@@ -1,0 +1,57 @@
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+
+@theme {
+  /* Primary palette */
+  --color-red: #E03C00;
+  --color-indigo: #4A3D9E;
+  --color-orange: #D4890C;
+  --color-pink: #D4907E;
+  --color-slate: #8C9DB5;
+  --color-forest: #3A4A2E;
+
+  /* Text hierarchy */
+  --color-primary: #2F2B2A;
+  --color-primary-body: #3A3634;
+  --color-secondary: #6B6461;
+  --color-meta: #8F9499;
+  --color-tertiary: #8A8F94;
+
+  /* Surfaces */
+  --color-background: #F9F8F6;
+  --color-surface: #ffffff;
+  --color-frame-fill: rgba(47, 43, 42, 0.03);
+  --color-footer: #f4f5f6;
+
+  /* Borders & interactive */
+  --color-dividers: rgba(47, 43, 42, 0.08);
+  --color-hover-fill: rgba(47, 43, 42, 0.04);
+  --color-selection: #D4907E40;
+
+  /* Font */
+  --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-primary-body);
+    min-height: 100dvh;
+  }
+
+  ::selection {
+    background: var(--color-selection);
+  }
+}
