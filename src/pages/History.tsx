@@ -45,16 +45,9 @@ export default function History() {
                 {/* Sent */}
                 {sentAffirmation && (
                   <div className="bg-surface rounded-2xl px-5 py-4">
-                    <div className="flex items-center gap-3 mb-2.5">
-                      <img
-                        src={user?.avatar}
-                        alt={user?.name}
-                        className="w-8 h-8 rounded object-cover object-top"
-                      />
-                      <div className="flex-1">
-                        <p className="text-[14px] text-meta">You wrote to</p>
-                        <p className="text-[16px] text-primary font-medium">{writeTo?.name}</p>
-                      </div>
+                    <div className="mb-2.5">
+                      <p className="text-[14px] text-meta">You wrote to</p>
+                      <p className="text-[16px] text-primary font-medium">{writeTo?.name}</p>
                     </div>
                     <p className="text-[15px] text-secondary leading-relaxed line-clamp-3">
                       {sentAffirmation.content}
@@ -69,15 +62,10 @@ export default function History() {
                     className="block active:scale-[0.98] transition-transform"
                   >
                     <div
-                      className="rounded-2xl px-5 py-4 flex items-center gap-4"
+                      className="rounded-2xl px-5 py-4"
                       style={{ backgroundColor: color + '12', border: `1px solid ${color}18` }}
                     >
-                      <img
-                        src={receiveFrom?.avatar}
-                        alt={receiveFrom?.name}
-                        className="w-8 h-8 rounded object-cover object-top shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
+                      <div>
                         <p className="text-[14px] text-meta">Letter from</p>
                         <p className="text-[16px] text-primary font-medium">{receiveFrom?.name}</p>
                         <p className="text-[14px] text-secondary mt-1 line-clamp-1">

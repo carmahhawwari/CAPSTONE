@@ -48,12 +48,7 @@ export default function Person() {
       </Link>
 
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <img
-          src={other.avatar}
-          alt={other.name}
-          className="w-16 h-16 rounded object-cover object-top"
-        />
+      <div>
         <h1 className="text-[28px] font-bold text-primary tracking-[-0.02em]">{other.name}</h1>
       </div>
 

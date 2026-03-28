@@ -21,12 +21,9 @@ export default function Profile() {
       </h1>
 
       {/* User Info */}
-      <div className="bg-surface rounded-2xl p-5 mt-6 flex items-center gap-4">
-        <img src={user?.avatar} alt={user?.name} className="w-14 h-14 rounded object-cover object-top" />
-        <div>
-          <p className="text-[20px] font-semibold text-primary">{user?.name}</p>
-          <p className="text-[15px] text-secondary mt-0.5">{user?.email}</p>
-        </div>
+      <div className="bg-surface rounded-2xl p-5 mt-6">
+        <p className="text-[20px] font-semibold text-primary">{user?.name}</p>
+        <p className="text-[15px] text-secondary mt-0.5">{user?.email}</p>
       </div>
 
       {/* Stats */}

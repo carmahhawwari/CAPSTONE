@@ -43,16 +43,9 @@ export default function Write() {
       </Link>
 
       {/* To */}
-      <div className="flex items-center gap-4 mb-2">
-        <img
-          src={writeTo?.avatar}
-          alt={writeTo?.name}
-          className="w-14 h-14 rounded object-cover object-top"
-        />
-        <div>
-          <p className="text-[13px] text-meta uppercase tracking-wider">Writing to</p>
-          <p className="text-[24px] text-primary font-bold tracking-[-0.02em]">{writeTo?.name}</p>
-        </div>
+      <div className="mb-2">
+        <p className="text-[13px] text-meta uppercase tracking-wider">Writing to</p>
+        <p className="text-[24px] text-primary font-bold tracking-[-0.02em]">{writeTo?.name}</p>
       </div>
 
       {/* Prompt */}

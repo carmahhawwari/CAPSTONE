@@ -55,3 +55,25 @@
     background: var(--color-selection);
   }
 }
+
+.sunset-gradient {
+  background: linear-gradient(
+    135deg,
+    #5B5680 0%,
+    #7B6E98 20%,
+    #A08BA0 40%,
+    #C4A99A 60%,
+    #D4B8A0 80%,
+    #5B5680 100%
+  );
+  background-size: 300% 300%;
+  animation: sunset-shift 8s ease-in-out infinite;
+}
+
+@keyframes sunset-shift {
+  0% { background-position: 0% 0%; }
+  25% { background-position: 100% 50%; }
+  50% { background-position: 50% 100%; }
+  75% { background-position: 0% 50%; }
+  100% { background-position: 0% 0%; }
+}

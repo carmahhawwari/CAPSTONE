@@ -31,14 +31,9 @@ export default function People() {
             <Link
               key={other.id}
               to={`/person/${other.id}`}
-              className="bg-surface rounded-2xl px-5 py-4 flex items-center gap-4 active:scale-[0.98] transition-transform"
+              className="bg-surface rounded-2xl px-5 py-4 flex items-center justify-between active:scale-[0.98] transition-transform"
             >
-              <img
-                src={other.avatar}
-                alt={other.name}
-                className="w-12 h-12 rounded object-cover object-top shrink-0"
-              />
-              <div className="flex-1 min-w-0">
+              <div>
                 <p className="text-[17px] text-primary font-semibold">{other.name}</p>
                 <p className="text-[14px] text-meta mt-0.5">
                   {letterCount} letter{letterCount !== 1 ? 's' : ''} · {memoryCount} memor{memoryCount !== 1 ? 'ies' : 'y'}
