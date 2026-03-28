@@ -17,7 +17,7 @@ export default function History() {
 
   return (
     <div className="px-5 pt-14 pb-28">
-      <h1 className="text-[34px] font-bold text-primary tracking-[-0.02em] leading-none">
+      <h1 className="text-[34px] font-normal text-primary tracking-[-0.02em] leading-none font-serif">
         History
       </h1>
 
@@ -44,7 +44,7 @@ export default function History() {
               <div className="flex flex-col gap-3">
                 {/* Sent */}
                 {sentAffirmation && (
-                  <div className="bg-surface rounded-2xl px-5 py-4">
+                  <div className="bg-surface rounded-xl px-5 py-4">
                     <div className="mb-2.5">
                       <p className="text-[14px] text-meta">You wrote to</p>
                       <p className="text-[16px] text-primary font-medium">{writeTo?.name}</p>
@@ -62,7 +62,7 @@ export default function History() {
                     className="block active:scale-[0.98] transition-transform"
                   >
                     <div
-                      className="rounded-2xl px-5 py-4"
+                      className="rounded-xl px-5 py-4"
                       style={{ backgroundColor: color + '12', border: `1px solid ${color}18` }}
                     >
                       <div>

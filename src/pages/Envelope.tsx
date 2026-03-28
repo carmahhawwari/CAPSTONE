@@ -70,7 +70,7 @@ export default function Envelope() {
 
   return (
     <div className="min-h-dvh bg-background px-5 pt-14 pb-28">
-      <Link to="/" className="w-12 h-12 rounded-full bg-[#ECECEC] flex items-center justify-center mb-8">
+      <Link to="/" className="sticky top-4 z-40 w-[44px] h-[44px] rounded-full liquid-glass-btn flex items-center justify-center mb-8">
         <ChevronLeft size={22} className="text-primary" />
       </Link>
 
@@ -90,7 +90,7 @@ export default function Envelope() {
             className="bg-surface px-6 py-7"
             style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.06)' }}
           >
-            <p className="text-[16px] text-primary-body leading-relaxed">
+            <p className="text-[18px] text-primary-body leading-relaxed font-normal font-serif">
               {affirmation.content}
             </p>
 

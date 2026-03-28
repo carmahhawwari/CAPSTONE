@@ -1,6 +1,7 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import BottomNav from './BottomNav';
+import LiquidGlassFilter from './LiquidGlass';
 
 export default function AppShell() {
   const { isAuthenticated } = useAuth();
@@ -11,6 +12,7 @@ export default function AppShell() {
 
   return (
     <div className="max-w-[480px] mx-auto min-h-dvh bg-background">
+      <LiquidGlassFilter />
       <Outlet />
       <BottomNav />
     </div>

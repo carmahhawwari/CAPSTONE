@@ -43,7 +43,7 @@ export default function Person() {
   return (
     <div className="px-5 pt-10 pb-28">
       {/* Back */}
-      <Link to="/people" className="w-12 h-12 rounded-full bg-[#ECECEC] flex items-center justify-center mb-8">
+      <Link to="/people" className="sticky top-4 z-40 w-[44px] h-[44px] rounded-full liquid-glass-btn flex items-center justify-center mb-8">
         <ChevronLeft size={22} className="text-primary" />
       </Link>
 
@@ -66,7 +66,7 @@ export default function Person() {
             {sharedAffirmations.map((a) => {
               const isSent = a.senderId === user?.id;
               return (
-                <div key={a.id} className="bg-surface rounded-2xl px-5 py-4">
+                <div key={a.id} className="bg-surface rounded-xl px-5 py-4">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[14px] text-meta font-medium">
                       {isSent ? 'You wrote' : `${other.name} wrote`}
@@ -93,7 +93,7 @@ export default function Person() {
         ) : (
           <div className="flex flex-col gap-3">
             {sharedMemories.map((m) => (
-              <div key={m.id} className="bg-surface rounded-2xl px-5 py-4">
+              <div key={m.id} className="bg-surface rounded-xl px-5 py-4">
                 <p className="text-[16px] text-primary font-medium">{m.title}</p>
                 <p className="text-[15px] text-secondary mt-1 leading-snug">{m.description}</p>
                 {m.location && (

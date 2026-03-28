@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <div className="px-5 pt-14 pb-28">
       {/* Title */}
-      <h1 className="text-[34px] font-bold text-primary tracking-[-0.02em] leading-none">
+      <h1 className="text-[30px] font-normal text-primary tracking-[-0.02em] leading-none font-serif">
         Affirm.
       </h1>
 
@@ -27,7 +27,7 @@ export default function Home() {
         to={receivedAffirmation ? `/read/${receivedAffirmation.id}` : '#'}
         className="block mt-5"
       >
-        <div className="relative rounded-2xl overflow-hidden min-h-[220px] flex flex-col justify-between p-6 sunset-card">
+        <div className="relative rounded-xl overflow-hidden min-h-[160px] flex flex-col justify-between p-6 sunset-card">
           {/* Animated gradient */}
           <div className="absolute inset-0 sunset-gradient" />
           {/* Grain overlay */}
@@ -42,7 +42,7 @@ export default function Home() {
           <div className="relative z-10">
             {receivedAffirmation ? (
               <>
-                <p className="text-[18px] text-white/95 leading-relaxed font-medium">
+                <p className="text-[18px] text-white/95 leading-relaxed font-normal font-serif">
                   {receivedAffirmation.content}
                 </p>
                 <p className="text-[14px] text-white/60 mt-4">
@@ -59,31 +59,31 @@ export default function Home() {
       </Link>
 
       {/* Recents bento */}
-      <h2 className="text-[22px] font-bold text-primary tracking-[-0.01em] mt-8 mb-3">
+      <h2 className="text-[22px] font-normal text-primary tracking-[-0.01em] mt-8 mb-3 font-serif">
         Recents
       </h2>
 
       <div className="grid grid-cols-2 gap-3">
         {/* Sent */}
-        <div className="bg-surface rounded-2xl p-5">
+        <div className="bg-surface rounded-xl p-5">
           <p className="text-[13px] text-meta font-medium uppercase tracking-wider">Sent</p>
-          <p className="text-[32px] font-bold text-primary tracking-tight mt-2">{totalSent}</p>
+          <p className="text-[32px] font-normal text-primary tracking-tight mt-2 font-serif">{totalSent}</p>
           <p className="text-[13px] text-meta">letters</p>
         </div>
 
         {/* Streak */}
-        <div className="bg-surface rounded-2xl p-5">
+        <div className="bg-surface rounded-xl p-5">
           <p className="text-[13px] text-meta font-medium uppercase tracking-wider">Streak</p>
-          <p className="text-[32px] font-bold text-primary tracking-tight mt-2">{streak}</p>
+          <p className="text-[32px] font-normal text-primary tracking-tight mt-2 font-serif">{streak}</p>
           <p className="text-[13px] text-meta">days</p>
         </div>
 
         {/* Write next — full width */}
         <Link to="/write" className="col-span-2 active:scale-[0.98] transition-transform">
-          <div className="bg-surface rounded-2xl p-5 flex items-center justify-between">
+          <div className="bg-surface rounded-xl p-5 flex items-center justify-between">
             <div>
               <p className="text-[13px] text-meta font-medium uppercase tracking-wider">Write next</p>
-              <p className="text-[20px] text-primary font-bold tracking-[-0.01em] mt-1">{writeTo?.name}</p>
+              <p className="text-[20px] text-primary font-normal tracking-[-0.01em] mt-1 font-serif">{writeTo?.name}</p>
             </div>
             <ChevronRight size={20} className="text-meta" />
           </div>
@@ -91,7 +91,7 @@ export default function Home() {
       </div>
 
       {/* People */}
-      <h2 className="text-[22px] font-bold text-primary tracking-[-0.01em] mt-10 mb-3">
+      <h2 className="text-[22px] font-normal text-primary tracking-[-0.01em] mt-10 mb-3 font-serif">
         People
       </h2>
 
@@ -107,7 +107,7 @@ export default function Home() {
             <Link
               key={other.id}
               to={`/person/${other.id}`}
-              className="bg-surface rounded-2xl px-5 py-4 flex items-center justify-between active:scale-[0.98] transition-transform"
+              className="bg-surface rounded-xl px-5 py-4 flex items-center justify-between active:scale-[0.98] transition-transform"
             >
               <div>
                 <p className="text-[16px] text-primary font-semibold">{other.name}</p>

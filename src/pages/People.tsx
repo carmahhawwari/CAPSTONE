@@ -9,7 +9,7 @@ export default function People() {
 
   return (
     <div className="px-5 pt-14 pb-28">
-      <h1 className="text-[34px] font-bold text-primary tracking-[-0.02em] leading-none">
+      <h1 className="text-[34px] font-normal text-primary tracking-[-0.02em] leading-none font-serif">
         People
       </h1>
 
@@ -31,7 +31,7 @@ export default function People() {
             <Link
               key={other.id}
               to={`/person/${other.id}`}
-              className="bg-surface rounded-2xl px-5 py-4 flex items-center justify-between active:scale-[0.98] transition-transform"
+              className="bg-surface rounded-xl px-5 py-4 flex items-center justify-between active:scale-[0.98] transition-transform"
             >
               <div>
                 <p className="text-[17px] text-primary font-semibold">{other.name}</p>

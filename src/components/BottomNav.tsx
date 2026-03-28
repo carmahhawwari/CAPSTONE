@@ -11,15 +11,17 @@ const tabs = [
 export default function BottomNav() {
   return (
     <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-      <div className="flex items-center gap-1 bg-[#F1F1F1] backdrop-blur-xl rounded-full px-2 py-2 shadow-sm">
+      <div
+        className="liquid-glass-nav flex items-center gap-1 rounded-full px-2 py-2"
+      >
         {tabs.map(({ to, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             end={to === '/'}
             className={({ isActive }) =>
-              `flex items-center justify-center w-12 h-12 rounded-full transition-colors ${
-                isActive ? 'bg-white text-primary' : 'text-tertiary'
+              `flex items-center justify-center w-[44px] h-[44px] rounded-full transition-all ${
+                isActive ? 'liquid-glass-active text-primary' : 'text-tertiary'
               }`
             }
           >

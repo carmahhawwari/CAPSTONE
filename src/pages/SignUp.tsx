@@ -28,7 +28,7 @@ export default function SignUp() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="bg-surface rounded-2xl overflow-hidden">
+          <div className="bg-surface rounded-xl overflow-hidden">
             <input
               type="text"
               placeholder="Name"
@@ -54,7 +54,7 @@ export default function SignUp() {
 
           <button
             type="submit"
-            className="bg-primary text-white rounded-2xl py-[16px] text-[16px] font-semibold mt-4 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+            className="bg-primary text-white rounded-xl py-[16px] text-[16px] font-semibold mt-4 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
           >
             Create Account
           </button>
