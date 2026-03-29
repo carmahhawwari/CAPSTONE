@@ -1,63 +1,61 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
+import { useOrbit } from '@/contexts/orbit';
 
 export default function SignIn() {
   const { signIn } = useAuth();
+  const { isOnboarded } = useOrbit();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     signIn(email, password);
-    navigate('/');
+    navigate(isOnboarded ? '/' : '/onboarding');
   };
 
   return (
-    <div className="min-h-dvh bg-background flex flex-col justify-center px-5">
-      <div className="w-full max-w-[400px] mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-[40px] font-bold text-primary tracking-[-0.02em] leading-none">
-            Affirm
+    <div className="flex min-h-dvh flex-col justify-center px-4 py-10">
+      <div className="orbit-card ticket-edge mx-auto max-w-[420px] rounded-[32px] px-6 py-8">
+        <div className="dot-grid rounded-[24px] px-5 py-8">
+          <p className="text-[12px] uppercase tracking-[0.34em] text-dusty">Working title</p>
+          <h1 className="mt-3 font-[var(--font-display)] text-[48px] leading-none font-semibold text-ink">
+            Orbit
           </h1>
-          <p className="text-[17px] text-secondary mt-3 leading-relaxed">
-            Send meaningful words to<br />the people who matter.
+          <p className="mt-4 max-w-[18rem] text-[18px] leading-7 text-muted">
+            A tiny ritual for reaching out. The wheel picks the person. You bring the note.
           </p>
-        </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="bg-surface rounded-xl overflow-hidden">
+          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-3">
             <input
               type="email"
               placeholder="Email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-5 py-[14px] text-[16px] text-primary outline-none placeholder:text-meta bg-transparent border-b border-dividers"
+              onChange={(event) => setEmail(event.target.value)}
+              className="rounded-[18px] border border-[color:var(--color-line)] bg-[rgba(255,251,245,0.86)] px-4 py-4 outline-none"
             />
             <input
               type="password"
               placeholder="Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-5 py-[14px] text-[16px] text-primary outline-none placeholder:text-meta bg-transparent"
+              onChange={(event) => setPassword(event.target.value)}
+              className="rounded-[18px] border border-[color:var(--color-line)] bg-[rgba(255,251,245,0.86)] px-4 py-4 outline-none"
             />
-          </div>
 
-          <button
-            type="submit"
-            className="bg-primary text-white rounded-xl py-[16px] text-[16px] font-semibold mt-4 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
-          >
-            Sign In
-          </button>
+            <button type="submit" className="button-primary mt-3 rounded-[20px] px-5 py-4 text-[16px] font-semibold">
+              Enter Orbit
+            </button>
+          </form>
 
-          <p className="text-center text-secondary text-[15px] mt-6">
-            Don't have an account?{' '}
-            <Link to="/sign-up" className="text-indigo font-semibold">
-              Sign Up
+          <p className="mt-5 text-center text-[14px] text-muted">
+            New here?{' '}
+            <Link to="/sign-up" className="font-semibold text-[color:var(--color-plum)]">
+              Build your orbit
             </Link>
           </p>
-        </form>
+        </div>
       </div>
     </div>
   );

@@ -1,114 +1,85 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
-import { affirmations, memories, users } from '@/lib/mock-data';
-
-const envelopeColors = ['#E03C00', '#4A3D9E', '#D4890C', '#D4907E', '#8C9DB5', '#3A4A2E'];
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-function EnvelopeClosed({ color }: { color: string }) {
-  const darker = color + 'CC';
-  return (
-    <svg width="100%" viewBox="0 0 353 183" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <mask id="closed-mask" fill="white">
-        <path d="M0 0H353V183H0V0Z"/>
-      </mask>
-      <path d="M0 0H353V183H0V0Z" fill={color} fillOpacity="0.3"/>
-      <path d="M353 183V187H357V183H353ZM0 183H-4V187H0V183ZM353 0H349V183H353H357V0H353ZM353 183V179H0V183V187H353V183ZM0 183H4V0H0H-4V183H0Z" fill="black" fillOpacity="0.1" mask="url(#closed-mask)"/>
-      <path d="M346.395 2H6.57422L176.002 115.595L346.395 2Z" fill={color} fillOpacity="0.35" stroke={darker} strokeWidth="2"/>
-    </svg>
-  );
-}
-
-function EnvelopeOpen({ color }: { color: string }) {
-  const darker = color + 'CC';
-  return (
-    <svg width="100%" viewBox="0 0 353 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <mask id="open-mask" fill="white">
-        <path d="M0 117H353V300H0V117Z"/>
-      </mask>
-      <path d="M0 117H353V300H0V117Z" fill={color} fillOpacity="0.3"/>
-      <path d="M353 300V301H354V300H353ZM0 300H-1V301H0V300ZM353 117H352V300H353H354V117H353ZM353 300V299H0V300V301H353V300ZM0 300H1V117H0H-1V300H0Z" fill="black" fillOpacity="0.1" mask="url(#open-mask)"/>
-      <path d="M351.349 117.5H1.64355L176 234.399L351.349 117.5Z" fill="#F7F7F7" stroke={darker} strokeOpacity="0.5"/>
-      <path d="M351.349 117.5H1.64355L176 0.600586L351.349 117.5Z" fill={color} fillOpacity="0.35" stroke={darker} strokeOpacity="0.5"/>
-    </svg>
-  );
-}
+import { fontOptions, incomingNotes, orbitCandidates, stationeryTemplates } from '@/lib/mock-data';
 
 export default function Envelope() {
-  const { id } = useParams<{ id: string }>();
-  const [open, setOpen] = useState(false);
-
-  const affirmationIndex = affirmations.findIndex((a) => a.id === id);
-  const affirmation = affirmations[affirmationIndex];
+  const { id } = useParams();
+  const note = incomingNotes.find((item) => item.id === id);
+  const [visibleLength, setVisibleLength] = useState(0);
 
   useEffect(() => {
-    const t = setTimeout(() => setOpen(true), 600);
-    return () => clearTimeout(t);
-  }, []);
+    if (!note) {
+      return;
+    }
 
-  if (!affirmation) {
-    return (
-      <div className="min-h-dvh bg-background flex items-center justify-center">
-        <p className="text-secondary">Affirmation not found.</p>
-      </div>
-    );
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setVisibleLength(0);
+    const timeout = window.setTimeout(() => {
+      const interval = window.setInterval(() => {
+        setVisibleLength((previous) => {
+          if (previous >= note.content.length) {
+            window.clearInterval(interval);
+            return previous;
+          }
+
+          return previous + 2;
+        });
+      }, 30);
+    }, 700);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [note]);
+
+  if (!note) {
+    return <Navigate to="/history" replace />;
   }
 
-  const color = envelopeColors[affirmationIndex % envelopeColors.length];
-  const sender = users.find((u) => u.id === affirmation.senderId);
-  const memory = affirmation.contextMemoryId
-    ? memories.find((m) => m.id === affirmation.contextMemoryId)
-    : null;
+  const sender = orbitCandidates.find((person) => person.id === note.senderId);
+  const template = stationeryTemplates.find((item) => item.id === note.templateId) ?? stationeryTemplates[0];
+  const font = fontOptions.find((item) => item.id === note.fontId) ?? fontOptions[0];
+  const isPrinting = visibleLength < note.content.length;
 
   return (
-    <div className="min-h-dvh bg-background px-5 pt-14 pb-28">
-      <Link to="/" className="sticky top-4 z-40 w-[44px] h-[44px] rounded-full liquid-glass-btn flex items-center justify-center mb-8">
-        <ChevronLeft size={22} className="text-primary" />
+    <div className="pt-8 pb-10">
+      <Link to="/history" className="button-secondary flex h-11 w-11 items-center justify-center rounded-full">
+        <ChevronLeft size={20} />
       </Link>
 
-      <div className="max-w-[380px] mx-auto relative">
-        {/* Letter card — slides up above envelope */}
-        <div
-          className="relative mx-3 transition-all ease-out"
-          style={{
-            zIndex: open ? 30 : 10,
-            transform: open ? 'translateY(0)' : 'translateY(120px)',
-            opacity: open ? 1 : 0,
-            transitionDuration: '700ms',
-            transitionDelay: open ? '300ms' : '0ms',
-          }}
-        >
-          <div
-            className="bg-surface px-6 py-7"
-            style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.06)' }}
-          >
-            <p className="text-[18px] text-primary-body leading-relaxed font-normal font-serif">
-              {affirmation.content}
-            </p>
+      <div className="mt-5">
+        <p className="text-[12px] uppercase tracking-[0.28em] text-dusty">Incoming note</p>
+        <h1 className="mt-3 font-[var(--font-display)] text-[34px] leading-none font-semibold text-ink">
+          Printing from {sender?.name}
+        </h1>
+        <p className="mt-4 text-[16px] leading-7 text-muted">
+          The delay is intentional. It should feel like a tiny machine quietly doing its work.
+        </p>
+      </div>
 
-            <p className="text-[15px] text-secondary mt-5">
-              — {sender?.name}
-            </p>
+      <div className="printer-body mt-8 rounded-[34px] px-5 pt-5 pb-7">
+        <div className="mb-4 flex items-center justify-between px-1 text-[11px] uppercase tracking-[0.24em] text-[rgba(53,41,35,0.72)]">
+          <span>Orbit Mini Press</span>
+          <div className="flex items-center gap-2">
+            <span className="printer-led text-[color:var(--color-olive)]" />
+            <span className="printer-led text-[color:var(--color-gold)]" />
           </div>
         </div>
-
-        {/* Envelope SVG — switches between closed and open */}
-        <div
-          className="relative z-20 transition-all ease-out"
-          style={{
-            marginTop: open ? '-40px' : '-120px',
-            transitionDuration: '600ms',
-          }}
-        >
-          {open ? <EnvelopeOpen color={color} /> : <EnvelopeClosed color={color} />}
+        <div className="printer-slot mx-auto h-6 w-[86%] rounded-full" />
+        <div className={`paper-note receipt-paper ${template.paper} mt-4 rounded-[28px] px-5 py-6`}>
+          <div className="flex items-center justify-between text-[12px] uppercase tracking-[0.24em] text-dusty">
+            <span>{isPrinting ? 'Printing...' : 'Printed'}</span>
+            <span>{new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+          </div>
+          <p className={`mt-5 min-h-[270px] text-[22px] leading-9 text-ink ${font.className}`}>
+            {note.content.slice(0, visibleLength)}
+            {isPrinting && <span className="inline-block h-6 w-[2px] animate-pulse bg-[rgba(52,43,38,0.6)] align-middle" />}
+          </p>
+          <div className="mt-6 flex items-center justify-between border-t border-[color:var(--color-line)] pt-4 text-[14px] text-muted">
+            <span>From {sender?.name}</span>
+            <span>{note.stamp}</span>
+          </div>
         </div>
       </div>
     </div>

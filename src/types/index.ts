@@ -3,43 +3,52 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
-  createdAt: string;
+  faxNumber: string;
+  joinedAt: string;
 }
 
-export interface Affirmation {
+export interface OrbitPerson {
+  id: string;
+  name: string;
+  relationship: string;
+  city: string;
+  lastContact: string;
+  avatar: string;
+  accent: string;
+  memory: string;
+}
+
+export interface NoteTemplate {
+  id: string;
+  name: string;
+  description: string;
+  accent: string;
+  paper: string;
+}
+
+export interface FontChoice {
+  id: string;
+  name: string;
+  className: string;
+  sample: string;
+}
+
+export interface OrbitNote {
   id: string;
   senderId: string;
-  receiverId: string;
+  senderName: string;
+  recipientId: string;
+  recipientName: string;
   content: string;
-  contextMemoryId?: string;
   createdAt: string;
-  sender?: User;
-  receiver?: User;
-  memory?: Memory;
+  templateId: string;
+  fontId: string;
+  stamp?: string;
+  preview: string;
+  status: 'incoming' | 'sent';
 }
 
-export interface Memory {
+export interface SpinPrompt {
   id: string;
-  userId: string;
-  sharedWithUserId?: string;
-  title: string;
-  description: string;
-  date: string;
-  location?: string;
-  tags: string[];
-  createdAt: string;
-}
-
-export interface Prompt {
-  id: string;
-  text: string;
-}
-
-export interface DailyAssignment {
-  id: string;
-  date: string;
-  writeToUserId: string;
-  receiveFromUserId: string;
-  sentAffirmationId?: string;
-  receivedAffirmationId?: string;
+  copy: string;
 }

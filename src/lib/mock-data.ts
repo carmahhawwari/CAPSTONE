@@ -1,145 +1,226 @@
-import type { User, Affirmation, Memory, Prompt, DailyAssignment } from '@/types';
+import type { FontChoice, NoteTemplate, OrbitNote, OrbitPerson, SpinPrompt, User } from '@/types';
 
 export const currentUser: User = {
-  id: 'u1',
-  name: 'Carmah',
-  email: 'carmah@example.com',
-  avatar: '/images/char1.svg',
-  createdAt: '2025-01-01T00:00:00Z',
+  id: 'user-orbit',
+  name: 'Maya',
+  email: 'maya@orbit.app',
+  avatar: 'M',
+  faxNumber: 'ORB-2048',
+  joinedAt: '2026-01-12T08:00:00Z',
 };
 
-export const users: User[] = [
-  currentUser,
-  { id: 'u2', name: 'Lina', email: 'lina@example.com', avatar: '/images/char2.svg', createdAt: '2025-01-02T00:00:00Z' },
-  { id: 'u3', name: 'Rayan', email: 'rayan@example.com', avatar: '/images/char3.svg', createdAt: '2025-01-03T00:00:00Z' },
-  { id: 'u4', name: 'Noor', email: 'noor@example.com', avatar: '/images/char4.svg', createdAt: '2025-02-01T00:00:00Z' },
-];
-
-export const memories: Memory[] = [
+export const orbitCandidates: OrbitPerson[] = [
   {
-    id: 'm1',
-    userId: 'u1',
-    sharedWithUserId: 'u2',
-    title: 'Late night study session',
-    description: 'We stayed up until 3am finishing our project together. You brought me coffee without asking.',
-    date: '2025-09-20T03:00:00Z',
-    location: 'Green Library',
-    tags: ['gratitude', 'friendship'],
-    createdAt: '2025-09-21T00:00:00Z',
+    id: 'p1',
+    name: 'Lina',
+    relationship: 'College roommate',
+    city: 'Chicago',
+    lastContact: '4 months ago',
+    avatar: 'L',
+    accent: '#EE8B68',
+    memory: 'Still sends weather screenshots when it snows.',
   },
   {
-    id: 'm2',
-    userId: 'u1',
-    sharedWithUserId: 'u2',
-    title: 'First day jitters',
-    description: 'You walked me to my first class and waited outside until I was settled.',
-    date: '2025-09-01T08:00:00Z',
-    tags: ['support', 'beginnings'],
-    createdAt: '2025-09-01T12:00:00Z',
+    id: 'p2',
+    name: 'Nikhil',
+    relationship: 'High school best friend',
+    city: 'Seattle',
+    lastContact: '2 months ago',
+    avatar: 'N',
+    accent: '#6B78D6',
+    memory: 'Knows the exact diner order from every road trip.',
   },
   {
-    id: 'm3',
-    userId: 'u1',
-    sharedWithUserId: 'u3',
-    title: 'Road trip to Big Sur',
-    description: 'We got lost three times and laughed so hard we had to pull over. Best wrong turns of my life.',
-    date: '2025-11-15T10:00:00Z',
-    location: 'Big Sur',
-    tags: ['adventure', 'joy'],
-    createdAt: '2025-11-16T00:00:00Z',
+    id: 'p3',
+    name: 'Tala',
+    relationship: 'Cousin',
+    city: 'Amman',
+    lastContact: '3 weeks ago',
+    avatar: 'T',
+    accent: '#5A8D76',
+    memory: 'Always mails back recipes with extra notes in the margins.',
   },
   {
-    id: 'm4',
-    userId: 'u1',
-    sharedWithUserId: 'u4',
-    title: 'The quiet bench moment',
-    description: 'We sat on that bench for an hour saying nothing. Sometimes that\'s all you need.',
-    date: '2025-12-05T16:00:00Z',
-    tags: ['presence', 'comfort'],
-    createdAt: '2025-12-06T00:00:00Z',
-  },
-];
-
-export const prompts: Prompt[] = [
-  { id: 'p1', text: 'Tell them what they helped you through this week.' },
-  { id: 'p2', text: 'Share a memory you\'ve never said out loud.' },
-  { id: 'p3', text: 'What\'s something small they did that meant everything?' },
-  { id: 'p4', text: 'What would you want them to know if you couldn\'t see them tomorrow?' },
-];
-
-// Today's assignment: write to Lina, receive from Rayan
-export const todayAssignment: DailyAssignment = {
-  id: 'd1',
-  date: new Date().toISOString().split('T')[0],
-  writeToUserId: 'u2',
-  receiveFromUserId: 'u3',
-  sentAffirmationId: undefined,
-  receivedAffirmationId: 'a2',
-};
-
-// Past assignments
-export const pastAssignments: DailyAssignment[] = [
-  {
-    id: 'd2',
-    date: '2026-03-25',
-    writeToUserId: 'u4',
-    receiveFromUserId: 'u2',
-    sentAffirmationId: 'a3',
-    receivedAffirmationId: 'a1',
+    id: 'p4',
+    name: 'Jonah',
+    relationship: 'Former lab partner',
+    city: 'Boston',
+    lastContact: '6 months ago',
+    avatar: 'J',
+    accent: '#C9833E',
+    memory: 'Once stayed late just to help re-run the whole experiment.',
   },
   {
-    id: 'd3',
-    date: '2026-03-24',
-    writeToUserId: 'u3',
-    receiveFromUserId: 'u4',
-    sentAffirmationId: 'a4',
-    receivedAffirmationId: 'a5',
+    id: 'p5',
+    name: 'Rayan',
+    relationship: 'Sibling',
+    city: 'San Diego',
+    lastContact: '1 month ago',
+    avatar: 'R',
+    accent: '#B3687D',
+    memory: 'Still leaves voicemails instead of texting when it matters.',
+  },
+  {
+    id: 'p6',
+    name: 'Sofia',
+    relationship: 'Study abroad friend',
+    city: 'Lisbon',
+    lastContact: '7 months ago',
+    avatar: 'S',
+    accent: '#9475D5',
+    memory: 'Turned every wrong turn into a better afternoon.',
+  },
+  {
+    id: 'p7',
+    name: 'Ajji',
+    relationship: 'Grandmother',
+    city: 'Fremont',
+    lastContact: '2 weeks ago',
+    avatar: 'A',
+    accent: '#B68A52',
+    memory: 'Keeps every card in the same tin by the phone.',
+  },
+  {
+    id: 'p8',
+    name: 'Mina',
+    relationship: 'Old coworker',
+    city: 'New York',
+    lastContact: '5 months ago',
+    avatar: 'M',
+    accent: '#4D7F93',
+    memory: 'Sent tea to the office after the toughest launch week.',
   },
 ];
 
-export const affirmations: Affirmation[] = [
+export const starterOrbitIds = ['p1', 'p2', 'p3', 'p5', 'p7'];
+
+export const stationeryTemplates: NoteTemplate[] = [
   {
-    id: 'a1',
-    senderId: 'u2',
-    receiverId: 'u1',
-    content: 'I never told you this, but that night you stayed up helping me study completely changed how I thought about friendship. You didn\'t have to, and you never made me feel like I owed you anything.',
-    createdAt: '2026-03-25T10:00:00Z',
-    sender: users[1],
+    id: 'lined',
+    name: 'Lined notecard',
+    description: 'Soft ruled lines and a little structure.',
+    accent: '#E0B085',
+    paper: 'template-lined',
   },
   {
-    id: 'a2',
-    senderId: 'u3',
-    receiverId: 'u1',
-    content: 'You always know exactly when I need to hear something kind. That\'s rare and I don\'t want you to forget it.',
-    createdAt: '2026-03-26T14:00:00Z',
-    sender: users[2],
+    id: 'postcard',
+    name: 'Postcard',
+    description: 'A bold top margin, like something mailed from somewhere sunny.',
+    accent: '#D5856E',
+    paper: 'template-postcard',
   },
   {
-    id: 'a3',
-    senderId: 'u1',
-    receiverId: 'u4',
-    content: 'You make every hard thing feel more manageable just by being there. Thank you for walking beside me through all of it.',
-    contextMemoryId: 'm2',
-    createdAt: '2026-03-25T09:00:00Z',
-    sender: currentUser,
-    receiver: users[3],
-    memory: memories[1],
+    id: 'plain',
+    name: 'Plain paper',
+    description: 'Clean, airy, and unhurried.',
+    accent: '#B9A97A',
+    paper: 'template-plain',
+  },
+];
+
+export const fontOptions: FontChoice[] = [
+  {
+    id: 'soft',
+    name: 'Soft pen',
+    className: 'font-soft',
+    sample: 'A gentle handwritten note',
   },
   {
-    id: 'a4',
-    senderId: 'u1',
-    receiverId: 'u3',
-    content: 'I hope you know that your laugh is one of the best sounds in the world. It makes every room warmer.',
-    createdAt: '2026-03-24T11:00:00Z',
-    sender: currentUser,
-    receiver: users[2],
+    id: 'diary',
+    name: 'Diary',
+    className: 'font-diary',
+    sample: 'For something quietly personal',
   },
   {
-    id: 'a5',
-    senderId: 'u4',
-    receiverId: 'u1',
-    content: 'You showed up for me when no one else did. I think about that more than you know.',
-    createdAt: '2026-03-24T16:00:00Z',
-    sender: users[3],
+    id: 'type',
+    name: 'Typewriter',
+    className: 'font-type',
+    sample: 'Warm, mechanical, and crisp',
   },
+  {
+    id: 'letter',
+    name: 'Letterpress',
+    className: 'font-letter',
+    sample: 'Classic, grounded, and clear',
+  },
+];
+
+export const stampOptions = ['★', '✿', '☀', '♥', '✦', '☾'];
+
+export const spinPrompts: SpinPrompt[] = [
+  { id: 'sp1', copy: "You've been meaning to reach out. We'll handle the choice." },
+  { id: 'sp2', copy: 'No occasion needed. Showing up is enough.' },
+  { id: 'sp3', copy: 'Small note. Big feeling. One person at a time.' },
+  { id: 'sp4', copy: 'Let the wheel decide who gets a little warmth today.' },
+];
+
+export const incomingNotes: OrbitNote[] = [
+  {
+    id: 'n1',
+    senderId: 'p2',
+    senderName: 'Nikhil',
+    recipientId: currentUser.id,
+    recipientName: currentUser.name,
+    content:
+      "I still think about that awful summer playlist you made and how somehow it became the soundtrack for one of my favorite weeks. You make ordinary days stick.",
+    createdAt: '2026-03-26T19:10:00Z',
+    templateId: 'plain',
+    fontId: 'type',
+    stamp: '★',
+    preview: 'You make ordinary days stick.',
+    status: 'incoming',
+  },
+  {
+    id: 'n2',
+    senderId: 'p7',
+    senderName: 'Ajji',
+    recipientId: currentUser.id,
+    recipientName: currentUser.name,
+    content:
+      'I like imagining your apartment when I fold laundry. It makes me feel close to you in the middle of ordinary things.',
+    createdAt: '2026-03-24T11:45:00Z',
+    templateId: 'lined',
+    fontId: 'letter',
+    stamp: '♥',
+    preview: 'It makes me feel close to you in ordinary things.',
+    status: 'incoming',
+  },
+  {
+    id: 'n3',
+    senderId: 'p1',
+    senderName: 'Lina',
+    recipientId: currentUser.id,
+    recipientName: currentUser.name,
+    content:
+      'Thank you for being the person I can send a photo of soup to and somehow feel more understood.',
+    createdAt: '2026-03-22T09:30:00Z',
+    templateId: 'postcard',
+    fontId: 'soft',
+    stamp: '✿',
+    preview: 'The person I can send a photo of soup to.',
+    status: 'incoming',
+  },
+];
+
+export const starterSentNotes: OrbitNote[] = [
+  {
+    id: 's1',
+    senderId: currentUser.id,
+    senderName: currentUser.name,
+    recipientId: 'p5',
+    recipientName: 'Rayan',
+    content: 'You make hard weeks feel less loud. I never say that enough.',
+    createdAt: '2026-03-21T08:15:00Z',
+    templateId: 'lined',
+    fontId: 'diary',
+    stamp: '☀',
+    preview: 'You make hard weeks feel less loud.',
+    status: 'sent',
+  },
+];
+
+export const orbitFacts = [
+  'Each person gets a shareable Orbit fax number later. That flow is stubbed for now.',
+  'The wheel only lets you re-spin once. Surrender is part of the product.',
+  'Inbox notes print slowly on purpose. The waiting is part of the meaning.',
 ];

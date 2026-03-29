@@ -1,13 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
-import { affirmations } from '@/lib/mock-data';
+import { useOrbit } from '@/contexts/orbit';
+import { currentUser, orbitFacts } from '@/lib/mock-data';
 
 export default function Profile() {
-  const { user, signOut } = useAuth();
   const navigate = useNavigate();
-
-  const sent = affirmations.filter((a) => a.senderId === user?.id).length;
-  const received = affirmations.filter((a) => a.receiverId === user?.id).length;
+  const { signOut, user } = useAuth();
+  const { incoming, resetOnboarding, sentNotes } = useOrbit();
 
   const handleSignOut = () => {
     signOut();
@@ -15,42 +14,71 @@ export default function Profile() {
   };
 
   return (
-    <div className="px-5 pt-14 pb-28 min-h-dvh flex flex-col">
-      <h1 className="text-[34px] font-normal text-primary tracking-[-0.02em] leading-none font-serif">
-        Profile
+    <div className="pt-8 pb-10">
+      <h1 className="font-[var(--font-display)] text-[38px] leading-none font-semibold text-ink">
+        You
       </h1>
 
-      {/* User Info */}
-      <div className="bg-surface rounded-xl p-5 mt-6">
-        <p className="text-[20px] font-semibold text-primary">{user?.name}</p>
-        <p className="text-[15px] text-secondary mt-0.5">{user?.email}</p>
-      </div>
-
-      {/* Stats */}
-      <div className="bg-surface rounded-xl overflow-hidden mt-4">
-        <div className="flex">
-          <div className="flex-1 text-center py-5 border-r border-dividers">
-            <p className="text-[28px] font-bold text-primary">{sent}</p>
-            <p className="text-[13px] text-meta mt-0.5">Sent</p>
+      <div className="orbit-card mt-6 rounded-[30px] px-5 py-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-[var(--font-display)] text-[28px] leading-none font-semibold text-ink">
+              {user?.name}
+            </p>
+            <p className="mt-2 text-[15px] text-muted">{user?.email}</p>
           </div>
-          <div className="flex-1 text-center py-5">
-            <p className="text-[28px] font-bold text-primary">{received}</p>
-            <p className="text-[13px] text-meta mt-0.5">Received</p>
+          <div className="rounded-full bg-[rgba(217,161,74,0.18)] px-4 py-2 text-[13px] text-ink">
+            {currentUser.faxNumber}
+          </div>
+        </div>
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className="rounded-[22px] bg-[rgba(255,251,245,0.76)] px-4 py-4">
+            <p className="text-[12px] uppercase tracking-[0.24em] text-dusty">Sent</p>
+            <p className="mt-2 text-[28px] font-semibold text-ink">{sentNotes.length}</p>
+          </div>
+          <div className="rounded-[22px] bg-[rgba(255,251,245,0.76)] px-4 py-4">
+            <p className="text-[12px] uppercase tracking-[0.24em] text-dusty">Received</p>
+            <p className="mt-2 text-[28px] font-semibold text-ink">{incoming.length}</p>
           </div>
         </div>
       </div>
 
-      {/* Sign Out */}
-      <div className="mt-auto">
-        <div className="bg-surface rounded-xl overflow-hidden">
-          <button
-            onClick={handleSignOut}
-            className="w-full py-[14px] text-[17px] text-[#FF3B30] font-normal cursor-pointer bg-transparent border-none hover:bg-hover-fill transition-colors"
-          >
-            Sign Out
-          </button>
+      <div className="orbit-card mt-4 rounded-[30px] px-5 py-5">
+        <p className="text-[12px] uppercase tracking-[0.24em] text-dusty">Later, when deployed</p>
+        <p className="mt-3 font-[var(--font-display)] text-[20px] leading-8 font-semibold text-ink">
+          Pair a warm little printer.
+        </p>
+        <p className="mt-3 text-[15px] leading-7 text-muted">
+          Every incoming note could slowly print into the room. The digital version still has to feel worth using first.
+        </p>
+
+        <div className="mt-5 flex flex-col gap-3">
+          {orbitFacts.map((fact) => (
+            <div
+              key={fact}
+              className="rounded-[20px] border border-[color:var(--color-line)] bg-[rgba(255,251,245,0.78)] px-4 py-4 text-[14px] leading-6 text-muted"
+            >
+              {fact}
+            </div>
+          ))}
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={resetOnboarding}
+        className="button-secondary mt-5 w-full rounded-[22px] px-5 py-4 text-[16px] font-semibold"
+      >
+        Rebuild orbit
+      </button>
+
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="mt-3 w-full rounded-[22px] border border-[rgba(179,72,56,0.22)] bg-[rgba(255,244,240,0.78)] px-5 py-4 text-[16px] font-semibold text-[#b34838]"
+      >
+        Sign out
+      </button>
     </div>
   );
 }

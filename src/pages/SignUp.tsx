@@ -9,63 +9,57 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     signUp(name, email, password);
-    navigate('/');
+    navigate('/onboarding');
   };
 
   return (
-    <div className="min-h-dvh bg-background flex flex-col justify-center px-5">
-      <div className="w-full max-w-[400px] mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-[40px] font-bold text-primary tracking-[-0.02em] leading-none">
-            Create Account
-          </h1>
-          <p className="text-[17px] text-secondary mt-3 leading-relaxed">
-            Start building deeper connections.
-          </p>
-        </div>
+    <div className="flex min-h-dvh flex-col justify-center px-4 py-10">
+      <div className="orbit-card mx-auto max-w-[420px] rounded-[32px] px-6 py-8">
+        <p className="text-[12px] uppercase tracking-[0.34em] text-dusty">First-time setup</p>
+        <h1 className="mt-3 font-[var(--font-display)] text-[40px] leading-none font-semibold text-ink">
+          Build your orbit.
+        </h1>
+        <p className="mt-4 text-[17px] leading-7 text-muted">
+          Keep it small. Close-but-distant people you care about enough to surprise.
+        </p>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="bg-surface rounded-xl overflow-hidden">
-            <input
-              type="text"
-              placeholder="Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-5 py-[14px] text-[16px] text-primary outline-none placeholder:text-meta bg-transparent border-b border-dividers"
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-5 py-[14px] text-[16px] text-primary outline-none placeholder:text-meta bg-transparent border-b border-dividers"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-5 py-[14px] text-[16px] text-primary outline-none placeholder:text-meta bg-transparent"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-3">
+          <input
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            className="rounded-[18px] border border-[color:var(--color-line)] bg-[rgba(255,251,245,0.86)] px-4 py-4 outline-none"
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="rounded-[18px] border border-[color:var(--color-line)] bg-[rgba(255,251,245,0.86)] px-4 py-4 outline-none"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="rounded-[18px] border border-[color:var(--color-line)] bg-[rgba(255,251,245,0.86)] px-4 py-4 outline-none"
+          />
 
-          <button
-            type="submit"
-            className="bg-primary text-white rounded-xl py-[16px] text-[16px] font-semibold mt-4 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
-          >
-            Create Account
+          <button type="submit" className="button-primary mt-3 rounded-[20px] px-5 py-4 text-[16px] font-semibold">
+            Start with mock data
           </button>
-
-          <p className="text-center text-secondary text-[15px] mt-6">
-            Already have an account?{' '}
-            <Link to="/sign-in" className="text-indigo font-semibold">
-              Sign In
-            </Link>
-          </p>
         </form>
+
+        <p className="mt-5 text-center text-[14px] text-muted">
+          Already set up?{' '}
+          <Link to="/sign-in" className="font-semibold text-[color:var(--color-plum)]">
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );

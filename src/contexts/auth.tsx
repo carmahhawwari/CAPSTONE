@@ -21,11 +21,14 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  const signIn = (_email: string, _password: string) => {
+  const signIn = (email: string, password: string) => {
+    void email;
+    void password;
     setUser(currentUser);
   };
 
-  const signUp = (name: string, email: string, _password: string) => {
+  const signUp = (name: string, email: string, password: string) => {
+    void password;
     setUser({ ...currentUser, name, email });
   };
 
@@ -40,4 +43,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
