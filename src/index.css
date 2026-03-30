@@ -14,7 +14,7 @@
   --color-plum: #8b7099;
 
   --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+  --font-display: 'Inter Variable', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 @layer base {
@@ -118,6 +118,89 @@
 .orbit-nav-active {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(247, 233, 214, 0.92));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.bottom-pill-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0.9rem;
+  z-index: 50;
+  width: min(calc(100% - 1.5rem), 25rem);
+  transform: translateX(-50%);
+}
+
+.bottom-pill-track {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 4.75rem;
+  padding: 0 3.4rem;
+  border-radius: 999px;
+  background: rgba(251, 244, 235, 0.98);
+  box-shadow:
+    0 14px 24px rgba(56, 44, 36, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.bottom-pill-link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 1.2rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: rgba(32, 28, 25, 0.9);
+}
+
+.bottom-pill-link-left {
+  justify-content: flex-start;
+  padding-left: 1rem;
+}
+
+.bottom-pill-link-right {
+  justify-content: flex-end;
+  padding-right: 1rem;
+}
+
+.bottom-pill-link-active {
+  color: rgba(18, 14, 12, 1);
+}
+
+.bottom-pill-plus {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6.6rem;
+  height: 6.6rem;
+  border-radius: 999px;
+  background: #6a625d;
+  transform: translate(-50%, -50%);
+  box-shadow:
+    0 14px 22px rgba(63, 47, 38, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.bottom-pill-plus-active {
+  background: #554e49;
+}
+
+.bottom-pill-plus-glyph {
+  margin-top: -0.2rem;
+  font-size: 4.8rem;
+  line-height: 1;
+  color: #fffdf8;
+  font-weight: 300;
+}
+
+.bottom-pill-plus-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .button-primary {
@@ -278,6 +361,630 @@
   background: rgba(225, 202, 175, 0.56);
   transform: rotate(10deg);
   box-shadow: 0 2px 4px rgba(78, 56, 42, 0.08);
+}
+
+.receipt-strip {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+  background:
+    linear-gradient(124deg, rgba(120, 98, 79, 0.04), transparent 24%, rgba(255, 255, 255, 0.4) 42%, transparent 62%),
+    linear-gradient(56deg, rgba(120, 98, 79, 0.05), transparent 22%, rgba(255, 255, 255, 0.34) 44%, transparent 68%),
+    linear-gradient(180deg, rgba(255, 251, 245, 0.99), rgba(245, 238, 229, 0.98)),
+    repeating-linear-gradient(
+      180deg,
+      rgba(120, 93, 72, 0.015),
+      rgba(120, 93, 72, 0.015) 2px,
+      transparent 2px,
+      transparent 28px
+    );
+  border: 1px solid rgba(86, 63, 49, 0.14);
+  border-top: 4px solid var(--receipt-accent, rgba(185, 169, 122, 0.9));
+  box-shadow:
+    0 24px 34px rgba(80, 58, 48, 0.12),
+    0 3px 0 rgba(212, 198, 185, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+.receipt-strip::before,
+.receipt-strip::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.receipt-strip::before {
+  inset: 0;
+  background:
+    linear-gradient(115deg, transparent 0 18%, rgba(153, 133, 118, 0.08) 28%, transparent 38% 100%),
+    linear-gradient(68deg, transparent 0 30%, rgba(153, 133, 118, 0.07) 40%, transparent 52% 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 22%, transparent 78%, rgba(118, 94, 75, 0.03));
+  opacity: 0.9;
+}
+
+.receipt-strip::after {
+  left: 18px;
+  right: 18px;
+  bottom: 12px;
+  height: 18px;
+  border-bottom: 1px dashed rgba(131, 109, 91, 0.34);
+  opacity: 0.7;
+}
+
+.receipt-band {
+  margin: -0.25rem -0.25rem 0;
+  padding: 0.95rem 1.15rem;
+  background: linear-gradient(180deg, rgba(81, 78, 77, 0.98), rgba(63, 61, 60, 0.98));
+  color: #f8f4ee;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1.1;
+  text-align: center;
+  letter-spacing: 0.01em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.receipt-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.9rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(106, 83, 67, 0.18);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: rgba(64, 50, 44, 0.86);
+}
+
+.receipt-kicker {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--color-dusty);
+}
+
+.receipt-photo-panel {
+  position: relative;
+  overflow: hidden;
+  min-height: 220px;
+  background:
+    linear-gradient(180deg, rgba(36, 33, 32, 0.08), rgba(36, 33, 32, 0.2)),
+    radial-gradient(circle at 24% 16%, rgba(255, 255, 255, 0.42), transparent 18%),
+    linear-gradient(180deg, rgba(178, 178, 178, 0.5), rgba(108, 108, 108, 0.82)),
+    radial-gradient(circle at 72% 30%, rgba(255, 255, 255, 0.28), transparent 18%);
+  border: 1px solid rgba(88, 62, 47, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 10px 18px rgba(80, 58, 48, 0.08);
+}
+
+.receipt-photo-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.18) 0.8px, transparent 0.8px),
+    linear-gradient(180deg, transparent 0 62%, rgba(18, 18, 18, 0.2));
+  background-size: 6px 6px, auto;
+  mix-blend-mode: soft-light;
+  opacity: 0.75;
+}
+
+.receipt-photo-label {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  right: 1rem;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(255, 250, 241, 0.9);
+}
+
+.receipt-compose-input {
+  min-height: 12rem;
+}
+
+.receipt-attachments {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(106, 83, 67, 0.14);
+}
+
+.receipt-signoff {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.65rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid rgba(106, 83, 67, 0.14);
+}
+
+.receipt-signature {
+  font-family: 'Snell Roundhand', 'Segoe Print', cursive;
+  font-size: 2rem;
+  line-height: 1;
+  color: rgba(53, 41, 35, 0.9);
+}
+
+.receipt-stamp-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.6rem;
+  height: 4.6rem;
+  border: 2px solid rgba(74, 57, 48, 0.32);
+  color: rgba(74, 57, 48, 0.78);
+  font-size: 1.9rem;
+  border-radius: 999px;
+  box-shadow:
+    inset 0 0 0 6px rgba(255, 255, 255, 0.5),
+    0 8px 18px rgba(80, 58, 48, 0.1);
+}
+
+.receipt-home-reveal {
+  margin-bottom: -3.75rem;
+}
+
+.receipt-home-reveal .receipt-band {
+  font-size: 1.82rem;
+}
+
+.receipt-fade-behind {
+  padding-bottom: 5.5rem;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 76%, rgba(0, 0, 0, 0.22) 92%, rgba(0, 0, 0, 0) 100%);
+}
+
+.receipt-printer-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: calc(100dvh - 16rem);
+  overflow: visible;
+}
+
+.receipt-printer-stage-full {
+  min-height: calc(100dvh - 7.5rem);
+}
+
+.receipt-roll-sheet {
+  margin: 0 auto -0.1rem;
+  width: min(100%, 21.5rem);
+  border-bottom: none;
+  border-radius: 2px 2px 0 0;
+  padding-bottom: 1.5rem;
+  transform-origin: bottom center;
+}
+
+.receipt-roll-sheet::after {
+  display: none;
+}
+
+.receipt-roll-entry {
+  margin-top: 1.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px dashed rgba(131, 109, 91, 0.34);
+}
+
+.receipt-roll-copy {
+  min-height: 4rem;
+}
+
+.receipt-printer-shell {
+  position: relative;
+  z-index: 2;
+  margin: 0 auto;
+  width: 100%;
+  overflow: visible;
+}
+
+.receipt-printer-composite {
+  position: relative;
+  margin: 0 auto;
+}
+
+.receipt-printer-composite-large {
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180vw;
+}
+
+.receipt-printer-layer {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 22px 26px rgba(60, 40, 31, 0.18));
+}
+
+.receipt-printer-back {
+  position: relative;
+  z-index: 1;
+}
+
+.receipt-printer-front {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.receipt-roll-pocket {
+  position: relative;
+  z-index: 2;
+  width: 95vw;
+  margin: 0 auto -10.3rem;
+}
+
+.receipt-print-roll {
+  border-top: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(246, 246, 244, 0.99)),
+    repeating-linear-gradient(
+      180deg,
+      rgba(120, 93, 72, 0.02),
+      rgba(120, 93, 72, 0.02) 2px,
+      transparent 2px,
+      transparent 28px
+    );
+  box-shadow:
+    0 24px 28px rgba(52, 42, 35, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.receipt-print-roll .receipt-meta-row {
+  font-size: 0.72rem;
+}
+
+.receipt-print-roll .receipt-roll-copy {
+  min-height: 5rem;
+}
+
+.receipt-printer-fallback {
+  margin-top: -0.1rem;
+}
+
+.receipt-printer-stage-full .receipt-printer-shell {
+  margin-bottom: calc(-11rem - 15vh);
+}
+
+.home-layout {
+  text-align: center;
+}
+
+.home-section-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: rgba(52, 43, 38, 0.92);
+}
+
+.home-printer-link {
+  position: relative;
+  display: block;
+  width: min(100%, 19rem);
+  margin: 1.4rem auto 0;
+}
+
+.home-printer-composite {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.home-printer-layer {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 20px 24px rgba(47, 35, 29, 0.14));
+}
+
+.home-printer-back {
+  position: relative;
+  z-index: 1;
+}
+
+.home-printer-front {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.home-printer-fallback {
+  position: relative;
+  z-index: 2;
+}
+
+.home-printer-paper {
+  position: absolute;
+  left: 50%;
+  bottom: 4.35rem;
+  z-index: 2;
+  width: 6.6rem;
+  height: 6.9rem;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(180deg, rgba(255, 251, 245, 0.98), rgba(241, 235, 227, 0.98)),
+    repeating-linear-gradient(
+      180deg,
+      rgba(120, 93, 72, 0.03),
+      rgba(120, 93, 72, 0.03) 2px,
+      transparent 2px,
+      transparent 24px
+    );
+  border-radius: 0.15rem 0.15rem 0 0;
+  box-shadow:
+    0 18px 20px rgba(58, 43, 35, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.home-splash {
+  position: absolute;
+  left: 50%;
+  bottom: -0.35rem;
+  width: 13rem;
+  height: 5rem;
+  transform: translateX(-50%);
+  background: rgba(133, 167, 231, 0.22);
+  clip-path: polygon(
+    50% 0%,
+    57% 18%,
+    73% 6%,
+    68% 26%,
+    88% 18%,
+    77% 38%,
+    100% 43%,
+    79% 53%,
+    93% 72%,
+    70% 69%,
+    73% 100%,
+    54% 78%,
+    44% 100%,
+    37% 74%,
+    16% 82%,
+    23% 60%,
+    0% 57%,
+    22% 44%,
+    6% 24%,
+    31% 27%,
+    26% 8%,
+    43% 19%
+  );
+}
+
+.home-splash-active {
+  background: #5d86e5;
+}
+
+.home-inbox-badge {
+  position: absolute;
+  top: 0.1rem;
+  right: 1.1rem;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: #5d86e5;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(61, 97, 176, 0.24);
+}
+
+.archive-stage {
+  position: relative;
+  height: 15rem;
+  margin-top: 1.6rem;
+}
+
+.archive-stack-button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.archive-folder {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  transition:
+    transform 220ms ease,
+    opacity 220ms ease;
+}
+
+.archive-folder-left {
+  transform: translateX(-10.8rem) rotate(-11deg) scale(0.84);
+  opacity: 0.78;
+  z-index: 1;
+}
+
+.archive-folder-center {
+  transform: translateX(-50%) scale(1);
+  z-index: 3;
+}
+
+.archive-folder-right {
+  transform: translateX(9rem) rotate(11deg) scale(0.84);
+  opacity: 0.78;
+  z-index: 1;
+}
+
+.archive-folder-art {
+  position: relative;
+  width: 12rem;
+  transform: rotate(8deg);
+  transform-origin: center;
+}
+
+.archive-folder-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 20px 24px rgba(68, 50, 39, 0.12));
+}
+
+.archive-folder-fallback {
+  width: 100%;
+  aspect-ratio: 1 / 0.82;
+  background:
+    linear-gradient(180deg, rgba(255, 229, 190, 0.95), rgba(251, 210, 157, 0.98)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.14), transparent 30%);
+  border: 1px solid rgba(216, 172, 123, 0.72);
+  border-radius: 0.4rem;
+  box-shadow: 0 18px 22px rgba(73, 51, 35, 0.1);
+}
+
+.archive-folder-stamp-shell {
+  position: absolute;
+  left: 46%;
+  top: 51%;
+  transform: translate(-50%, -50%) rotate(-14deg);
+  width: 4.6rem;
+  height: 5.9rem;
+}
+
+.archive-folder-stamp {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 14px rgba(63, 44, 35, 0.14));
+}
+
+.people-person-card {
+  position: relative;
+  overflow: visible;
+  padding-top: 4.6rem;
+}
+
+.people-person-stamp {
+  position: absolute;
+  top: -3.8rem;
+  right: 1rem;
+  width: 5.9rem;
+  height: 7.4rem;
+  object-fit: contain;
+  transform: rotate(-7deg);
+  filter: drop-shadow(0 16px 18px rgba(63, 44, 35, 0.16));
+  pointer-events: none;
+}
+
+.home-archive-label {
+  margin-top: 0.8rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: rgba(52, 43, 38, 0.82);
+}
+
+.archive-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+
+.archive-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(125, 117, 111, 0.32);
+  padding: 0;
+}
+
+.archive-dot-active {
+  background: rgba(52, 43, 38, 0.74);
+}
+
+.archive-scroll-wrap {
+  margin-top: 1.6rem;
+}
+
+.archive-scroll-row {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 0 1rem 0.5rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.archive-scroll-row::-webkit-scrollbar {
+  display: none;
+}
+
+.archive-scroll-card {
+  flex: 0 0 11.5rem;
+  scroll-snap-align: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  opacity: 0.72;
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.archive-scroll-card-active {
+  opacity: 1;
+  transform: translateY(-0.2rem);
+}
+
+.archive-scroll-name {
+  display: block;
+  margin-top: 0.8rem;
+  font-family: var(--font-sans);
+  font-size: 0.98rem;
+  color: rgba(32, 28, 25, 0.9);
+}
+
+.roulette-mask {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.72), transparent 30%),
+    linear-gradient(180deg, rgba(214, 214, 214, 0.92), rgba(205, 205, 205, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    inset 0 -16px 20px rgba(112, 112, 112, 0.14),
+    0 18px 30px rgba(78, 56, 42, 0.12);
+}
+
+.roulette-mask::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: 999px;
+  border: 1px dashed rgba(114, 92, 72, 0.16);
+  pointer-events: none;
+}
+
+.spotlight-stage {
+  position: relative;
+  overflow: hidden;
+}
+
+.starburst {
+  filter: drop-shadow(0 18px 18px rgba(239, 201, 109, 0.18));
+}
+
+.stamp-roulette-track {
+  will-change: transform;
+}
+
+.stamp-shell {
+  filter: drop-shadow(0 14px 16px rgba(72, 52, 42, 0.14));
 }
 
 .receipt-paper {

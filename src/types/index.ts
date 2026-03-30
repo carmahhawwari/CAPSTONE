@@ -5,15 +5,22 @@ export interface User {
   avatar: string;
   faxNumber: string;
   joinedAt: string;
+  accent?: string;
+  city?: string;
+  relationship?: string;
+  stampImage?: string;
+  memory?: string;
 }
 
 export interface OrbitPerson {
   id: string;
   name: string;
+  email?: string;
   relationship: string;
   city: string;
   lastContact: string;
   avatar: string;
+  stampImage: string;
   accent: string;
   memory: string;
 }
@@ -45,10 +52,27 @@ export interface OrbitNote {
   fontId: string;
   stamp?: string;
   preview: string;
+  promptLabel?: string;
+  imageName?: string;
+  audioName?: string;
   status: 'incoming' | 'sent';
 }
 
 export interface SpinPrompt {
   id: string;
   copy: string;
+}
+
+export interface PromptChoice {
+  id: string;
+  text: string;
+  type: 'prompt' | 'open';
+}
+
+export interface FriendRequest {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  createdAt: string;
+  status: 'pending' | 'accepted' | 'declined';
 }

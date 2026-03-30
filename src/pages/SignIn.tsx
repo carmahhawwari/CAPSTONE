@@ -1,19 +1,31 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
-import { useOrbit } from '@/contexts/orbit';
+import { currentUser } from '@/lib/mock-data';
+
+const DEMO_PASSWORD = 'password123';
 
 export default function SignIn() {
   const { signIn } = useAuth();
-  const { isOnboarded } = useOrbit();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const completeSignIn = (nextEmail: string, nextPassword: string) => {
+    const nextError = signIn(nextEmail, nextPassword);
+    if (nextError) {
+      setError(nextError);
+      return;
+    }
+
+    setError('');
+    navigate('/');
+  };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    signIn(email, password);
-    navigate(isOnboarded ? '/' : '/onboarding');
+    completeSignIn(email, password);
   };
 
   return (
@@ -44,8 +56,17 @@ export default function SignIn() {
               className="rounded-[18px] border border-[color:var(--color-line)] bg-[rgba(255,251,245,0.86)] px-4 py-4 outline-none"
             />
 
+            {error && <p className="text-[14px] text-[#b54b4b]">{error}</p>}
+
             <button type="submit" className="button-primary mt-3 rounded-[20px] px-5 py-4 text-[16px] font-semibold">
               Enter Orbit
+            </button>
+            <button
+              type="button"
+              onClick={() => completeSignIn(currentUser.email, DEMO_PASSWORD)}
+              className="button-secondary rounded-[20px] px-5 py-4 text-[16px] font-semibold"
+            >
+              Mock-up
             </button>
           </form>
 

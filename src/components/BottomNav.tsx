@@ -1,32 +1,42 @@
-import { NavLink } from 'react-router-dom';
-import { CircleDot, Inbox, Orbit, UserRound } from 'lucide-react';
-
-const tabs = [
-  { to: '/', icon: CircleDot, label: 'Spin' },
-  { to: '/history', icon: Inbox, label: 'Letterbox' },
-  { to: '/people', icon: Orbit, label: 'Orbit' },
-  { to: '/profile', icon: UserRound, label: 'You' },
-];
+import { useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 
 export default function BottomNav() {
+  const location = useLocation();
+  const [sendButtonMissing, setSendButtonMissing] = useState(false);
+  const plusActive =
+    location.pathname === '/prompts' ||
+    location.pathname === '/write' ||
+    location.pathname === '/daily-spin';
+
   return (
-    <nav className="fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-[390px] -translate-x-1/2">
-      <div className="orbit-nav grid grid-cols-4 gap-2 rounded-[26px] px-3 py-3">
-        {tabs.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-1 rounded-[18px] px-2 py-2 text-[11px] font-medium transition-all ${
-                isActive ? 'orbit-nav-active text-ink' : 'text-dusty'
-              }`
-            }
-          >
-            <Icon size={18} strokeWidth={1.8} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
+    <nav className="bottom-pill-nav">
+      <div className="bottom-pill-track">
+        <NavLink
+          to="/"
+          end
+          className={({ isActive }) => `bottom-pill-link bottom-pill-link-left ${isActive ? 'bottom-pill-link-active' : ''}`}
+        >
+          home
+        </NavLink>
+        <NavLink
+          to="/people"
+          className={({ isActive }) => `bottom-pill-link bottom-pill-link-right ${isActive ? 'bottom-pill-link-active' : ''}`}
+        >
+          people
+        </NavLink>
+        <Link to="/prompts" className={`bottom-pill-plus ${plusActive ? 'bottom-pill-plus-active' : ''}`} aria-label="Start a new message">
+          {sendButtonMissing ? (
+            <span className="bottom-pill-plus-glyph">+</span>
+          ) : (
+            <img
+              src="/images/send_button.png"
+              alt=""
+              className="bottom-pill-plus-image"
+              onError={() => setSendButtonMissing(true)}
+            />
+          )}
+        </Link>
       </div>
     </nav>
   );

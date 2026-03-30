@@ -1,10 +1,12 @@
 import { Link, Navigate } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
-import { fontOptions, orbitCandidates, stationeryTemplates } from '@/lib/mock-data';
+import { useSocial } from '@/contexts/social';
 import { useOrbit } from '@/contexts/orbit';
+import { fontOptions, stationeryTemplates } from '@/lib/mock-data';
 
 export default function Sent() {
   const { lastSentNote } = useOrbit();
+  const { getPersonById } = useSocial();
 
   if (!lastSentNote) {
     return <Navigate to="/" replace />;
@@ -12,7 +14,7 @@ export default function Sent() {
 
   const template = stationeryTemplates.find((item) => item.id === lastSentNote.templateId) ?? stationeryTemplates[0];
   const font = fontOptions.find((item) => item.id === lastSentNote.fontId) ?? fontOptions[0];
-  const recipient = orbitCandidates.find((person) => person.id === lastSentNote.recipientId);
+  const recipient = getPersonById(lastSentNote.recipientId);
 
   return (
     <div className="pt-8 pb-10">

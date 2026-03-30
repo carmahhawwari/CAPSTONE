@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useOrbit } from '@/contexts/orbit';
-import { currentUser, orbitFacts } from '@/lib/mock-data';
+import { useSocial } from '@/contexts/social';
+import { orbitFacts } from '@/lib/mock-data';
 
 export default function Profile() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { incoming, resetOnboarding, sentNotes } = useOrbit();
+  const { profile } = useSocial();
 
   const handleSignOut = () => {
     signOut();
@@ -28,7 +30,7 @@ export default function Profile() {
             <p className="mt-2 text-[15px] text-muted">{user?.email}</p>
           </div>
           <div className="rounded-full bg-[rgba(217,161,74,0.18)] px-4 py-2 text-[13px] text-ink">
-            {currentUser.faxNumber}
+            {profile?.faxNumber ?? user?.faxNumber}
           </div>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-3">

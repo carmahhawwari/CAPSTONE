@@ -8,11 +8,18 @@ export default function SignUp() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    signUp(name, email, password);
-    navigate('/onboarding');
+    const nextError = signUp(name, email, password);
+    if (nextError) {
+      setError(nextError);
+      return;
+    }
+
+    setError('');
+    navigate('/people');
   };
 
   return (
@@ -49,8 +56,10 @@ export default function SignUp() {
             className="rounded-[18px] border border-[color:var(--color-line)] bg-[rgba(255,251,245,0.86)] px-4 py-4 outline-none"
           />
 
+          {error && <p className="text-[14px] text-[#b54b4b]">{error}</p>}
+
           <button type="submit" className="button-primary mt-3 rounded-[20px] px-5 py-4 text-[16px] font-semibold">
-            Start with mock data
+            Create account
           </button>
         </form>
 

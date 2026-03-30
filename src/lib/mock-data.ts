@@ -1,4 +1,12 @@
-import type { FontChoice, NoteTemplate, OrbitNote, OrbitPerson, SpinPrompt, User } from '@/types';
+import type {
+  FontChoice,
+  NoteTemplate,
+  OrbitNote,
+  OrbitPerson,
+  PromptChoice,
+  SpinPrompt,
+  User,
+} from '@/types';
 
 export const currentUser: User = {
   id: 'user-orbit',
@@ -17,6 +25,7 @@ export const orbitCandidates: OrbitPerson[] = [
     city: 'Chicago',
     lastContact: '4 months ago',
     avatar: 'L',
+    stampImage: '/stamps/lina-stamp.png',
     accent: '#EE8B68',
     memory: 'Still sends weather screenshots when it snows.',
   },
@@ -27,6 +36,7 @@ export const orbitCandidates: OrbitPerson[] = [
     city: 'Seattle',
     lastContact: '2 months ago',
     avatar: 'N',
+    stampImage: '/stamps/nikhil-stamp.png',
     accent: '#6B78D6',
     memory: 'Knows the exact diner order from every road trip.',
   },
@@ -37,6 +47,7 @@ export const orbitCandidates: OrbitPerson[] = [
     city: 'Amman',
     lastContact: '3 weeks ago',
     avatar: 'T',
+    stampImage: '/stamps/tala-stamp.png',
     accent: '#5A8D76',
     memory: 'Always mails back recipes with extra notes in the margins.',
   },
@@ -47,6 +58,7 @@ export const orbitCandidates: OrbitPerson[] = [
     city: 'Boston',
     lastContact: '6 months ago',
     avatar: 'J',
+    stampImage: '/stamps/jonah-stamp.png',
     accent: '#C9833E',
     memory: 'Once stayed late just to help re-run the whole experiment.',
   },
@@ -57,6 +69,7 @@ export const orbitCandidates: OrbitPerson[] = [
     city: 'San Diego',
     lastContact: '1 month ago',
     avatar: 'R',
+    stampImage: '/stamps/rayan-stamp.png',
     accent: '#B3687D',
     memory: 'Still leaves voicemails instead of texting when it matters.',
   },
@@ -67,6 +80,7 @@ export const orbitCandidates: OrbitPerson[] = [
     city: 'Lisbon',
     lastContact: '7 months ago',
     avatar: 'S',
+    stampImage: '/stamps/sofia-stamp.png',
     accent: '#9475D5',
     memory: 'Turned every wrong turn into a better afternoon.',
   },
@@ -77,6 +91,7 @@ export const orbitCandidates: OrbitPerson[] = [
     city: 'Fremont',
     lastContact: '2 weeks ago',
     avatar: 'A',
+    stampImage: '/stamps/ajji-stamp.png',
     accent: '#B68A52',
     memory: 'Keeps every card in the same tin by the phone.',
   },
@@ -87,6 +102,7 @@ export const orbitCandidates: OrbitPerson[] = [
     city: 'New York',
     lastContact: '5 months ago',
     avatar: 'M',
+    stampImage: '/stamps/mina-stamp.png',
     accent: '#4D7F93',
     memory: 'Sent tea to the office after the toughest launch week.',
   },
@@ -168,6 +184,7 @@ export const incomingNotes: OrbitNote[] = [
     fontId: 'type',
     stamp: '★',
     preview: 'You make ordinary days stick.',
+    imageName: 'cabin-skyline.jpg',
     status: 'incoming',
   },
   {
@@ -183,6 +200,7 @@ export const incomingNotes: OrbitNote[] = [
     fontId: 'letter',
     stamp: '♥',
     preview: 'It makes me feel close to you in ordinary things.',
+    audioName: 'laundry-room-voice-note.m4a',
     status: 'incoming',
   },
   {
@@ -223,4 +241,37 @@ export const orbitFacts = [
   'Each person gets a shareable Orbit fax number later. That flow is stubbed for now.',
   'The wheel only lets you re-spin once. Surrender is part of the product.',
   'Inbox notes print slowly on purpose. The waiting is part of the meaning.',
+];
+
+export const writingPrompts: PromptChoice[] = [
+  {
+    id: 'pr1',
+    text: 'Tell them about a tiny thing they do that still stays with you.',
+    type: 'prompt',
+  },
+  {
+    id: 'pr2',
+    text: 'What ordinary moment would feel better if they were there?',
+    type: 'prompt',
+  },
+  {
+    id: 'pr3',
+    text: 'Name one quality of theirs that quietly changes a room.',
+    type: 'prompt',
+  },
+  {
+    id: 'pr4',
+    text: 'What have you been meaning to thank them for without a big occasion?',
+    type: 'prompt',
+  },
+  {
+    id: 'pr5',
+    text: 'What memory still makes you smile when the day gets loud?',
+    type: 'prompt',
+  },
+  {
+    id: 'open',
+    text: 'Open response',
+    type: 'open',
+  },
 ];

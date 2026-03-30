@@ -5,20 +5,34 @@ import BottomNav from './BottomNav';
 
 export default function AppShell() {
   const { isAuthenticated } = useAuth();
-  const { isOnboarded } = useOrbit();
+  const { isOnboarded, needsDailySpin } = useOrbit();
   const location = useLocation();
-  const navHidden = location.pathname === '/onboarding' || location.pathname.startsWith('/read/');
+  const onboardingSafeRoute = location.pathname === '/onboarding' || location.pathname === '/people';
+  const navHidden =
+    location.pathname === '/onboarding' ||
+    location.pathname === '/daily-spin' ||
+    location.pathname === '/prompts' ||
+    location.pathname.startsWith('/read/');
 
   if (!isAuthenticated) {
     return <Navigate to="/sign-in" replace />;
   }
 
-  if (!isOnboarded && location.pathname !== '/onboarding') {
+  if (!isOnboarded && !onboardingSafeRoute) {
     return <Navigate to="/onboarding" replace />;
   }
 
   if (isOnboarded && location.pathname === '/onboarding') {
     return <Navigate to="/" replace />;
+  }
+
+  if (
+    isOnboarded &&
+    needsDailySpin &&
+    location.pathname !== '/daily-spin' &&
+    location.pathname !== '/onboarding'
+  ) {
+    return <Navigate to="/daily-spin" replace />;
   }
 
   return (
