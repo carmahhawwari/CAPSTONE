@@ -177,16 +177,7 @@
   justify-content: center;
   width: 6.6rem;
   height: 6.6rem;
-  border-radius: 999px;
-  background: #6a625d;
   transform: translate(-50%, -50%);
-  box-shadow:
-    0 14px 22px rgba(63, 47, 38, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.bottom-pill-plus-active {
-  background: #554e49;
 }
 
 .bottom-pill-plus-glyph {
@@ -870,7 +861,7 @@
 
 .people-person-stamp {
   position: absolute;
-  top: -3.8rem;
+  top: -1.9rem;
   right: 1rem;
   width: 5.9rem;
   height: 7.4rem;
