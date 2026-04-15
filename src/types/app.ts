@@ -12,5 +12,6 @@ export interface Receipt {
   from: string
   prompt?: string
   content: string
+  imageDataUrl?: string
   friendId: string
 }

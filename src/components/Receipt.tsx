@@ -25,6 +25,15 @@ export default function Receipt({ receipt, className = '' }: ReceiptProps) {
         {receipt.prompt && (
           <p className="text-xs text-gray-500 italic mb-3 leading-relaxed">{receipt.prompt}</p>
         )}
+        {receipt.imageDataUrl && (
+          <div className="mb-3">
+            <img
+              src={receipt.imageDataUrl}
+              alt="Receipt attachment"
+              className="w-full max-h-72 object-contain rounded border border-gray-200 bg-white"
+            />
+          </div>
+        )}
         <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{receipt.content}</p>
       </div>
 

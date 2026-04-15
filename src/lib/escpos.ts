@@ -5,6 +5,12 @@ const PRINTER_WIDTH_DOTS = 576
 
 const CAPTURE_ATTR = 'data-escpos-capture'
 
+export type DitherMethod = 'floyd-steinberg' | 'atkinson' | 'ordered' | 'threshold'
+
+interface RenderToPrintOptions {
+  ditherMethod?: DitherMethod
+}
+
 function inlineComputedStyles(sourceRoot: HTMLElement, clonedRoot: HTMLElement): void {
   const sourceNodes = [sourceRoot, ...Array.from(sourceRoot.querySelectorAll<HTMLElement>('*'))]
   const clonedNodes = [clonedRoot, ...Array.from(clonedRoot.querySelectorAll<HTMLElement>('*'))]
@@ -44,7 +50,10 @@ function applyCaptureStyle(doc: Document): HTMLStyleElement {
  * Render a DOM element to a 1-bit bitmap ESC/POS buffer ready for the printer.
  * Returns a Uint8Array containing full ESC/POS commands (init, bitmap, cut).
  */
-export async function renderToPrintBuffer(element: HTMLElement): Promise<Uint8Array> {
+export async function renderToPrintBuffer(
+  element: HTMLElement,
+  options: RenderToPrintOptions = {},
+): Promise<Uint8Array> {
   const previousCaptureAttr = element.getAttribute(CAPTURE_ATTR)
   const captureStyle = applyCaptureStyle(document)
   const captureId = Math.random().toString(36).slice(2)
@@ -72,7 +81,7 @@ export async function renderToPrintBuffer(element: HTMLElement): Promise<Uint8Ar
     // 2. Get pixel data and convert to 1-bit
     const ctx = canvas.getContext('2d')!
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    const mono = ditherFloydSteinberg(imageData)
+    const mono = ditherImage(imageData, options.ditherMethod ?? 'floyd-steinberg')
 
     // 3. Build ESC/POS command buffer
     return buildEscPosBuffer(mono, canvas.width, canvas.height)
@@ -86,21 +95,99 @@ export async function renderToPrintBuffer(element: HTMLElement): Promise<Uint8Ar
   }
 }
 
+function toGrayscaleFloat(imageData: ImageData): Float32Array {
+  const { data } = imageData
+  const gray = new Float32Array(imageData.width * imageData.height)
+  for (let i = 0; i < gray.length; i++) {
+    const r = data[i * 4]
+    const g = data[i * 4 + 1]
+    const b = data[i * 4 + 2]
+    gray[i] = 0.299 * r + 0.587 * g + 0.114 * b
+  }
+  return gray
+}
+
+function ditherImage(imageData: ImageData, method: DitherMethod): Uint8Array {
+  switch (method) {
+    case 'threshold':
+      return ditherThreshold(imageData)
+    case 'ordered':
+      return ditherOrdered(imageData)
+    case 'atkinson':
+      return ditherAtkinson(imageData)
+    case 'floyd-steinberg':
+    default:
+      return ditherFloydSteinberg(imageData)
+  }
+}
+
+function ditherThreshold(imageData: ImageData): Uint8Array {
+  const gray = toGrayscaleFloat(imageData)
+  const result = new Uint8Array(gray.length)
+  for (let i = 0; i < gray.length; i++) {
+    result[i] = gray[i] < 128 ? 1 : 0
+  }
+  return result
+}
+
+function ditherOrdered(imageData: ImageData): Uint8Array {
+  const { width, height } = imageData
+  const gray = toGrayscaleFloat(imageData)
+  const result = new Uint8Array(gray.length)
+  const bayer4x4 = [
+    [0, 8, 2, 10],
+    [12, 4, 14, 6],
+    [3, 11, 1, 9],
+    [15, 7, 13, 5],
+  ]
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = y * width + x
+      const threshold = (bayer4x4[y % 4][x % 4] + 0.5) * (255 / 16)
+      result[idx] = gray[idx] < threshold ? 1 : 0
+    }
+  }
+
+  return result
+}
+
+function ditherAtkinson(imageData: ImageData): Uint8Array {
+  const { width, height } = imageData
+  const gray = toGrayscaleFloat(imageData)
+  const result = new Uint8Array(width * height)
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = y * width + x
+      const oldPixel = gray[idx]
+      const newPixel = oldPixel < 128 ? 0 : 255
+      result[idx] = newPixel === 0 ? 1 : 0
+      const error = (oldPixel - newPixel) / 8
+
+      if (x + 1 < width) gray[idx + 1] += error
+      if (x + 2 < width) gray[idx + 2] += error
+      if (y + 1 < height) {
+        if (x - 1 >= 0) gray[(y + 1) * width + (x - 1)] += error
+        gray[(y + 1) * width + x] += error
+        if (x + 1 < width) gray[(y + 1) * width + (x + 1)] += error
+      }
+      if (y + 2 < height) {
+        gray[(y + 2) * width + x] += error
+      }
+    }
+  }
+
+  return result
+}
+
 /**
  * Floyd-Steinberg dithering: converts RGBA ImageData to a 1-bit array.
  * Returns a flat array where each value is 0 (white) or 1 (black).
  */
 function ditherFloydSteinberg(imageData: ImageData): Uint8Array {
-  const { width, height, data } = imageData
-  // Convert to grayscale float buffer
-  const gray = new Float32Array(width * height)
-  for (let i = 0; i < gray.length; i++) {
-    const r = data[i * 4]
-    const g = data[i * 4 + 1]
-    const b = data[i * 4 + 2]
-    // Luminance weights
-    gray[i] = 0.299 * r + 0.587 * g + 0.114 * b
-  }
+  const { width, height } = imageData
+  const gray = toGrayscaleFloat(imageData)
 
   const result = new Uint8Array(width * height)
 
@@ -135,6 +222,7 @@ function ditherFloydSteinberg(imageData: ImageData): Uint8Array {
  */
 function buildEscPosBuffer(mono: Uint8Array, width: number, height: number): Uint8Array {
   const bytesPerLine = Math.ceil(width / 8)
+  const chunkHeight = 48
 
   // Pack 1-bit pixels into bytes (MSB = leftmost pixel)
   const bitmapData = new Uint8Array(bytesPerLine * height)
@@ -151,23 +239,37 @@ function buildEscPosBuffer(mono: Uint8Array, width: number, height: number): Uin
   // ESC @ — initialize printer
   const init = new Uint8Array([0x1B, 0x40])
 
-  // GS v 0 — raster bit image command
-  const gsv0 = new Uint8Array([
-    0x1D, 0x76, 0x30, // GS v 0
-    0x00,              // m = 0 (normal)
-    bytesPerLine & 0xFF, (bytesPerLine >> 8) & 0xFF, // xL, xH
-    height & 0xFF, (height >> 8) & 0xFF,             // yL, yH
-  ])
+  // Many thermal printers are more stable when raster data is sent in smaller vertical chunks.
+  const chunks: Uint8Array[] = []
+  for (let startY = 0; startY < height; startY += chunkHeight) {
+    const thisChunkHeight = Math.min(chunkHeight, height - startY)
+    const gsv0 = new Uint8Array([
+      0x1D, 0x76, 0x30, // GS v 0
+      0x00, // m = 0 (normal)
+      bytesPerLine & 0xFF,
+      (bytesPerLine >> 8) & 0xFF,
+      thisChunkHeight & 0xFF,
+      (thisChunkHeight >> 8) & 0xFF,
+    ])
+
+    const chunkBytes = new Uint8Array(bytesPerLine * thisChunkHeight)
+    const from = startY * bytesPerLine
+    const to = from + chunkBytes.length
+    chunkBytes.set(bitmapData.subarray(from, to))
+
+    chunks.push(gsv0, chunkBytes)
+  }
 
   // Feed + partial cut
   const feed = new Uint8Array([0x1B, 0x64, 0x04]) // ESC d 4 — feed 4 lines
   const cut = new Uint8Array([0x1D, 0x56, 0x42, 0x00]) // GS V B 0 — partial cut
 
   // Concatenate all parts
-  const total = init.length + gsv0.length + bitmapData.length + feed.length + cut.length
+  const chunkTotal = chunks.reduce((sum, part) => sum + part.length, 0)
+  const total = init.length + chunkTotal + feed.length + cut.length
   const buffer = new Uint8Array(total)
   let offset = 0
-  for (const part of [init, gsv0, bitmapData, feed, cut]) {
+  for (const part of [init, ...chunks, feed, cut]) {
     buffer.set(part, offset)
     offset += part.length
   }

@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Avatar from '@/components/Avatar'
 import BottomNav from '@/components/BottomNav'
 import { FRIENDS } from '@/data/mock'
-import { submitPrintJob } from '@/lib/printJob'
 
 const PROMPTS = [
   'What was the best part of your day yesterday?',
@@ -27,18 +26,10 @@ export default function ComposeScreen() {
   const selectedFriend = FRIENDS.find(f => f.id === selectedFriendId)
 
   async function handleSend() {
-    if (!selectedFriendId || !message.trim() || !receiptRef.current) return
+    if (!selectedFriendId || !message.trim()) return
     setSending(true)
-    try {
-      await submitPrintJob({
-        receiptElement: receiptRef.current,
-        recipientName: selectedFriend?.name ?? 'Unknown',
-      })
-      navigate(`/printing?to=${selectedFriendId}`)
-    } catch (err) {
-      console.error('Print job failed:', err)
-      setSending(false)
-    }
+    // Note is saved locally; geolocation only requested when printing
+    navigate('/')
   }
 
   return (
@@ -114,7 +105,7 @@ export default function ComposeScreen() {
           disabled={!selectedFriendId || !message.trim() || sending}
           className="mt-6 w-full py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-blue-700 transition-colors"
         >
-          {sending ? 'Sending...' : 'Send to Printer'}
+          {sending ? 'Sending...' : 'Send'}
         </button>
       </div>
 

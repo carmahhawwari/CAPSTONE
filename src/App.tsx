@@ -7,7 +7,7 @@ import HomeScreen from '@/pages/HomeScreen'
 import FriendsScreen from '@/pages/FriendsScreen'
 import FriendDetailScreen from '@/pages/FriendDetailScreen'
 import ArchiveScreen from '@/pages/ArchiveScreen'
-import ComposeScreen from '@/pages/ComposeScreen'
+import BlockBasedComposeScreen from '@/pages/BlockBasedComposeScreen'
 import PrintingScreen from '@/pages/PrintingScreen'
 import TestPrintScreen from '@/pages/TestPrintScreen'
 
@@ -22,7 +22,7 @@ function App() {
           <Route path="/friends" element={<ProtectedRoute><FriendsScreen /></ProtectedRoute>} />
           <Route path="/friends/:id" element={<ProtectedRoute><FriendDetailScreen /></ProtectedRoute>} />
           <Route path="/archive" element={<ProtectedRoute><ArchiveScreen /></ProtectedRoute>} />
-          <Route path="/compose" element={<ProtectedRoute><ComposeScreen /></ProtectedRoute>} />
+          <Route path="/compose" element={<ProtectedRoute><BlockBasedComposeScreen /></ProtectedRoute>} />
           <Route path="/printing" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
           <Route path="/test-print" element={<TestPrintScreen />} />
         </Routes>
