@@ -37,6 +37,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       posts: {
         Row: {
@@ -63,6 +64,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       likes: {
         Row: {
@@ -83,6 +85,7 @@ export interface Database {
           post_id?: string
           created_at?: string
         }
+        Relationships: []
       }
       follows: {
         Row: {
@@ -103,10 +106,97 @@ export interface Database {
           following_id?: string
           created_at?: string
         }
+        Relationships: []
+      }
+      printers: {
+        Row: {
+          id: string
+          name: string
+          latitude: number
+          longitude: number
+          geofence_radius_m: number
+          api_key: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          latitude: number
+          longitude: number
+          geofence_radius_m?: number
+          api_key?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          latitude?: number
+          longitude?: number
+          geofence_radius_m?: number
+          api_key?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      print_jobs: {
+        Row: {
+          id: string
+          printer_id: string | null
+          sender_id: string | null
+          recipient_name: string | null
+          payload_base64: string
+          status: string
+          error_message: string | null
+          sender_latitude: number | null
+          sender_longitude: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          printer_id?: string | null
+          sender_id?: string | null
+          recipient_name?: string | null
+          payload_base64: string
+          status?: string
+          error_message?: string | null
+          sender_latitude?: number | null
+          sender_longitude?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          printer_id?: string | null
+          sender_id?: string | null
+          recipient_name?: string | null
+          payload_base64?: string
+          status?: string
+          error_message?: string | null
+          sender_latitude?: number | null
+          sender_longitude?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      nearest_printer: {
+        Args: {
+          lat: number
+          lng: number
+        }
+        Returns: string | null
+      }
+    }
     Enums: Record<string, never>
   }
 }
