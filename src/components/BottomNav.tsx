@@ -7,6 +7,7 @@ export default function BottomNav() {
   const plusActive =
     location.pathname === '/prompts' ||
     location.pathname === '/write' ||
+    location.pathname === '/compose' ||
     location.pathname === '/daily-spin';
 
   return (

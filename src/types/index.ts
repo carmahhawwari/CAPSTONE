@@ -33,6 +33,33 @@ export interface NoteTemplate {
   paper: string;
 }
 
+export interface ReceiptTextBlock {
+  id: string;
+  type: 'text';
+  text: string;
+  fontId: string;
+  size: number;
+}
+
+export interface ReceiptWordArtBlock {
+  id: string;
+  type: 'word-art';
+  text: string;
+  fontId: string;
+  size: number;
+  weight: 'bold' | 'black';
+  transform: 'none' | 'uppercase';
+}
+
+export interface ReceiptImageBlock {
+  id: string;
+  type: 'image';
+  src: string;
+  name: string;
+}
+
+export type ReceiptBlock = ReceiptTextBlock | ReceiptWordArtBlock | ReceiptImageBlock;
+
 export interface FontChoice {
   id: string;
   name: string;
@@ -53,8 +80,10 @@ export interface OrbitNote {
   stamp?: string;
   preview: string;
   promptLabel?: string;
+  receiptBlocks?: ReceiptBlock[];
   imageName?: string;
   audioName?: string;
+  signatureName?: string;
   status: 'incoming' | 'sent';
 }
 

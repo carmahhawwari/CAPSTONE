@@ -451,18 +451,6 @@
     0 10px 18px rgba(80, 58, 48, 0.08);
 }
 
-.receipt-photo-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(rgba(255, 255, 255, 0.18) 0.8px, transparent 0.8px),
-    linear-gradient(180deg, transparent 0 62%, rgba(18, 18, 18, 0.2));
-  background-size: 6px 6px, auto;
-  mix-blend-mode: soft-light;
-  opacity: 0.75;
-}
-
 .receipt-photo-label {
   position: absolute;
   left: 1rem;

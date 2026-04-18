@@ -2,15 +2,20 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useAuth } from '@/contexts/auth';
 import { useSocial } from '@/contexts/social';
 import { writingPrompts } from '@/lib/mock-data';
-import type { OrbitNote, OrbitPerson, PromptChoice, User } from '@/types';
+import { flattenReceiptBlocks, getFirstReceiptImageName } from '@/lib/receipt-blocks';
+import type { OrbitNote, OrbitPerson, PromptChoice, ReceiptBlock, User } from '@/types';
 
 interface SendNoteInput {
+  recipientId: string;
   content: string;
+  promptLabel?: string;
   templateId: string;
   fontId: string;
   stamp?: string;
+  receiptBlocks?: ReceiptBlock[];
   imageName?: string;
   audioName?: string;
+  signatureName?: string;
 }
 
 interface OrbitContextType {
@@ -273,27 +278,47 @@ function OrbitProviderInner({ children, user }: { children: ReactNode; user: Use
     }));
   };
 
-  const sendNote = ({ content, templateId, fontId, stamp, imageName, audioName }: SendNoteInput) => {
-    if (!currentContact) {
+  const sendNote = ({
+    recipientId,
+    content,
+    promptLabel,
+    templateId,
+    fontId,
+    stamp,
+    receiptBlocks,
+    imageName,
+    audioName,
+    signatureName,
+  }: SendNoteInput) => {
+    const recipient =
+      friends.find((person) => person.id === recipientId) ??
+      currentContact;
+
+    if (!recipient) {
       return null;
     }
+
+    const receiptContent = content.trim() || (receiptBlocks ? flattenReceiptBlocks(receiptBlocks) : '');
+    const receiptImageName = imageName ?? (receiptBlocks ? getFirstReceiptImageName(receiptBlocks) : undefined);
 
     const nextTurn = state.turnCount + 1;
     const note: OrbitNote = {
       id: `sent-${Date.now()}`,
       senderId: user.id,
       senderName: user.name,
-      recipientId: currentContact.id,
-      recipientName: currentContact.name,
-      content,
+      recipientId: recipient.id,
+      recipientName: recipient.name,
+      content: receiptContent,
       createdAt: new Date().toISOString(),
       templateId,
       fontId,
       stamp,
-      promptLabel: selectedPrompt?.text,
-      imageName,
+      promptLabel: promptLabel ?? selectedPrompt?.text,
+      receiptBlocks,
+      imageName: receiptImageName,
       audioName,
-      preview: content.slice(0, 72).trim(),
+      signatureName: signatureName ?? user.name,
+      preview: receiptContent.slice(0, 72).trim() || receiptImageName || 'New note',
       status: 'sent',
     };
 
@@ -303,7 +328,7 @@ function OrbitProviderInner({ children, user }: { children: ReactNode; user: Use
       lastSentNoteId: note.id,
       turnCount: nextTurn,
       canRespin: false,
-      currentContactId: currentContact.id,
+      currentContactId: recipient.id,
       selectedPromptId: null,
     }));
 

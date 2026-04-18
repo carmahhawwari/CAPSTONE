@@ -69,7 +69,7 @@ export default function Prompts() {
 
       <button
         type="button"
-        onClick={() => navigate('/write')}
+        onClick={() => navigate('/compose')}
         disabled={!selectedPrompt}
         className="button-primary mt-6 flex w-full items-center justify-center gap-2 rounded-[22px] px-5 py-4 text-[16px] font-semibold disabled:opacity-45"
       >
