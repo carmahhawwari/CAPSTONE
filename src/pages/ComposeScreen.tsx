@@ -29,7 +29,7 @@ export default function ComposeScreen() {
     if (!selectedFriendId || !message.trim()) return
     setSending(true)
     // Note is saved locally; geolocation only requested when printing
-    navigate('/')
+    navigate('/home')
   }
 
   return (
