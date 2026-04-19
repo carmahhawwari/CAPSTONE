@@ -9,7 +9,7 @@ export default function PrintingScreen() {
   const friend = FRIENDS.find(f => f.id === friendId)
 
   useEffect(() => {
-    const timer = setTimeout(() => navigate('/'), 2500)
+    const timer = setTimeout(() => navigate('/home'), 2500)
     return () => clearTimeout(timer)
   }, [navigate])
 

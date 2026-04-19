@@ -55,7 +55,7 @@ const SettingsIcon = ({ active }: { active: boolean }) => (
 export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-100 flex items-center justify-around px-8 z-50">
-      <NavLink to="/" end className="flex items-center justify-center p-2">
+      <NavLink to="/home" end className="flex items-center justify-center p-2">
         {({ isActive }) => <HomeIcon active={isActive} />}
       </NavLink>
       <NavLink to="/compose" className="flex items-center justify-center p-2">
