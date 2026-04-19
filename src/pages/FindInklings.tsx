@@ -21,6 +21,7 @@ export default function FindInklings() {
       setError('Supabase not configured')
       return
     }
+    const client = supabase
 
     let cancelled = false
     const timer = setTimeout(async () => {
@@ -28,7 +29,7 @@ export default function FindInklings() {
       setError(null)
 
       const trimmed = query.trim()
-      let builder = supabase
+      let builder = client
         .from('profiles')
         .select('id, username, display_name, avatar_url')
         .order('display_name', { ascending: true, nullsFirst: false })
