@@ -14,6 +14,7 @@ Usage:
 import base64
 import os
 import signal
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -127,10 +128,31 @@ def poll_once() -> int:
     return len(result.data)
 
 
+def attempt_bootloader_exit() -> None:
+    """Try to exit bootloader mode if the device is in it."""
+    try:
+        script_path = os.path.join(os.path.dirname(__file__), "bootloader_exit.py")
+        if os.path.exists(script_path):
+            print("[server] Checking bootloader status...")
+            result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, timeout=30)
+            if result.stdout:
+                for line in result.stdout.strip().split("\n"):
+                    print(line)
+            if result.returncode != 0 and result.stderr:
+                print(f"[server] Bootloader exit: {result.stderr.strip()}")
+        else:
+            print(f"[server] Bootloader exit script not found at {script_path}")
+    except Exception as e:
+        print(f"[server] Bootloader exit error: {e}")
+
+
 def main() -> None:
     print(f"[server] Print server starting")
     print(f"[server] Printer ID: {PRINTER_ID}")
     print(f"[server] Polling every {POLL_INTERVAL}s")
+
+    # Try to exit bootloader mode on startup
+    attempt_bootloader_exit()
 
     # Graceful shutdown
     running = True
