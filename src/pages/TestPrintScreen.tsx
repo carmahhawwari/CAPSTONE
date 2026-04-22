@@ -3,10 +3,13 @@ import Receipt from '@/components/Receipt'
 import { renderToPrintBuffer, bufferToBase64 } from '@/lib/escpos'
 import type { DitherMethod } from '@/lib/escpos'
 import { PRINT_SERVER_URL } from '@/lib/printBackend'
+import { submitPrintJob } from '@/lib/printJob'
+import { useAuth } from '@/contexts/AuthContext'
 import { RECEIPTS } from '@/data/mock'
 import type { Receipt as ReceiptType } from '@/types/app'
 
 type Status = 'idle' | 'rendering' | 'sending' | 'done' | 'error'
+type PrintMode = 'local' | 'internet'
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const out = new ArrayBuffer(bytes.byteLength)
@@ -134,6 +137,7 @@ async function renderDitheredImageDataUrl(
 }
 
 export default function TestPrintScreen() {
+  const { user } = useAuth()
   const receiptRef = useRef<HTMLDivElement>(null)
   const livePreviewUrlRef = useRef<string | null>(null)
   const livePreviewRunRef = useRef(0)
@@ -145,6 +149,7 @@ export default function TestPrintScreen() {
   const [liveBitmapUrl, setLiveBitmapUrl] = useState<string | null>(null)
   const [livePreviewError, setLivePreviewError] = useState('')
   const [uploadedImageSource, setUploadedImageSource] = useState<string | null>(null)
+  const [printMode, setPrintMode] = useState<PrintMode>('local')
 
   // Editable custom receipt
   const [custom, setCustom] = useState<ReceiptType>({
@@ -226,14 +231,27 @@ export default function TestPrintScreen() {
       setLastSize(buffer.length)
       setStatus('sending')
 
-      const res = await fetch(PRINT_SERVER_URL + '/print', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/octet-stream' },
-        body: toArrayBuffer(buffer),
-      })
+      if (printMode === 'internet') {
+        // Send via Supabase to the Pi
+        if (!user?.id) {
+          throw new Error('Not logged in. Please log in to print over the internet.')
+        }
+        await submitPrintJob({
+          receiptElement: receiptRef.current,
+          recipientName: custom.to,
+          messageText: custom.content,
+        })
+      } else {
+        // Send to local print server
+        const res = await fetch(PRINT_SERVER_URL + '/print', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/octet-stream' },
+          body: toArrayBuffer(buffer),
+        })
 
-      if (!res.ok) {
-        throw new Error(`Print server returned ${res.status}: ${await res.text()}`)
+        if (!res.ok) {
+          throw new Error(`Print server returned ${res.status}: ${await res.text()}`)
+        }
       }
 
       setStatus('done')
@@ -336,6 +354,36 @@ export default function TestPrintScreen() {
         <p className="text-sm text-gray-500 mb-6">
           ESC/POS bitmap test — POS80 @ 576 dots wide
         </p>
+
+        {/* Print mode toggle */}
+        <div className="mb-4">
+          <label className="text-sm font-medium text-gray-700 block mb-2">Print Mode</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPrintMode('local')}
+              className={`flex-1 px-4 py-2 rounded font-medium text-sm transition-colors ${
+                printMode === 'local'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Local (USB)
+            </button>
+            <button
+              onClick={() => setPrintMode('internet')}
+              className={`flex-1 px-4 py-2 rounded font-medium text-sm transition-colors ${
+                printMode === 'internet'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Internet (Pi)
+            </button>
+          </div>
+          {printMode === 'internet' && !user?.id && (
+            <p className="text-xs text-orange-600 mt-2">⚠️ Not logged in. Log in first to print over the internet.</p>
+          )}
+        </div>
 
         {/* Receipt selector */}
         <div className="mb-4">
