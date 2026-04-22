@@ -163,6 +163,7 @@ export default function TestPrintScreen() {
   const [uploadedImageSource, setUploadedImageSource] = useState<string | null>(null)
   const [bitmapPreviewUrl, setBitmapPreviewUrl] = useState<string | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewError, setPreviewError] = useState<string | null>(null)
 
   // Editable custom receipt
   const [custom, setCustom] = useState<ReceiptType>({
@@ -223,6 +224,7 @@ export default function TestPrintScreen() {
 
     let cancelled = false
     setPreviewLoading(true)
+    setPreviewError(null)
 
     ;(async () => {
       try {
@@ -232,7 +234,9 @@ export default function TestPrintScreen() {
         setPreviewLoading(false)
       } catch (e) {
         if (cancelled) return
+        const msg = e instanceof Error ? e.message : String(e)
         console.error('Preview generation error:', e)
+        setPreviewError(msg)
         setPreviewLoading(false)
       }
     })()
@@ -429,6 +433,8 @@ export default function TestPrintScreen() {
           <div className="bg-gray-100 border border-gray-300 rounded p-2 overflow-auto" style={{ maxHeight: '300px' }}>
             {previewLoading ? (
               <p className="text-xs text-gray-500 text-center py-4">Generating preview...</p>
+            ) : previewError ? (
+              <p className="text-xs text-red-600 text-center py-4">Error: {previewError}</p>
             ) : bitmapPreviewUrl ? (
               <img
                 src={bitmapPreviewUrl}
@@ -436,7 +442,7 @@ export default function TestPrintScreen() {
                 className="w-full border border-gray-200 bg-white"
               />
             ) : (
-              <p className="text-xs text-gray-500 text-center py-4">No preview</p>
+              <p className="text-xs text-gray-500 text-center py-4">No preview available</p>
             )}
           </div>
         </div>
