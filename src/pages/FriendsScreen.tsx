@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Avatar from '@/components/Avatar'
 import BottomNav from '@/components/BottomNav'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
-import { FriendProfile } from '@/types/app'
+import type { FriendProfile } from '@/types/app'
 
 function MailIcon() {
   return (

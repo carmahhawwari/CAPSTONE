@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import Avatar from '@/components/Avatar'
 import Receipt from '@/components/Receipt'
 import BottomNav from '@/components/BottomNav'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import { getReceiptsByFriend } from '@/lib/receipts'
-import { FriendProfile, Receipt as ReceiptType } from '@/types/app'
+import type { FriendProfile, Receipt as ReceiptType } from '@/types/app'
 
 function BackIcon() {
   return (

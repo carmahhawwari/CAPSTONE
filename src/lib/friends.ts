@@ -1,8 +1,5 @@
 import { supabase } from './supabase'
-import { FriendProfile } from '@/types/app'
-import { Database } from '@/types/database'
-
-type FriendsRow = Database['public']['Tables']['friends']['Row']
+import type { FriendProfile } from '@/types/app'
 
 /**
  * Get all accepted friends of a user.

@@ -13,7 +13,7 @@ type Profile = {
 
 type FriendshipStatus = 'none' | 'pending_sent' | 'pending_received' | 'accepted'
 
-interface FriendshipMap {
+type FriendshipMap = {
   status: FriendshipStatus
   rowId?: string
 }

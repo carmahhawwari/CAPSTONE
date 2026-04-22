@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { Receipt } from '@/types/app'
+import type { Receipt } from '@/types/app'
 
 /**
  * Get all receipts (print jobs) sent to a specific friend.

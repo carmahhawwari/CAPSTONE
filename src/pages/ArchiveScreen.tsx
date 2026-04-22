@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import { getReceiptsByFriend } from '@/lib/receipts'
-import { FriendProfile, Receipt } from '@/types/app'
+import type { FriendProfile, Receipt } from '@/types/app'
 
 export default function ArchiveScreen() {
   const { user } = useAuth()
