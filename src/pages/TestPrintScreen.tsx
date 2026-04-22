@@ -90,23 +90,6 @@ function ditherImageData(imageData: ImageData, method: DitherMethod): Uint8Array
   return result
 }
 
-/**
- * Generate a preview of the receipt showing how it will look.
- * Uses html2canvas to render the receipt DOM to an image.
- */
-async function generateBitmapPreview(receiptElement: HTMLElement): Promise<string> {
-  const html2canvas = (await import('html2canvas')).default
-
-  // Render the receipt DOM to canvas
-  const canvas = await html2canvas(receiptElement, {
-    scale: 1,
-    useCORS: true,
-    backgroundColor: '#ffffff',
-  })
-
-  // Convert to image URL
-  return canvas.toDataURL('image/png')
-}
 
 async function renderDitheredImageDataUrl(
   source: string,
@@ -161,9 +144,6 @@ export default function TestPrintScreen() {
   const [lastSize, setLastSize] = useState<number | null>(null)
   const [ditherMethod, setDitherMethod] = useState<DitherMethod>('floyd-steinberg')
   const [uploadedImageSource, setUploadedImageSource] = useState<string | null>(null)
-  const [bitmapPreviewUrl, setBitmapPreviewUrl] = useState<string | null>(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [previewError, setPreviewError] = useState<string | null>(null)
 
   // Editable custom receipt
   const [custom, setCustom] = useState<ReceiptType>({
@@ -218,39 +198,6 @@ export default function TestPrintScreen() {
     }
   }, [uploadedImageSource, ditherMethod])
 
-  // Generate bitmap preview whenever receipt changes
-  useEffect(() => {
-    if (!receiptRef.current) {
-      console.log('receiptRef.current is null')
-      return
-    }
-
-    let cancelled = false
-    setPreviewLoading(true)
-    setPreviewError(null)
-    console.log('Starting preview generation...')
-
-    ;(async () => {
-      try {
-        console.log('Calling generateBitmapPreview...')
-        const url = await generateBitmapPreview(receiptRef.current!)
-        console.log('Got preview URL:', url ? 'success' : 'null')
-        if (cancelled) return
-        setBitmapPreviewUrl(url)
-        setPreviewLoading(false)
-      } catch (e) {
-        if (cancelled) return
-        const msg = e instanceof Error ? e.message : String(e)
-        console.error('Preview generation error:', msg, e)
-        setPreviewError(msg)
-        setPreviewLoading(false)
-      }
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [selectedIdx, custom.to, custom.from, custom.prompt, custom.content, custom.imageDataUrl])
 
   async function handlePrint() {
     if (!receiptRef.current) return
