@@ -220,22 +220,28 @@ export default function TestPrintScreen() {
 
   // Generate bitmap preview whenever receipt changes
   useEffect(() => {
-    if (!receiptRef.current) return
+    if (!receiptRef.current) {
+      console.log('receiptRef.current is null')
+      return
+    }
 
     let cancelled = false
     setPreviewLoading(true)
     setPreviewError(null)
+    console.log('Starting preview generation...')
 
     ;(async () => {
       try {
+        console.log('Calling generateBitmapPreview...')
         const url = await generateBitmapPreview(receiptRef.current!)
+        console.log('Got preview URL:', url ? 'success' : 'null')
         if (cancelled) return
         setBitmapPreviewUrl(url)
         setPreviewLoading(false)
       } catch (e) {
         if (cancelled) return
         const msg = e instanceof Error ? e.message : String(e)
-        console.error('Preview generation error:', e)
+        console.error('Preview generation error:', msg, e)
         setPreviewError(msg)
         setPreviewLoading(false)
       }
@@ -427,25 +433,6 @@ export default function TestPrintScreen() {
           </div>
         </div>
 
-        {/* Bitmap preview */}
-        <div className="mb-4">
-          <p className="text-xs text-gray-400 mb-1">Bitmap preview (what the printer will print):</p>
-          <div className="bg-gray-100 border border-gray-300 rounded p-2 overflow-auto" style={{ maxHeight: '300px' }}>
-            {previewLoading ? (
-              <p className="text-xs text-gray-500 text-center py-4">Generating preview...</p>
-            ) : previewError ? (
-              <p className="text-xs text-red-600 text-center py-4">Error: {previewError}</p>
-            ) : bitmapPreviewUrl ? (
-              <img
-                src={bitmapPreviewUrl}
-                alt="Bitmap preview"
-                className="w-full border border-gray-200 bg-white"
-              />
-            ) : (
-              <p className="text-xs text-gray-500 text-center py-4">No preview available</p>
-            )}
-          </div>
-        </div>
 
         {/* Actions */}
         <div className="flex gap-3 mb-4">
