@@ -1,8 +1,12 @@
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Avatar from '@/components/Avatar'
 import Receipt from '@/components/Receipt'
 import BottomNav from '@/components/BottomNav'
-import { FRIENDS, RECEIPTS } from '@/data/mock'
+import { useAuth } from '@/contexts/AuthContext'
+import { getFriends } from '@/lib/friends'
+import { getReceiptsByFriend } from '@/lib/receipts'
+import { FriendProfile, Receipt as ReceiptType } from '@/types/app'
 
 function BackIcon() {
   return (
@@ -14,9 +18,40 @@ function BackIcon() {
 
 export default function FriendDetailScreen() {
   const { id } = useParams<{ id: string }>()
+  const { user } = useAuth()
   const navigate = useNavigate()
-  const friend = FRIENDS.find(f => f.id === id)
-  const receipts = RECEIPTS.filter(r => r.friendId === id)
+  const [friend, setFriend] = useState<FriendProfile | null>(null)
+  const [receipts, setReceipts] = useState<ReceiptType[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user?.id || !id) {
+      setLoading(false)
+      return
+    }
+
+    const loadData = async () => {
+      const friends = await getFriends(user.id)
+      const foundFriend = friends.find(f => f.profile.id === id)
+      setFriend(foundFriend ?? null)
+
+      if (foundFriend) {
+        const recs = await getReceiptsByFriend(user.id, id)
+        setReceipts(recs)
+      }
+      setLoading(false)
+    }
+
+    loadData()
+  }, [user?.id, id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    )
+  }
 
   if (!friend) {
     return (
@@ -37,10 +72,14 @@ export default function FriendDetailScreen() {
 
       {/* Profile */}
       <div className="flex items-center gap-4 px-6 pb-6">
-        <Avatar avatarId={friend.avatarId} size={72} />
+        {friend.profile.avatar_url ? (
+          <img src={friend.profile.avatar_url} alt="" className="w-18 h-18 rounded-full object-cover" />
+        ) : (
+          <div className="w-18 h-18 rounded-full bg-gray-300" />
+        )}
         <div>
-          <h2 className="text-xl font-bold text-gray-900">{friend.name}</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{friend.address}</p>
+          <h2 className="text-xl font-bold text-gray-900">{friend.profile.display_name || friend.profile.username}</h2>
+          <p className="text-sm text-gray-500 mt-0.5">@{friend.profile.username}</p>
         </div>
       </div>
 

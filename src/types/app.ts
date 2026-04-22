@@ -5,6 +5,18 @@ export interface Friend {
   avatarId: 1 | 2 | 3 | 5
 }
 
+export interface FriendProfile {
+  friendRowId: string
+  friendshipStatus: 'pending' | 'accepted'
+  iRequested: boolean
+  profile: {
+    id: string
+    username: string | null
+    display_name: string | null
+    avatar_url: string | null
+  }
+}
+
 export interface Receipt {
   id: string
   date: string
