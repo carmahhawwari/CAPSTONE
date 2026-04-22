@@ -1,14 +1,65 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 
-const FIELDS = [
-  'Carmah',
-  'Hawwari',
-  'chawwari@stanford.edu',
-  '65064322020',
-]
+interface ProfileData {
+  display_name: string | null
+  username: string | null
+  email: string | null
+}
 
 export default function Profile() {
   const navigate = useNavigate()
+  const { user, signOut } = useAuth()
+  const [profile, setProfile] = useState<ProfileData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user?.id) {
+      setLoading(false)
+      return
+    }
+
+    const loadProfile = async () => {
+      if (supabase) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('display_name, username')
+          .eq('id', user.id)
+          .single()
+
+        setProfile({
+          display_name: data?.display_name ?? null,
+          username: data?.username ?? null,
+          email: user.email ?? null,
+        })
+      } else {
+        // Mock mode
+        setProfile({
+          display_name: user.email?.split('@')[0] ?? null,
+          username: null,
+          email: user.email ?? null,
+        })
+      }
+      setLoading(false)
+    }
+
+    loadProfile()
+  }, [user?.id])
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/login')
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col bg-bg-base items-center justify-center">
+        <p className="text-text-tertiary">Loading...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-base px-6 pt-12 pb-8">
@@ -24,16 +75,28 @@ export default function Profile() {
         </div>
       </header>
 
-      <div className="mt-12 flex flex-col gap-3">
-        {FIELDS.map((value) => (
-          <div
-            key={value}
-            className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3"
-          >
-            {value}
+      {profile && (
+        <div className="mt-12 flex flex-col gap-3">
+          <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
+            {profile.display_name || 'No name set'}
           </div>
-        ))}
-      </div>
+          {profile.username && (
+            <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
+              @{profile.username}
+            </div>
+          )}
+          <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
+            {profile.email}
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={handleSignOut}
+        className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 w-full py-4"
+      >
+        Sign Out
+      </button>
     </div>
   )
 }
