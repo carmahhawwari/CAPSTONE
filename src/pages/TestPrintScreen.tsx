@@ -91,46 +91,20 @@ function ditherImageData(imageData: ImageData, method: DitherMethod): Uint8Array
 }
 
 /**
- * Generate a bitmap preview of the receipt showing how it will print.
- * Renders the ESC/POS data as a 1-bit bitmap using dithering.
+ * Generate a preview of the receipt showing how it will look.
+ * Uses html2canvas to render the receipt DOM to an image.
  */
-async function generateBitmapPreview(
-  receiptElement: HTMLElement,
-  ditherMethod: DitherMethod,
-): Promise<string> {
-  // Render receipt to ESC/POS binary
-  const { renderToPrintBuffer } = await import('@/lib/escpos')
-  const buffer = await renderToPrintBuffer(receiptElement, { ditherMethod })
+async function generateBitmapPreview(receiptElement: HTMLElement): Promise<string> {
+  const html2canvas = (await import('html2canvas')).default
 
-  // Convert to bitmap for display
-  // The receipt is 576 dots wide (80mm @ 203 DPI)
-  const width = 576
-  const height = Math.ceil(buffer.length / 72) // Approximate height
+  // Render the receipt DOM to canvas
+  const canvas = await html2canvas(receiptElement, {
+    scale: 1,
+    useCORS: true,
+    backgroundColor: '#ffffff',
+  })
 
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Could not create preview canvas')
-
-  // White background
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, width, height)
-  ctx.fillStyle = '#000000'
-
-  // Render bitmap from ESC/POS (simplified - just show bytes as columns)
-  let byteIdx = 0
-  for (let y = 0; y < height && byteIdx < buffer.length; y += 8) {
-    for (let x = 0; x < width && byteIdx < buffer.length; x++) {
-      const byte = buffer[byteIdx++]
-      for (let bit = 0; bit < 8; bit++) {
-        if (byte & (0x80 >> bit)) {
-          ctx.fillRect(x, y + bit, 1, 1)
-        }
-      }
-    }
-  }
-
+  // Convert to image URL
   return canvas.toDataURL('image/png')
 }
 
@@ -252,7 +226,7 @@ export default function TestPrintScreen() {
 
     ;(async () => {
       try {
-        const url = await generateBitmapPreview(receiptRef.current!, ditherMethod)
+        const url = await generateBitmapPreview(receiptRef.current!)
         if (cancelled) return
         setBitmapPreviewUrl(url)
         setPreviewLoading(false)
@@ -266,7 +240,7 @@ export default function TestPrintScreen() {
     return () => {
       cancelled = true
     }
-  }, [selectedIdx, custom.to, custom.from, custom.prompt, custom.content, custom.imageDataUrl, ditherMethod])
+  }, [selectedIdx, custom.to, custom.from, custom.prompt, custom.content, custom.imageDataUrl])
 
   async function handlePrint() {
     if (!receiptRef.current) return
