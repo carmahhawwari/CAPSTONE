@@ -1,13 +1,21 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
+import { submitPrintJob } from '@/lib/printJob'
 
 export default function CreateReceipt() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const [searchParams] = useSearchParams()
   const [message, setMessage] = useState('')
   const [image, setImage] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const receiptRef = useRef<HTMLDivElement>(null)
 
   const receiptNumber = '00-00-000'
+  const recipientId = searchParams.get('to')
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -17,8 +25,32 @@ export default function CreateReceipt() {
     reader.readAsDataURL(file)
   }
 
-  const handleSend = () => {
-    navigate('/receipt-sent')
+  const handleSend = async () => {
+    if (!receiptRef.current) {
+      setError('Receipt element not found')
+      return
+    }
+
+    if (!user?.id) {
+      setError('Not logged in')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      await submitPrintJob({
+        receiptElement: receiptRef.current,
+        recipientName: recipientId ? `Friend ${recipientId.slice(0, 8)}` : 'Unknown',
+        messageText: message,
+        recipientId: recipientId ?? undefined,
+      })
+      navigate('/receipt-sent')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send')
+      setLoading(false)
+    }
   }
 
   return (
@@ -30,8 +62,14 @@ export default function CreateReceipt() {
         </IconButton>
       </header>
 
+      {error && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="flex flex-1 items-center justify-center py-8">
-        <div className="border-fill-primary bg-bg-primary rounded-md w-full border-2">
+        <div ref={receiptRef} className="border-fill-primary bg-bg-primary rounded-md w-full border-2">
         <div className="text-headline text-text-primary border-fill-primary border-b-2 py-4 text-center">
           {receiptNumber}
         </div>
@@ -90,9 +128,10 @@ export default function CreateReceipt() {
       <button
         type="button"
         onClick={handleSend}
-        className="text-headline text-text-inverse bg-fill-primary rounded-md w-full py-4"
+        disabled={loading}
+        className="text-headline text-text-inverse bg-fill-primary rounded-md w-full py-4 disabled:opacity-50"
       >
-        Send to Inklings
+        {loading ? 'Sending...' : 'Send to Inklings'}
       </button>
     </div>
   )
