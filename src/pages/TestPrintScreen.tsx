@@ -90,6 +90,50 @@ function ditherImageData(imageData: ImageData, method: DitherMethod): Uint8Array
   return result
 }
 
+/**
+ * Generate a bitmap preview of the receipt showing how it will print.
+ * Renders the ESC/POS data as a 1-bit bitmap using dithering.
+ */
+async function generateBitmapPreview(
+  receiptElement: HTMLElement,
+  ditherMethod: DitherMethod,
+): Promise<string> {
+  // Render receipt to ESC/POS binary
+  const { renderToPrintBuffer } = await import('@/lib/escpos')
+  const buffer = await renderToPrintBuffer(receiptElement, { ditherMethod })
+
+  // Convert to bitmap for display
+  // The receipt is 576 dots wide (80mm @ 203 DPI)
+  const width = 576
+  const height = Math.ceil(buffer.length / 72) // Approximate height
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Could not create preview canvas')
+
+  // White background
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, width, height)
+  ctx.fillStyle = '#000000'
+
+  // Render bitmap from ESC/POS (simplified - just show bytes as columns)
+  let byteIdx = 0
+  for (let y = 0; y < height && byteIdx < buffer.length; y += 8) {
+    for (let x = 0; x < width && byteIdx < buffer.length; x++) {
+      const byte = buffer[byteIdx++]
+      for (let bit = 0; bit < 8; bit++) {
+        if (byte & (0x80 >> bit)) {
+          ctx.fillRect(x, y + bit, 1, 1)
+        }
+      }
+    }
+  }
+
+  return canvas.toDataURL('image/png')
+}
+
 async function renderDitheredImageDataUrl(
   source: string,
   ditherMethod: DitherMethod,
@@ -143,6 +187,8 @@ export default function TestPrintScreen() {
   const [lastSize, setLastSize] = useState<number | null>(null)
   const [ditherMethod, setDitherMethod] = useState<DitherMethod>('floyd-steinberg')
   const [uploadedImageSource, setUploadedImageSource] = useState<string | null>(null)
+  const [bitmapPreviewUrl, setBitmapPreviewUrl] = useState<string | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   // Editable custom receipt
   const [custom, setCustom] = useState<ReceiptType>({
@@ -196,6 +242,31 @@ export default function TestPrintScreen() {
       cancelled = true
     }
   }, [uploadedImageSource, ditherMethod])
+
+  // Generate bitmap preview whenever receipt changes
+  useEffect(() => {
+    if (!receiptRef.current) return
+
+    let cancelled = false
+    setPreviewLoading(true)
+
+    ;(async () => {
+      try {
+        const url = await generateBitmapPreview(receiptRef.current!, ditherMethod)
+        if (cancelled) return
+        setBitmapPreviewUrl(url)
+        setPreviewLoading(false)
+      } catch (e) {
+        if (cancelled) return
+        console.error('Preview generation error:', e)
+        setPreviewLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedIdx, custom.to, custom.from, custom.prompt, custom.content, custom.imageDataUrl, ditherMethod])
 
   async function handlePrint() {
     if (!receiptRef.current) return
@@ -375,6 +446,24 @@ export default function TestPrintScreen() {
             style={{ width: '80mm', maxWidth: '100%', background: 'white' }}
           >
             <Receipt receipt={receipt} />
+          </div>
+        </div>
+
+        {/* Bitmap preview */}
+        <div className="mb-4">
+          <p className="text-xs text-gray-400 mb-1">Bitmap preview (what the printer will print):</p>
+          <div className="bg-gray-100 border border-gray-300 rounded p-2 overflow-auto" style={{ maxHeight: '300px' }}>
+            {previewLoading ? (
+              <p className="text-xs text-gray-500 text-center py-4">Generating preview...</p>
+            ) : bitmapPreviewUrl ? (
+              <img
+                src={bitmapPreviewUrl}
+                alt="Bitmap preview"
+                className="w-full border border-gray-200 bg-white"
+              />
+            ) : (
+              <p className="text-xs text-gray-500 text-center py-4">No preview</p>
+            )}
           </div>
         </div>
 
