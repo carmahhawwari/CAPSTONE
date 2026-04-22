@@ -2,28 +2,53 @@
 
 Complete print server solution for internet-based thermal printing via Supabase.
 
+## Architecture
+
+Two parallel printing pipelines:
+
+### Pipeline 1: Internet-based (via Supabase)
+```
+Web App → Supabase → print_server.py → USB Printer
+```
+Jobs created in app are sent to Supabase, print server polls and prints.
+
+### Pipeline 2: System CUPS printing
+```
+Any App → CUPS → rastertomhtpos → usb-backend → USB Printer
+```
+System-wide printing from any application via CUPS.
+
 ## Components
 
-### `print_server.py`
-Main polling server that:
-- Connects to Supabase
-- Polls for pending print jobs
-- Sends ESC/POS commands to USB printer
-- Updates job status in database
-- Auto-starts via systemd
+### `print_server.py` — Supabase Polling Server
+- Connects to Supabase PostgreSQL
+- Polls every 3 seconds for pending print jobs
+- Sends ESC/POS binary to USB printer via pyusb
+- Updates job status (pending → printing → done/failed)
+- Auto-starts as systemd service
+- **Best for:** Web app printing
 
-### `bootloader_exit.py`
-Attempts to exit printer bootloader mode if device is in 0x5720.
-- Tries USB reset and control transfers
-- Waits for device to re-enumerate as 0x5743
-- Called automatically on print server startup
+### `bootloader_exit.py` — Device Mode Switcher
+- Detects printer in bootloader mode (USB 0x0483:0x5720)
+- Attempts USB reset and firmware control transfers
+- Waits for device to re-enumerate in application mode (0x5743)
+- Called automatically by print_server.py on startup
+- **Solves:** "Invalid endpoint address" errors
 
-### `rastertomhtpos.py`
-Converts images to ESC/POS bitmap format.
-- Standalone converter: `python rastertomhtpos.py input.png output.bin`
-- CUPS filter mode for system-wide printing
-- Multiple dithering methods (Floyd-Steinberg, ordered, threshold)
-- Auto-scales images to 576 dots (POS80 width)
+### `rastertomhtpos.py` — Raster-to-ESC/POS Converter
+- CUPS filter that converts PPM raster to ESC/POS bitmap
+- Replacement for macOS rastertomhtpos binary
+- Dithering: Floyd-Steinberg, ordered (Bayer), or threshold
+- Auto-scales images to printer width (227 dots / 80mm)
+- Outputs raw ESC/POS commands
+- **Best for:** CUPS integration
+
+### `usb-backend.py` — CUPS USB Backend
+- CUPS backend (/usr/lib/cups/backend/usb-mhtpos)
+- Receives ESC/POS from rastertomhtpos filter
+- Handles bootloader mode detection and exit
+- Sends data directly to USB printer
+- **Best for:** System-wide printing from any app
 
 ## Installation
 
@@ -32,55 +57,121 @@ Converts images to ESC/POS bitmap format.
 pip install -r requirements.txt
 ```
 
+Requires: Pillow, pyusb, python-escpos, supabase, python-dotenv
+
 ### 2. Configure Environment
 ```bash
 cp .env.example .env
-# Edit .env with your Supabase credentials and printer ID
+# Edit with: SUPABASE_URL, SUPABASE_SERVICE_KEY, PRINTER_ID
+# Optional: USB_VENDOR_ID, USB_PRODUCT_ID, POLL_INTERVAL
 ```
 
-### 3. Setup Systemd Service
-The service file should already be in `/etc/systemd/system/inklings-printer.service`
+### 3. Setup Internet Printing (Supabase)
+The service file at `/etc/systemd/system/inklings-printer.service` enables auto-start.
 
-Enable and start:
 ```bash
 sudo systemctl enable inklings-printer
 sudo systemctl start inklings-printer
-```
-
-Monitor logs:
-```bash
 sudo journalctl -u inklings-printer -f
 ```
 
-### 4. (Optional) Install CUPS Filter
-For system-wide printing support via CUPS:
+This polls Supabase for jobs and prints them automatically.
+
+### 4. (Optional) Setup System CUPS Printing
+For printing from any Linux application via CUPS:
+
 ```bash
-bash install-cups-filter.sh
+# Copy filter and backend to CUPS
+sudo cp rastertomhtpos.py /usr/lib/cups/filter/rastertomhtpos
+sudo cp usb-backend.py /usr/lib/cups/backend/usb-mhtpos
+sudo chmod +x /usr/lib/cups/filter/rastertomhtpos
+sudo chmod +x /usr/lib/cups/backend/usb-mhtpos
+
+# Copy PPD printer definition
+sudo cp /tmp/MP_POS_80.ppd /etc/cups/ppd/Brightek-POS80.ppd
+
+# Create CUPS printer entry
+sudo lpadmin -p Brightek-POS80 -E -v usb://0x0483:0x5743 -m Brightek-POS80.ppd
+
+# Set as default (optional)
+lpoptions -d Brightek-POS80
+
+# Restart CUPS
+sudo systemctl restart cups
 ```
 
-Then add printer to CUPS:
+Test CUPS printing:
 ```bash
-sudo lpadmin -p Brightek-POS80 -E -v usb://Brightek/POS80 -m Brightek-POS80.ppd
+echo "Test" | lp -d Brightek-POS80
+# Or print an image:
+lp -d Brightek-POS80 /path/to/image.png
 ```
 
 ## Troubleshooting
 
 ### Printer in Bootloader Mode
-If you see "Invalid endpoint address 0x1" errors:
+**Symptom:** "Invalid endpoint address 0x1" in logs
+
+**Cause:** Device detected as 0x0483:0x5720 (bootloader) instead of 0x5743 (application)
+
+**Fix:**
 ```bash
-python bootloader_exit.py
+# Manual exit
+python print-server/bootloader_exit.py
+
+# Or automatic (runs on print server startup)
+sudo systemctl restart inklings-printer
 ```
 
-The device should re-enumerate as 0x5743 (application mode).
+The device should re-enumerate as 0x5743. This happens automatically on print server startup.
 
-### USB Permissions
-Make sure the `inklings` user is in the `dialout` group:
+### USB Device Not Found
 ```bash
+# Check if device is visible
+lsusb | grep 0483
+
+# If found: check permissions
+ls -la /dev/bus/usb/*/
+
+# Fix: Add user to dialout group
 sudo usermod -a -G dialout inklings
+sudo usermod -a -G lp inklings
+```
+
+Then log out and log back in, or restart the print server.
+
+### CUPS Printer Offline
+```bash
+# Check CUPS status
+lpstat -p -d
+
+# Restart CUPS
+sudo systemctl restart cups
+
+# Check backend logs
+tail -f /var/log/cups/error_log
 ```
 
 ### Test Printing
-From the web app (Inklings), create a test receipt and click Print. The job should appear in the logs within 3 seconds.
+
+**From web app:**
+1. Log in to Inklings
+2. Create a test receipt
+3. Click "Print"
+4. Check logs: `sudo journalctl -u inklings-printer -f`
+
+**From CUPS:**
+```bash
+lp -d Brightek-POS80 /path/to/image.png
+lpstat -o  # Check print queue
+lprm -P Brightek-POS80 -  # Clear queue
+```
+
+**Manual test:**
+```bash
+python print-server/rastertomhtpos.py test.png test.bin
+hexdump -C test.bin | head  # Verify ESC/POS commands
+```
 
 ## Architecture
 
@@ -101,11 +192,44 @@ USB Printer
 5. Printer outputs receipt
 6. Status updated back to app (real-time via Supabase)
 
+## USB Protocol
+
+The Brightek POS80 uses two device modes:
+
+| Mode | Vendor ID | Product ID | Purpose |
+|------|-----------|-----------|---------|
+| **Application** | 0x0483 | 0x5743 | Normal printing (ESC/POS) |
+| **Bootloader** | 0x0483 | 0x5720 | Firmware updates, different endpoints |
+
+**Bootloader mode** has different USB endpoints than application mode, causing "Invalid endpoint address 0x1" if you try to send ESC/POS commands to it. The `bootloader_exit.py` utility handles this automatically.
+
+### ESC/POS Command Format
+
+The printer uses standard ESC/POS (Epson Standard Code for POS) thermal printer commands:
+
+```
+ESC @ — Reset printer
+ESC 3 <n> — Set line spacing
+GS v 0 — Raster image command (for bitmaps)
+1D 2F — Raster image (alternate)
+ESC i — Partial cut
+ESC m — Full cut
+```
+
+Our implementation uses:
+- **GS v 0** format for bitmap images (standard)
+- **Floyd-Steinberg dithering** for better image quality
+- **203 DPI** (standard thermal printer resolution)
+- **576 dots wide** = 80mm at 203 DPI
+
 ## Printer Specs
 
-**Model:** Brightek POS80  
+**Model:** Brightek POS80 (MP-POS80 in China)  
 **Interface:** USB  
 **Vendor ID:** 0x0483  
-**Product ID:** 0x5743 (application mode) / 0x5720 (bootloader)  
-**Width:** 80mm (576 dots at 203 DPI)  
-**Format:** ESC/POS thermal printer language
+**Product ID:** 0x5743 (application) / 0x5720 (bootloader)  
+**Width:** 80mm (227 points / 576 dots at 203 DPI)  
+**Paper:** 80mm thermal roll  
+**Command Set:** ESC/POS (Epson thermal printer standard)  
+**Max Print Speed:** ~10 lines/second  
+**Resolution:** 203 DPI (monochrome)
