@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
+import { addFriend, getFollowingIds } from '@/lib/friends'
 
 type Profile = {
   id: string
@@ -14,7 +16,32 @@ export default function FindInklings() {
   const [users, setUsers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [following, setFollowing] = useState<Set<string>>(new Set())
+  const [pending, setPending] = useState<Set<string>>(new Set())
+  const { user } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!supabase || !user) return
+    getFollowingIds().then(setFollowing).catch(() => {})
+  }, [user])
+
+  const handleAdd = async (targetId: string) => {
+    if (!supabase || !user || pending.has(targetId) || following.has(targetId)) return
+    setPending((s) => new Set(s).add(targetId))
+    try {
+      await addFriend(targetId)
+      setFollowing((s) => new Set(s).add(targetId))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add friend')
+    } finally {
+      setPending((s) => {
+        const next = new Set(s)
+        next.delete(targetId)
+        return next
+      })
+    }
+  }
 
   useEffect(() => {
     if (!supabase) {
@@ -47,7 +74,7 @@ export default function FindInklings() {
         setError(qErr.message)
         setUsers([])
       } else {
-        setUsers(data ?? [])
+        setUsers((data ?? []).filter((u) => u.id !== user?.id))
       }
       setLoading(false)
     }, 200)
@@ -56,7 +83,7 @@ export default function FindInklings() {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [query])
+  }, [query, user?.id])
 
   const handleInvite = () => {
     navigate('/home')
@@ -126,9 +153,11 @@ export default function FindInklings() {
                   </div>
                   <button
                     type="button"
-                    className="text-callout text-text-inverse bg-fill-primary rounded-md px-4 py-2 shrink-0"
+                    onClick={() => handleAdd(u.id)}
+                    disabled={following.has(u.id) || pending.has(u.id)}
+                    className="text-callout text-text-inverse bg-fill-primary rounded-md px-4 py-2 shrink-0 disabled:opacity-40"
                   >
-                    Add
+                    {following.has(u.id) ? 'Added' : pending.has(u.id) ? 'Adding…' : 'Add'}
                   </button>
                 </div>
               )

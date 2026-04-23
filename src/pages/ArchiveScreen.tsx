@@ -1,12 +1,51 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FRIENDS, RECEIPTS } from '@/data/mock'
+import { useAuth } from '@/contexts/AuthContext'
+import { getFriends, type FriendProfile } from '@/lib/friends'
+import { getArchive, type ReceiptWithProfiles } from '@/lib/receipts'
+import type { Block } from '@/types/canvas'
+
+const SAVED_TAB = '__saved__'
+
+function firstText(blocks: Block[]): string {
+  for (const b of blocks) {
+    if (b.type === 'text' && b.content?.trim()) return b.content
+  }
+  return ''
+}
 
 export default function ArchiveScreen() {
   const navigate = useNavigate()
-  const [activeFriendId, setActiveFriendId] = useState<string>(FRIENDS[0].id)
+  const { user } = useAuth()
+  const [friends, setFriends] = useState<FriendProfile[]>([])
+  const [receipts, setReceipts] = useState<ReceiptWithProfiles[]>([])
+  const [activeTab, setActiveTab] = useState<string>(SAVED_TAB)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filtered = RECEIPTS.filter((r) => r.friendId === activeFriendId)
+  useEffect(() => {
+    if (!user) return
+    setLoading(true)
+    Promise.all([getFriends(), getArchive()])
+      .then(([fs, rs]) => {
+        setFriends(fs)
+        setReceipts(rs)
+        if (fs.length > 0) setActiveTab(fs[0].id)
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'))
+      .finally(() => setLoading(false))
+  }, [user])
+
+  const filtered = useMemo(() => {
+    if (activeTab === SAVED_TAB) {
+      return receipts.filter((r) => r.recipient_id === null && r.author_id === user?.id)
+    }
+    return receipts.filter(
+      (r) =>
+        (r.author_id === activeTab && r.recipient_id === user?.id) ||
+        (r.author_id === user?.id && r.recipient_id === activeTab),
+    )
+  }, [activeTab, receipts, user?.id])
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-base">
@@ -15,22 +54,22 @@ export default function ArchiveScreen() {
           <div className="flex min-w-0 flex-1 flex-col gap-4">
             <h1 className="text-regular-semibold text-text-primary">Archives</h1>
             <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
-              {FRIENDS.map((f) => {
-                const label = f.name.split(' ')[0]
-                const isActive = activeFriendId === f.id
+              <TabButton
+                active={activeTab === SAVED_TAB}
+                onClick={() => setActiveTab(SAVED_TAB)}
+              >
+                Saved
+              </TabButton>
+              {friends.map((f) => {
+                const label = (f.display_name || f.username || 'Friend').split(' ')[0]
                 return (
-                  <button
+                  <TabButton
                     key={f.id}
-                    type="button"
-                    onClick={() => setActiveFriendId(f.id)}
-                    className={
-                      isActive
-                        ? 'text-headline text-text-inverse bg-fill-primary rounded-full whitespace-nowrap px-5 py-2'
-                        : 'text-headline text-text-primary whitespace-nowrap px-2 py-2'
-                    }
+                    active={activeTab === f.id}
+                    onClick={() => setActiveTab(f.id)}
                   >
                     {label}
-                  </button>
+                  </TabButton>
                 )
               })}
             </div>
@@ -57,20 +96,56 @@ export default function ArchiveScreen() {
       </div>
 
       <div className="mt-6 flex flex-col gap-5 px-6 pb-8">
-        {filtered.length === 0 ? (
-          <p className="text-subheadline text-text-tertiary">
-            No letters yet.
-          </p>
+        {error && <p className="text-subheadline text-text-tertiary">{error}</p>}
+        {loading ? (
+          <p className="text-subheadline text-text-tertiary">Loading…</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-subheadline text-text-tertiary">No letters yet.</p>
         ) : (
-          filtered.map((r) => (
-            <div
-              key={r.id}
-              className="border-fill-primary bg-bg-primary rounded-md aspect-[16/10] w-full border-2"
-            />
-          ))
+          filtered.map((r) => {
+            const content = (r.content as { blocks?: Block[] } | null) ?? {}
+            const snippet = firstText(content.blocks ?? [])
+            return (
+              <div
+                key={r.id}
+                className="border-fill-primary bg-bg-primary rounded-md aspect-[16/10] w-full border-2 p-4 flex flex-col justify-between overflow-hidden"
+              >
+                <p className="text-subheadline text-text-primary line-clamp-4">
+                  {snippet || '(no text)'}
+                </p>
+                <p className="text-footnote text-text-tertiary">
+                  {new Date(r.created_at).toLocaleDateString()}
+                </p>
+              </div>
+            )
+          })
         )}
       </div>
     </div>
+  )
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        active
+          ? 'text-headline text-text-inverse bg-fill-primary rounded-full whitespace-nowrap px-5 py-2'
+          : 'text-headline text-text-primary whitespace-nowrap px-2 py-2'
+      }
+    >
+      {children}
+    </button>
   )
 }
 
