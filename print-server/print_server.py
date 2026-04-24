@@ -167,12 +167,12 @@ def attempt_bootloader_exit() -> None:
             if result.stdout:
                 for line in result.stdout.strip().split("\n"):
                     print(line)
-            if result.returncode != 0 and result.stderr:
-                print(f"[server] Bootloader exit: {result.stderr.strip()}")
+            if result.returncode != 0:
+                print("[server] Bootloader exit skipped (device may already be ready or in bootloader mode)")
         else:
             print(f"[server] Bootloader exit script not found at {script_path}")
     except Exception as e:
-        print(f"[server] Bootloader exit error: {e}")
+        print(f"[server] Bootloader exit error (continuing): {e}")
 
 
 def main() -> None:
@@ -180,8 +180,9 @@ def main() -> None:
     print(f"[server] Printer ID: {PRINTER_ID}")
     print(f"[server] Polling every {POLL_INTERVAL}s")
 
-    # Try to exit bootloader mode on startup
-    attempt_bootloader_exit()
+    # Skip bootloader exit (causes resource busy issues)
+    # The printer can work in bootloader mode if we use correct endpoints
+    print(f"[server] Ready to accept print jobs")
 
     # Graceful shutdown
     running = True
