@@ -123,19 +123,24 @@ def claim_job(job_id: str) -> bool:
 
 
 def mark_done(job_id: str) -> None:
-    supabase.table("print_jobs").update({"status": "done"}).eq("id", job_id).execute()
+    result = supabase.table("print_jobs").update({"status": "done"}).eq("id", job_id).execute()
+    if not result.data:
+        raise Exception(f"Failed to mark job {job_id} as done")
 
 
 def mark_failed(job_id: str, error: str) -> None:
-    (
+    result = (
         supabase.table("print_jobs")
         .update({"status": "failed", "error_message": error[:500]})
         .eq("id", job_id)
         .execute()
     )
+    if not result.data:
+        print(f"[job {job_id[:8]}] Warning: Failed to update job status")
 
 
 def process_job(job: dict) -> None:
+    global _printer
     job_id = job["id"]
     print(f"[job {job_id[:8]}] Processing...")
 
@@ -146,11 +151,23 @@ def process_job(job: dict) -> None:
     try:
         payload = base64.b64decode(job["payload_base64"])
         send_to_printer(payload)
+        print(f"[job {job_id[:8]}] Sent {len(payload)} bytes to printer")
+
+        # Mark as done
         mark_done(job_id)
-        print(f"[job {job_id[:8]}] Printed successfully ({len(payload)} bytes)")
+        print(f"[job {job_id[:8]}] ✓ Completed successfully")
+
+        # Reset printer connection for next job
+        _printer = None
+
     except Exception as e:
-        print(f"[job {job_id[:8]}] FAILED: {e}")
-        mark_failed(job_id, str(e))
+        print(f"[job {job_id[:8]}] ✗ FAILED: {e}")
+        try:
+            mark_failed(job_id, str(e))
+        except Exception as err:
+            print(f"[job {job_id[:8]}] Could not mark failed: {err}")
+        # Reset printer on error
+        _printer = None
 
 
 # ---------- Poll Loop ----------
