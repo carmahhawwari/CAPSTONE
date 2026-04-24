@@ -101,12 +101,12 @@ export default function CreateReceipt() {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="border-2 border-gray-300 rounded-md flex aspect-video w-full items-center justify-center overflow-hidden hover:border-gray-400 transition"
+              className="border-2 border-gray-300 rounded-md w-full overflow-hidden hover:border-gray-400 transition bg-gray-50"
             >
               {image ? (
-                <img src={image} alt="Uploaded" className="h-full w-full object-cover" />
+                <img src={image} alt="Uploaded" className="w-full h-auto object-cover" />
               ) : (
-                <div className="flex flex-col items-center gap-2 text-gray-500">
+                <div className="flex flex-col items-center gap-2 text-gray-500 py-12">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 19V5M5 12L12 5L19 12" />
                   </svg>
