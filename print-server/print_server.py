@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from supabase import create_client, Client
+import usb.util
 
 load_dotenv()
 
@@ -103,6 +104,19 @@ def send_to_printer(raw_bytes: bytes) -> None:
     printer['device'].write(printer['out_ep'], raw_bytes, timeout=10_000)
 
 
+def close_printer() -> None:
+    """Explicitly close and release the USB device."""
+    global _printer
+    if _printer is not None:
+        try:
+            import usb.core
+            _printer['device'].reset()
+            usb.util.dispose_resources(_printer['device'])
+        except Exception as e:
+            print(f"[printer] Warning closing device: {e}")
+        _printer = None
+
+
 # ---------- Job Processing ----------
 
 
@@ -140,7 +154,6 @@ def mark_failed(job_id: str, error: str) -> None:
 
 
 def process_job(job: dict) -> None:
-    global _printer
     job_id = job["id"]
     print(f"[job {job_id[:8]}] Processing...")
 
@@ -157,17 +170,16 @@ def process_job(job: dict) -> None:
         mark_done(job_id)
         print(f"[job {job_id[:8]}] ✓ Completed successfully")
 
-        # Reset printer connection for next job
-        _printer = None
-
     except Exception as e:
         print(f"[job {job_id[:8]}] ✗ FAILED: {e}")
         try:
             mark_failed(job_id, str(e))
         except Exception as err:
             print(f"[job {job_id[:8]}] Could not mark failed: {err}")
-        # Reset printer on error
-        _printer = None
+    finally:
+        # Always close printer connection after job
+        close_printer()
+        time.sleep(0.5)  # Brief delay before next job
 
 
 # ---------- Poll Loop ----------
