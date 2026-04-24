@@ -29,6 +29,7 @@ SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
 PRINTER_ID = os.environ["PRINTER_ID"]
 USB_VENDOR_ID = int(os.environ.get("USB_VENDOR_ID", "0x0483"), 16)
 USB_PRODUCT_ID = int(os.environ.get("USB_PRODUCT_ID", "0x5743"), 16)
+USB_BOOTLOADER_ID = 0x5720  # Bootloader mode device ID
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", "3"))
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -47,9 +48,15 @@ def get_printer():
     import usb.core
     import usb.util
 
+    # Try application mode first (0x5743), then bootloader mode (0x5720)
     dev = usb.core.find(idVendor=USB_VENDOR_ID, idProduct=USB_PRODUCT_ID)
+    product_id = USB_PRODUCT_ID
+
     if dev is None:
-        raise Exception(f"USB device {USB_VENDOR_ID:#06x}:{USB_PRODUCT_ID:#06x} not found")
+        dev = usb.core.find(idVendor=USB_VENDOR_ID, idProduct=USB_BOOTLOADER_ID)
+        product_id = USB_BOOTLOADER_ID
+        if dev is None:
+            raise Exception(f"USB device not found (tried {USB_VENDOR_ID:#06x}:{USB_PRODUCT_ID:#06x} and {USB_VENDOR_ID:#06x}:{USB_BOOTLOADER_ID:#06x})")
 
     dev.set_configuration()
     cfg = dev.get_active_configuration()
@@ -69,7 +76,7 @@ def get_printer():
         raise Exception("Could not find printer endpoints")
 
     _printer = {'device': dev, 'out_ep': out_ep, 'in_ep': in_ep}
-    print(f"[printer] Connected to USB device {USB_VENDOR_ID:#06x}:{USB_PRODUCT_ID:#06x} (EP OUT=0x03, EP IN=0x81)")
+    print(f"[printer] Connected to USB device {USB_VENDOR_ID:#06x}:{product_id:#06x} (EP OUT=0x03, EP IN=0x81)")
     return _printer
 
 
