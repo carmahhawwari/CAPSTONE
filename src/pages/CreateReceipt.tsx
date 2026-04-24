@@ -1,13 +1,36 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
+import { newBlockId, type Block } from '@/types/canvas'
+import paperTexture from '@/assets/paper-texture.jpg'
 
-export default function CreateReceipt() {
+type Props = {
+  onboarding?: boolean
+}
+
+export default function CreateReceipt({ onboarding = false }: Props = {}) {
   const navigate = useNavigate()
-  const [message, setMessage] = useState('')
-  const [image, setImage] = useState<string | null>(null)
+  const [message, setMessage] = useState(() => {
+    if (!onboarding) return ''
+    const blocks = loadDraft().content?.blocks ?? []
+    const text = blocks.find((b) => b.type === 'text')
+    return text && text.type === 'text' ? text.content : ''
+  })
+  const [image, setImage] = useState<string | null>(() => {
+    if (!onboarding) return null
+    const blocks = loadDraft().content?.blocks ?? []
+    const img = blocks.find((b) => b.type === 'image')
+    return img && img.type === 'image' ? img.dataUrl : null
+  })
+  const [senderName, setSenderName] = useState('')
+  const [recipientName, setRecipientName] = useState(() => {
+    if (!onboarding) return ''
+    return loadDraft().recipient?.name ?? ''
+  })
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const receiptNumber = '00-00-000'
+  const today = new Date()
+  const dateStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -18,22 +41,64 @@ export default function CreateReceipt() {
   }
 
   const handleSend = () => {
+    if (onboarding) {
+      const blocks: Block[] = []
+      if (image) blocks.push({ id: newBlockId(), type: 'image', dataUrl: image })
+      if (message.trim()) blocks.push({ id: newBlockId(), type: 'text', content: message.trim(), style: 'normal' })
+      if (senderName.trim()) {
+        blocks.push({ id: newBlockId(), type: 'text', content: `— ${senderName.trim()}`, style: 'normal' })
+      }
+      saveDraft({
+        content: { blocks, prompt: '' },
+        recipient: recipientName.trim()
+          ? { name: recipientName.trim(), phone: loadDraft().recipient?.phone ?? '' }
+          : null,
+      })
+      navigate('/onboard/deliver')
+      return
+    }
     navigate('/receipt-sent')
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-base px-6 pt-12 pb-8">
       <header className="flex items-end justify-between">
-        <h1 className="text-regular-semibold text-text-primary">Create Recipt</h1>
-        <IconButton label="Home" onClick={() => navigate('/home')}>
+        <h1 className="text-regular-semibold text-text-primary">
+          {onboarding ? 'Write your receipt' : 'Create Recipt'}
+        </h1>
+        <IconButton
+          label={onboarding ? 'Back' : 'Home'}
+          onClick={() => navigate(onboarding ? '/onboard' : '/home')}
+        >
           <HomeIcon />
         </IconButton>
       </header>
 
       <div className="flex flex-1 items-center justify-center py-8">
-        <div className="border-fill-primary bg-bg-primary rounded-md w-full border-2">
+        <div
+          className="w-full"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url(${paperTexture})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: '#ffffff',
+            boxShadow: '0 6px 20px rgba(34, 33, 33, 0.08), 0 1px 3px rgba(34, 33, 33, 0.06)',
+            fontFamily: 'var(--font-printvetica)',
+          }}
+        >
         <div className="text-headline text-text-primary border-fill-primary border-b-2 py-4 text-center">
-          {receiptNumber}
+          {dateStr}
+        </div>
+
+        <div className="border-fill-primary flex items-center gap-1 border-b-2 px-4 py-2 text-body">
+          <span className="text-text-primary font-semibold">To:</span>
+          <input
+            type="text"
+            value={recipientName}
+            onChange={(e) => setRecipientName(e.target.value)}
+            placeholder="name"
+            className="text-text-primary placeholder:text-text-tertiary bg-transparent focus:outline-none"
+          />
         </div>
 
         <div className="flex flex-col gap-4 p-4">
@@ -48,7 +113,8 @@ export default function CreateReceipt() {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="border-fill-primary rounded-md flex aspect-[4/3] w-full items-center justify-center overflow-hidden border-2"
+              className="border-fill-tertiary flex aspect-[4/3] w-full items-center justify-center overflow-hidden border"
+              style={{ boxShadow: '0 2px 6px rgba(34, 33, 33, 0.12)' }}
             >
               {image ? (
                 <img src={image} alt="" className="h-full w-full object-cover" />
@@ -61,14 +127,20 @@ export default function CreateReceipt() {
                 </div>
               )}
             </button>
-            <button
-              type="button"
-              onClick={() => setImage(null)}
-              aria-label="Remove image"
-              className="bg-fill-primary text-text-inverse absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full"
-            >
-              <XIcon />
-            </button>
+            {image && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setImage(null)
+                  if (fileRef.current) fileRef.current.value = ''
+                }}
+                aria-label="Remove image"
+                className="bg-fill-primary text-text-inverse absolute -top-2 -right-2 z-10 flex h-7 w-7 items-center justify-center"
+              >
+                <XIcon />
+              </button>
+            )}
           </div>
 
           <textarea
@@ -76,13 +148,19 @@ export default function CreateReceipt() {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Your message belongs here"
             rows={3}
-            className="text-body text-text-tertiary placeholder:text-text-tertiary w-full resize-none bg-transparent focus:outline-none"
+            className="text-body text-text-primary placeholder:text-text-tertiary w-full resize-none bg-transparent focus:outline-none"
           />
         </div>
 
-        <div className="text-body text-text-primary border-fill-primary border-t-2 p-4 text-right">
-          <div>love,</div>
-          <div>name</div>
+        <div className="border-fill-primary text-body text-text-primary border-t-2 p-4">
+          <div>Love,</div>
+          <input
+            type="text"
+            value={senderName}
+            onChange={(e) => setSenderName(e.target.value)}
+            placeholder="your name"
+            className="text-text-primary placeholder:text-text-tertiary w-full bg-transparent focus:outline-none"
+          />
         </div>
         </div>
       </div>
@@ -92,7 +170,7 @@ export default function CreateReceipt() {
         onClick={handleSend}
         className="text-headline text-text-inverse bg-fill-primary rounded-md w-full py-4"
       >
-        Send to Inklings
+        {onboarding ? 'Continue' : 'Send to Inklings'}
       </button>
     </div>
   )
