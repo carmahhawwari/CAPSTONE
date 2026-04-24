@@ -19,12 +19,24 @@ export default function CreateReceipt() {
   // Get recipient ID from URL params
   const recipientId = searchParams.get('to')
 
+  // Editable recipient and sender
+  const [toText, setToText] = useState('')
+  const [fromText, setFromText] = useState('')
+  const [fontSize, setFontSize] = useState('base')
+
+  const fontSizeMap = {
+    sm: 'text-sm',
+    base: 'text-base',
+    lg: 'text-lg',
+    xl: 'text-xl',
+  }
+
   // Build receipt object for display
   const receipt: ReceiptType = {
     id: 'draft',
     date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-    to: recipientId ? `Friend ${recipientId.slice(0, 8)}` : 'Friend',
-    from: user?.user_metadata?.display_name ?? 'You',
+    to: toText || (recipientId ? `Friend ${recipientId.slice(0, 8)}` : 'To: '),
+    from: fromText || (user?.user_metadata?.display_name ?? 'From: '),
     prompt: undefined,
     content: message || '(your message will appear here)',
     imageDataUrl: image || undefined,
@@ -127,6 +139,50 @@ export default function CreateReceipt() {
           </div>
         </div>
 
+        {/* Recipient and Sender */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">To:</label>
+            <input
+              type="text"
+              value={toText}
+              onChange={(e) => setToText(e.target.value)}
+              placeholder={recipientId ? `Friend ${recipientId.slice(0, 8)}` : 'Recipient name'}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">From:</label>
+            <input
+              type="text"
+              value={fromText}
+              onChange={(e) => setFromText(e.target.value)}
+              placeholder={user?.user_metadata?.display_name ?? 'Your name'}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Font Size */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Text Size</label>
+          <div className="flex gap-2">
+            {Object.entries(fontSizeMap).map(([key, _]) => (
+              <button
+                key={key}
+                onClick={() => setFontSize(key)}
+                className={`px-3 py-1 rounded text-sm border ${
+                  fontSize === key
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                {key.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Message Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Your Message</label>
@@ -143,7 +199,7 @@ export default function CreateReceipt() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
           <div ref={receiptRef} className="max-w-sm mx-auto">
-            <Receipt receipt={receipt} />
+            <Receipt receipt={receipt} fontSize={fontSize as 'sm' | 'base' | 'lg' | 'xl'} />
           </div>
         </div>
       </div>
