@@ -44,17 +44,39 @@ def get_printer():
     if _printer is not None:
         return _printer
 
-    from escpos.printer import Usb
+    import usb.core
+    import usb.util
 
-    _printer = Usb(USB_VENDOR_ID, USB_PRODUCT_ID)
-    print(f"[printer] Connected to USB device {USB_VENDOR_ID:#06x}:{USB_PRODUCT_ID:#06x}")
+    dev = usb.core.find(idVendor=USB_VENDOR_ID, idProduct=USB_PRODUCT_ID)
+    if dev is None:
+        raise Exception(f"USB device {USB_VENDOR_ID:#06x}:{USB_PRODUCT_ID:#06x} not found")
+
+    dev.set_configuration()
+    cfg = dev.get_active_configuration()
+    intf = cfg[(0, 0)]
+
+    # Brightek POS80 uses non-standard endpoints: 0x81 (IN), 0x03 (OUT)
+    out_ep = usb.util.find_descriptor(
+        intf,
+        bEndpointAddress=0x03
+    )
+    in_ep = usb.util.find_descriptor(
+        intf,
+        bEndpointAddress=0x81
+    )
+
+    if not out_ep or not in_ep:
+        raise Exception("Could not find printer endpoints")
+
+    _printer = {'device': dev, 'out_ep': out_ep, 'in_ep': in_ep}
+    print(f"[printer] Connected to USB device {USB_VENDOR_ID:#06x}:{USB_PRODUCT_ID:#06x} (EP OUT=0x03, EP IN=0x81)")
     return _printer
 
 
 def send_to_printer(raw_bytes: bytes) -> None:
     """Send raw ESC/POS bytes to the thermal printer."""
     printer = get_printer()
-    printer.device.write(printer.out_ep, raw_bytes, timeout=10_000)
+    printer['device'].write(printer['out_ep'], raw_bytes, timeout=10_000)
 
 
 # ---------- Job Processing ----------
