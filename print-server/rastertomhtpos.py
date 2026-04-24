@@ -3,20 +3,27 @@
 CUPS filter: Convert raster images to ESC/POS format for Brightek POS80 thermal printer.
 
 This is a Pi-compatible replacement for the macOS rastertomhtpos utility.
-Can be used as a CUPS filter or standalone image converter.
+Handles raster input from CUPS and outputs ESC/POS binary to USB backend.
 
 Usage as CUPS filter:
     rastertomhtpos.py job-id user title copies options [filename]
 
-Usage as standalone converter:
-    rastertomhtpos.py input.ppm output.bin
+The filter receives PPM raster data and outputs ESC/POS commands suitable for
+the Brightek POS80 80mm thermal printer.
 """
 
 import struct
 import sys
+import os
+import tempfile
 from pathlib import Path
-from PIL import Image
-import io
+from io import BytesIO
+
+try:
+    from PIL import Image
+except ImportError:
+    print("Error: Pillow not installed. Install with: pip install Pillow", file=sys.stderr)
+    sys.exit(1)
 
 # ESC/POS commands
 ESC = b'\x1b'
@@ -186,6 +193,20 @@ class ESCPOSImage:
 
         return bytes(output)
 
+def ppm_to_image(ppm_data):
+    """Convert PPM binary data to PIL Image."""
+    try:
+        # PPM format: magic number, width, height, [maxval], pixel data
+        # P4 = monochrome (binary)
+        # P5 = grayscale (binary)
+        # P6 = RGB (binary)
+
+        return Image.open(BytesIO(ppm_data))
+    except Exception as e:
+        print(f"Error parsing PPM: {e}", file=sys.stderr)
+        return None
+
+
 def cups_filter_mode():
     """Run as CUPS filter."""
     # CUPS filter arguments: job-id user title copies options [filename]
@@ -193,31 +214,31 @@ def cups_filter_mode():
         print("Usage: rastertomhtpos.py job-id user title copies options [filename]", file=sys.stderr)
         sys.exit(1)
 
-    # Read input
+    # Read PPM raster data
     if len(sys.argv) > 6:
         # Read from file
         with open(sys.argv[6], 'rb') as f:
-            input_data = f.read()
+            ppm_data = f.read()
     else:
         # Read from stdin
-        input_data = sys.stdin.buffer.read()
+        ppm_data = sys.stdin.buffer.read()
 
-    # PPM is simple: "P4/P5/P6 width height [maxval] data"
-    # For simplicity, we'll assume it's valid PPM and extract basic info
-
-    # For now, just read as PPM and convert
     try:
-        # Create temp PPM file
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix='.ppm', delete=False) as tmp:
-            tmp.write(input_data)
+        # Convert PPM to image
+        img = ppm_to_image(ppm_data)
+        if not img:
+            sys.exit(1)
+
+        # Create temp file with the image
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+            img.save(tmp.name, 'PNG')
             tmp_path = tmp.name
 
-        # Convert
-        converter = ESCPOSImage()
+        # Convert to ESC/POS
+        converter = ESCPOSImage(dither='floyd-steinberg')
         output = converter.image_to_escpos(tmp_path)
 
-        # Write to stdout
+        # Write ESC/POS binary to stdout (for CUPS backend to send to printer)
         sys.stdout.buffer.write(output)
 
         # Cleanup
