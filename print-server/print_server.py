@@ -58,7 +58,24 @@ def get_printer():
         if dev is None:
             raise Exception(f"USB device not found (tried {USB_VENDOR_ID:#06x}:{USB_PRODUCT_ID:#06x} and {USB_VENDOR_ID:#06x}:{USB_BOOTLOADER_ID:#06x})")
 
-    dev.set_configuration()
+    # Detach from kernel driver if needed
+    try:
+        if dev.is_kernel_driver_active(0):
+            dev.detach_kernel_driver(0)
+    except (usb.core.USBError, Exception):
+        pass  # Not always available on all systems
+
+    try:
+        dev.set_configuration()
+    except usb.core.USBError as e:
+        if "Resource busy" in str(e):
+            print("[printer] Device busy, trying to reset...")
+            dev.reset()
+            time.sleep(0.5)
+            dev.set_configuration()
+        else:
+            raise
+
     cfg = dev.get_active_configuration()
     intf = cfg[(0, 0)]
 
