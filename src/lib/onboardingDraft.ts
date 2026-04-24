@@ -86,15 +86,14 @@ export async function commitDraftForUser(authorId: string): Promise<CommitResult
     return { kind: 'delivered', recipientId, receiptId: data.id as string }
   }
 
-  const { data, error } = await supabase
-    .from('pending_receipts')
+  const { data, error } = await (supabase.from('pending_receipts' as never) as any)
     .insert({ author_id: authorId, recipient_phone: phone, content })
     .select('id')
     .single()
   if (error) throw error
 
   clearDraft()
-  return { kind: 'pending', pendingId: data.id as string }
+  return { kind: 'pending', pendingId: (data as { id: string }).id }
 }
 
 function normalizePhone(input: string): string {
