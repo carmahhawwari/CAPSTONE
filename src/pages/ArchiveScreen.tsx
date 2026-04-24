@@ -1,12 +1,59 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FRIENDS, RECEIPTS } from '@/data/mock'
+import { useAuth } from '@/contexts/AuthContext'
+import { getFriends } from '@/lib/friends'
+import { getReceiptsByFriend } from '@/lib/receipts'
+import type { FriendProfile, Receipt } from '@/types/app'
 
 export default function ArchiveScreen() {
+  const { user } = useAuth()
   const navigate = useNavigate()
-  const [activeFriendId, setActiveFriendId] = useState<string>(FRIENDS[0].id)
+  const [friends, setFriends] = useState<FriendProfile[]>([])
+  const [activeFriendId, setActiveFriendId] = useState<string | null>(null)
+  const [receipts, setReceipts] = useState<Receipt[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = RECEIPTS.filter((r) => r.friendId === activeFriendId)
+  useEffect(() => {
+    if (!user?.id) {
+      setLoading(false)
+      return
+    }
+
+    const loadFriends = async () => {
+      const friendsList = await getFriends(user.id)
+      setFriends(friendsList)
+      if (friendsList.length > 0) {
+        setActiveFriendId(friendsList[0].profile.id)
+      }
+      setLoading(false)
+    }
+
+    loadFriends()
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id || !activeFriendId) {
+      setReceipts([])
+      return
+    }
+
+    const loadReceipts = async () => {
+      const recs = await getReceiptsByFriend(user.id, activeFriendId)
+      setReceipts(recs)
+    }
+
+    loadReceipts()
+  }, [user?.id, activeFriendId])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col bg-bg-base items-center justify-center">
+        <p className="text-text-tertiary">Loading...</p>
+      </div>
+    )
+  }
+
+  const filtered = receipts
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-base">
@@ -15,24 +62,28 @@ export default function ArchiveScreen() {
           <div className="flex min-w-0 flex-1 flex-col gap-4">
             <h1 className="text-regular-semibold text-text-primary">Archives</h1>
             <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
-              {FRIENDS.map((f) => {
-                const label = f.name.split(' ')[0]
-                const isActive = activeFriendId === f.id
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => setActiveFriendId(f.id)}
-                    className={
-                      isActive
-                        ? 'text-headline text-text-inverse bg-fill-primary rounded-full whitespace-nowrap px-5 py-2'
-                        : 'text-headline text-text-primary whitespace-nowrap px-2 py-2'
-                    }
-                  >
-                    {label}
-                  </button>
-                )
-              })}
+              {friends.length === 0 ? (
+                <p className="text-subheadline text-text-tertiary">No friends yet</p>
+              ) : (
+                friends.map((f) => {
+                  const label = (f.profile.display_name || f.profile.username || 'Friend').split(' ')[0]
+                  const isActive = activeFriendId === f.profile.id
+                  return (
+                    <button
+                      key={f.friendRowId}
+                      type="button"
+                      onClick={() => setActiveFriendId(f.profile.id)}
+                      className={
+                        isActive
+                          ? 'text-headline text-text-inverse bg-fill-primary rounded-full whitespace-nowrap px-5 py-2'
+                          : 'text-headline text-text-primary whitespace-nowrap px-2 py-2'
+                      }
+                    >
+                      {label}
+                    </button>
+                  )
+                })
+              )}
             </div>
           </div>
 

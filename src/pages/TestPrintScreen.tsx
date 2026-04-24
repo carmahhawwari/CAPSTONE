@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import Receipt from '@/components/Receipt'
-import { renderToPrintBuffer, bufferToBase64 } from '@/lib/escpos'
+import { renderToPrintBuffer } from '@/lib/escpos'
 import type { DitherMethod } from '@/lib/escpos'
-import { PRINT_SERVER_URL } from '@/lib/printBackend'
+import { submitPrintJob } from '@/lib/printJob'
+import { useAuth } from '@/contexts/AuthContext'
 import { RECEIPTS } from '@/data/mock'
 import type { Receipt as ReceiptType } from '@/types/app'
 
@@ -89,6 +90,7 @@ function ditherImageData(imageData: ImageData, method: DitherMethod): Uint8Array
   return result
 }
 
+
 async function renderDitheredImageDataUrl(
   source: string,
   ditherMethod: DitherMethod,
@@ -134,16 +136,13 @@ async function renderDitheredImageDataUrl(
 }
 
 export default function TestPrintScreen() {
+  const { user } = useAuth()
   const receiptRef = useRef<HTMLDivElement>(null)
-  const livePreviewUrlRef = useRef<string | null>(null)
-  const livePreviewRunRef = useRef(0)
   const [selectedIdx, setSelectedIdx] = useState(0)
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
   const [lastSize, setLastSize] = useState<number | null>(null)
   const [ditherMethod, setDitherMethod] = useState<DitherMethod>('floyd-steinberg')
-  const [liveBitmapUrl, setLiveBitmapUrl] = useState<string | null>(null)
-  const [livePreviewError, setLivePreviewError] = useState('')
   const [uploadedImageSource, setUploadedImageSource] = useState<string | null>(null)
 
   // Editable custom receipt
@@ -160,22 +159,6 @@ export default function TestPrintScreen() {
   const useCustom = selectedIdx === -1
   const receipt = useCustom ? custom : RECEIPTS[selectedIdx]
 
-  async function generatePreviewUrl(target: HTMLElement): Promise<string> {
-    const buffer = await renderToPrintBuffer(target, { ditherMethod })
-    const b64 = bufferToBase64(buffer)
-    const res = await fetch(PRINT_SERVER_URL + '/preview', {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: b64,
-    })
-
-    if (!res.ok) {
-      throw new Error(`Preview failed: ${res.status}`)
-    }
-
-    const blob = await res.blob()
-    return URL.createObjectURL(blob)
-  }
 
   async function handleImageSelected(file: File | null) {
     if (!file) {
@@ -215,6 +198,7 @@ export default function TestPrintScreen() {
     }
   }, [uploadedImageSource, ditherMethod])
 
+
   async function handlePrint() {
     if (!receiptRef.current) return
 
@@ -222,19 +206,19 @@ export default function TestPrintScreen() {
     setError('')
 
     try {
-      const buffer = await renderToPrintBuffer(receiptRef.current, { ditherMethod })
-      setLastSize(buffer.length)
+      await renderToPrintBuffer(receiptRef.current, { ditherMethod })
       setStatus('sending')
 
-      const res = await fetch(PRINT_SERVER_URL + '/print', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/octet-stream' },
-        body: toArrayBuffer(buffer),
-      })
-
-      if (!res.ok) {
-        throw new Error(`Print server returned ${res.status}: ${await res.text()}`)
+      // Send via Supabase to the Pi
+      if (!user?.id) {
+        throw new Error('Not logged in. Please log in to print.')
       }
+
+      await submitPrintJob({
+        receiptElement: receiptRef.current,
+        recipientName: custom.to,
+        messageText: custom.content,
+      })
 
       setStatus('done')
     } catch (e) {
@@ -268,58 +252,8 @@ export default function TestPrintScreen() {
     }
   }
 
-  async function handlePreview() {
-    if (!receiptRef.current) return
 
-    try {
-      const url = await generatePreviewUrl(receiptRef.current)
-      window.open(url, '_blank')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-      setStatus('error')
-    }
-  }
 
-  useEffect(() => {
-    if (!receiptRef.current) return
-
-    let cancelled = false
-    const runId = ++livePreviewRunRef.current
-    const timerId = window.setTimeout(async () => {
-      if (!receiptRef.current) return
-      try {
-        const nextUrl = await generatePreviewUrl(receiptRef.current)
-        if (cancelled || runId !== livePreviewRunRef.current) {
-          URL.revokeObjectURL(nextUrl)
-          return
-        }
-
-        if (livePreviewUrlRef.current) {
-          URL.revokeObjectURL(livePreviewUrlRef.current)
-        }
-        livePreviewUrlRef.current = nextUrl
-        setLiveBitmapUrl(nextUrl)
-        setLivePreviewError('')
-      } catch (e) {
-        if (cancelled || runId !== livePreviewRunRef.current) return
-        setLivePreviewError(e instanceof Error ? e.message : String(e))
-      }
-    }, 350)
-
-    return () => {
-      cancelled = true
-      window.clearTimeout(timerId)
-    }
-  }, [selectedIdx, custom.to, custom.from, custom.prompt, custom.content, custom.imageDataUrl, ditherMethod])
-
-  useEffect(() => {
-    return () => {
-      if (livePreviewUrlRef.current) {
-        URL.revokeObjectURL(livePreviewUrlRef.current)
-        livePreviewUrlRef.current = null
-      }
-    }
-  }, [])
 
   const statusLabel: Record<Status, string> = {
     idle: '',
@@ -336,6 +270,12 @@ export default function TestPrintScreen() {
         <p className="text-sm text-gray-500 mb-6">
           ESC/POS bitmap test — POS80 @ 576 dots wide
         </p>
+
+        {!user?.id && (
+          <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded text-orange-700 text-sm">
+            ⚠️ Not logged in. <a href="/login" className="underline">Log in</a> to print.
+          </div>
+        )}
 
         {/* Receipt selector */}
         <div className="mb-4">
@@ -429,9 +369,9 @@ export default function TestPrintScreen() {
           </div>
         )}
 
-        {/* Preview: the actual Receipt component that will be rasterized */}
+        {/* Receipt preview: the actual component that will be rasterized */}
         <div className="mb-4">
-          <p className="text-xs text-gray-400 mb-1">Receipt preview (this DOM element gets rasterized):</p>
+          <p className="text-xs text-gray-400 mb-1">Receipt (will be sent to printer):</p>
           <div
             ref={receiptRef}
             style={{ width: '80mm', maxWidth: '100%', background: 'white' }}
@@ -440,37 +380,15 @@ export default function TestPrintScreen() {
           </div>
         </div>
 
-        <div className="mb-4">
-          <p className="text-xs text-gray-400 mb-1">Live bitmap preview (updates as you edit):</p>
-          <div className="bg-white border border-gray-200 rounded p-2 min-h-24">
-            {liveBitmapUrl ? (
-              <img
-                src={liveBitmapUrl}
-                alt="Live printer bitmap preview"
-                className="w-full h-auto border border-gray-200"
-              />
-            ) : (
-              <p className="text-xs text-gray-500">Generating preview...</p>
-            )}
-          </div>
-          {livePreviewError && <p className="text-xs text-red-600 mt-1">Live preview error: {livePreviewError}</p>}
-        </div>
 
         {/* Actions */}
         <div className="flex gap-3 mb-4">
           <button
             onClick={handlePrint}
             disabled={status === 'rendering' || status === 'sending'}
-            className="px-4 py-2 bg-orange-500 text-white rounded font-medium text-sm hover:bg-orange-600 disabled:opacity-50"
+            className="px-4 py-2 bg-orange-500 text-white rounded font-medium text-sm hover:bg-orange-600 disabled:opacity-50 flex-1"
           >
-            Print
-          </button>
-          <button
-            onClick={handlePreview}
-            disabled={status === 'rendering' || status === 'sending'}
-            className="px-4 py-2 bg-gray-700 text-white rounded font-medium text-sm hover:bg-gray-800 disabled:opacity-50"
-          >
-            Preview Bitmap
+            {status === 'sending' ? 'Sending...' : 'Print'}
           </button>
           <button
             onClick={handleDownload}
@@ -490,18 +408,17 @@ export default function TestPrintScreen() {
 
         {/* Instructions */}
         <div className="mt-8 bg-white border border-gray-200 rounded p-4 text-sm text-gray-600 space-y-3">
-          <h2 className="font-semibold text-gray-800">Setup</h2>
-          <p>1. Plug the POS80 into your Mac via USB</p>
-          <p>2. Start the local print server in queue mode (recommended):</p>
-          <code className="block bg-gray-50 p-2 rounded text-xs">node scripts/print-server.mjs Brightek_POS80</code>
-          <p>3. Optional: direct device mode:</p>
-          <code className="block bg-gray-50 p-2 rounded text-xs">node scripts/print-server.mjs /dev/cu.usbserial-1234</code>
-          <p>4. Click <strong>Print</strong> above to send the receipt</p>
+          <h2 className="font-semibold text-gray-800">Internet Printing Setup</h2>
+          <p>1. Make sure you're logged in</p>
+          <p>2. Toggle print mode to <strong>Internet (Pi)</strong></p>
+          <p>3. Edit the receipt (to/from/message/image)</p>
+          <p>4. Click <strong>Print</strong> to send to your Raspberry Pi</p>
+          <p>5. Your Pi will pick up the job and print within 3 seconds</p>
           <hr className="border-gray-200" />
           <p className="text-xs text-gray-400">
-            <strong>Preview Bitmap</strong> renders the ESC/POS data back to a PNG so you can verify the dithering without wasting paper.
+            The printer connects to Supabase, which your Raspberry Pi polls every 3 seconds. When a job is found, it claims it atomically, sends the ESC/POS data to the USB printer, and updates the status.
             <br />
-            <strong>Download .bin</strong> saves the raw ESC/POS binary — you can send it manually: <code>lp -d Brightek_POS80 -o raw receipt.bin</code>
+            <strong>Download .bin</strong> saves the raw ESC/POS binary for manual testing.
           </p>
         </div>
       </div>

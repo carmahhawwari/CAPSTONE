@@ -5,6 +5,8 @@ import { PRINT_SERVER_URL, USE_LOCAL_PRINT_SERVER } from './printBackend'
 interface SubmitPrintJobOptions {
   receiptElement: HTMLElement
   recipientName: string
+  messageText?: string
+  recipientId?: string
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -37,7 +39,7 @@ function getCurrentPosition(): Promise<GeolocationPosition | null> {
  *
  * Returns the job ID on success, or throws on failure.
  */
-export async function submitPrintJob({ receiptElement, recipientName }: SubmitPrintJobOptions): Promise<string> {
+export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId }: SubmitPrintJobOptions): Promise<string> {
   // 1. Render receipt to ESC/POS binary
   const buffer = await renderToPrintBuffer(receiptElement)
   const payload = bufferToBase64(buffer)
@@ -92,6 +94,8 @@ export async function submitPrintJob({ receiptElement, recipientName }: SubmitPr
       printer_id: printerId,
       sender_id: user?.id ?? null,
       recipient_name: recipientName,
+      recipient_id: recipientId ?? null,
+      message_text: messageText ?? null,
       payload_base64: payload,
       sender_latitude: lat,
       sender_longitude: lng,
