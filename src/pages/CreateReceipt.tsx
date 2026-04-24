@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { submitPrintJob } from '@/lib/printJob'
+import Receipt from '@/components/Receipt'
+import type { Receipt as ReceiptType } from '@/types/app'
 
 export default function CreateReceipt() {
   const navigate = useNavigate()
@@ -14,8 +16,32 @@ export default function CreateReceipt() {
   const fileRef = useRef<HTMLInputElement>(null)
   const receiptRef = useRef<HTMLDivElement>(null)
 
-  const receiptNumber = '00-00-000'
+  // Get recipient ID from URL params
   const recipientId = searchParams.get('to')
+
+  // Editable recipient and sender
+  const [toText, setToText] = useState('')
+  const [fromText, setFromText] = useState('')
+  const [fontSize, setFontSize] = useState('base')
+
+  const fontSizeMap = {
+    sm: 'text-sm',
+    base: 'text-base',
+    lg: 'text-lg',
+    xl: 'text-xl',
+  }
+
+  // Build receipt object for display
+  const receipt: ReceiptType = {
+    id: 'draft',
+    date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    to: toText || (recipientId ? `Friend ${recipientId.slice(0, 8)}` : 'To: '),
+    from: fromText || (user?.user_metadata?.display_name ?? 'From: '),
+    prompt: undefined,
+    content: message || '(your message will appear here)',
+    imageDataUrl: image || undefined,
+    friendId: recipientId || 'unknown',
+  }
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -54,12 +80,16 @@ export default function CreateReceipt() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg-base px-6 pt-12 pb-8">
-      <header className="flex items-end justify-between">
-        <h1 className="text-regular-semibold text-text-primary">Create Recipt</h1>
-        <IconButton label="Home" onClick={() => navigate('/home')}>
-          <HomeIcon />
-        </IconButton>
+    <div className="flex min-h-screen flex-col bg-gray-50 px-4 pt-6 pb-8">
+      <header className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Create Receipt</h1>
+        <button
+          onClick={() => navigate('/home')}
+          className="text-gray-500 hover:text-gray-700"
+          aria-label="Go home"
+        >
+          ←
+        </button>
       </header>
 
       {error && (
@@ -68,13 +98,10 @@ export default function CreateReceipt() {
         </div>
       )}
 
-      <div className="flex flex-1 items-center justify-center py-8">
-        <div ref={receiptRef} className="border-fill-primary bg-bg-primary rounded-md w-full border-2">
-        <div className="text-headline text-text-primary border-fill-primary border-b-2 py-4 text-center">
-          {receiptNumber}
-        </div>
-
-        <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 py-8">
+        {/* Image Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Attach Image (optional)</label>
           <div className="relative">
             <input
               ref={fileRef}
@@ -86,135 +113,106 @@ export default function CreateReceipt() {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="border-fill-primary rounded-md flex aspect-[4/3] w-full items-center justify-center overflow-hidden border-2"
+              className="border-2 border-gray-300 rounded-md w-full overflow-hidden hover:border-gray-400 transition bg-gray-50"
             >
               {image ? (
-                <img src={image} alt="" className="h-full w-full object-cover" />
+                <img src={image} alt="Uploaded" className="w-full h-auto object-cover" />
               ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <ArrowUpIcon />
-                  <span className="text-headline text-text-primary">
-                    upload image
-                  </span>
+                <div className="flex flex-col items-center gap-2 text-gray-500 py-12">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 19V5M5 12L12 5L19 12" />
+                  </svg>
+                  <span className="text-sm">Upload image</span>
                 </div>
               )}
             </button>
-            <button
-              type="button"
-              onClick={() => setImage(null)}
-              aria-label="Remove image"
-              className="bg-fill-primary text-text-inverse absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full"
-            >
-              <XIcon />
-            </button>
+            {image && (
+              <button
+                type="button"
+                onClick={() => setImage(null)}
+                aria-label="Remove image"
+                className="bg-red-500 text-white absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full hover:bg-red-600"
+              >
+                ×
+              </button>
+            )}
           </div>
+        </div>
 
+        {/* Recipient and Sender */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">To:</label>
+            <input
+              type="text"
+              value={toText}
+              onChange={(e) => setToText(e.target.value)}
+              placeholder={recipientId ? `Friend ${recipientId.slice(0, 8)}` : 'Recipient name'}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">From:</label>
+            <input
+              type="text"
+              value={fromText}
+              onChange={(e) => setFromText(e.target.value)}
+              placeholder={user?.user_metadata?.display_name ?? 'Your name'}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Font Size */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Text Size</label>
+          <div className="flex gap-2">
+            {Object.entries(fontSizeMap).map(([key, _]) => (
+              <button
+                key={key}
+                onClick={() => setFontSize(key)}
+                className={`px-3 py-1 rounded text-sm border ${
+                  fontSize === key
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                {key.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Message Input */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Your Message</label>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Your message belongs here"
-            rows={3}
-            className="text-body text-text-tertiary placeholder:text-text-tertiary w-full resize-none bg-transparent focus:outline-none"
+            placeholder="Write your message here..."
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
         </div>
 
-        <div className="text-body text-text-primary border-fill-primary border-t-2 p-4 text-right">
-          <div>love,</div>
-          <div>name</div>
-        </div>
+        {/* Receipt Preview */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
+          <div ref={receiptRef} className="max-w-sm mx-auto">
+            <Receipt receipt={receipt} fontSize={fontSize as 'sm' | 'base' | 'lg' | 'xl'} />
+          </div>
         </div>
       </div>
 
       <button
         type="button"
         onClick={handleSend}
-        disabled={loading}
-        className="text-headline text-text-inverse bg-fill-primary rounded-md w-full py-4 disabled:opacity-50"
+        disabled={loading || !message}
+        className="bg-blue-500 text-white font-medium py-3 px-4 rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
       >
-        {loading ? 'Sending...' : 'Send to Inklings'}
+        {loading ? 'Sending...' : 'Send Receipt'}
       </button>
     </div>
   )
 }
 
-function IconButton({
-  children,
-  label,
-  onClick,
-}: {
-  children: React.ReactNode
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className="border-fill-primary flex h-11 w-11 items-center justify-center rounded-full border-2"
-    >
-      {children}
-    </button>
-  )
-}
-
-function HomeIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d="M3 10.5L12 3L21 10.5V20C21 20.55 20.55 21 20 21H15V14H9V21H4C3.45 21 3 20.55 3 20V10.5Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function ArrowUpIcon() {
-  return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d="M12 19V5M5 12L12 5L19 12"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function XIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d="M6 6L18 18M18 6L6 18"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}

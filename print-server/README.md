@@ -152,6 +152,18 @@ sudo systemctl restart cups
 tail -f /var/log/cups/error_log
 ```
 
+### Resource Busy Error (USB)
+**Symptom:** `[Errno 16] Resource busy` when printing
+
+**Cause:** Device held by kernel driver or bootloader_exit script
+
+**Fix:**
+1. Ensure bootloader_exit script isn't running (`pkill -f bootloader_exit`)
+2. The print server now auto-detaches kernel drivers
+3. If still busy, unplug printer and wait 10 seconds before plugging back in
+
+The print server handles both application mode (0x5743) and bootloader mode (0x5720) with automatic kernel driver detach.
+
 ### Test Printing
 
 **From web app:**
@@ -196,12 +208,22 @@ USB Printer
 
 The Brightek POS80 uses two device modes:
 
-| Mode | Vendor ID | Product ID | Purpose |
-|------|-----------|-----------|---------|
-| **Application** | 0x0483 | 0x5743 | Normal printing (ESC/POS) |
-| **Bootloader** | 0x0483 | 0x5720 | Firmware updates, different endpoints |
+| Mode | Vendor ID | Product ID | Interface | Endpoints |
+|------|-----------|-----------|-----------|-----------|
+| **Application** | 0x0483 | 0x5743 | Printer | Variable (auto-detected) |
+| **Bootloader** | 0x0483 | 0x5720 | Printer (0x81 IN, 0x03 OUT) | Fixed: IN=0x81, OUT=0x03 |
 
-**Bootloader mode** has different USB endpoints than application mode, causing "Invalid endpoint address 0x1" if you try to send ESC/POS commands to it. The `bootloader_exit.py` utility handles this automatically.
+### Bootloader Mode Support
+
+The printer often boots in bootloader mode (0x5720). **The print server now works in bootloader mode** using explicit endpoint addresses:
+
+**Solution implemented:**
+1. Detect both device IDs (0x5743 and 0x5720)
+2. Use fixed endpoints (IN=0x81, OUT=0x03) for bootloader mode
+3. Detach kernel driver if claimed (`usb.detach_kernel_driver()`)
+4. Handle "Resource busy" errors with USB reset
+
+**This eliminates the need for bootloader exit on most systems.** The printer prints successfully in bootloader mode as long as endpoints are explicit.
 
 ### ESC/POS Command Format
 

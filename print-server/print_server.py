@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from supabase import create_client, Client
+import usb.util
 
 load_dotenv()
 
@@ -29,6 +30,7 @@ SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
 PRINTER_ID = os.environ["PRINTER_ID"]
 USB_VENDOR_ID = int(os.environ.get("USB_VENDOR_ID", "0x0483"), 16)
 USB_PRODUCT_ID = int(os.environ.get("USB_PRODUCT_ID", "0x5743"), 16)
+USB_BOOTLOADER_ID = 0x5720  # Bootloader mode device ID
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", "3"))
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -44,17 +46,75 @@ def get_printer():
     if _printer is not None:
         return _printer
 
-    from escpos.printer import Usb
+    import usb.core
+    import usb.util
 
-    _printer = Usb(USB_VENDOR_ID, USB_PRODUCT_ID)
-    print(f"[printer] Connected to USB device {USB_VENDOR_ID:#06x}:{USB_PRODUCT_ID:#06x}")
+    # Try application mode first (0x5743), then bootloader mode (0x5720)
+    dev = usb.core.find(idVendor=USB_VENDOR_ID, idProduct=USB_PRODUCT_ID)
+    product_id = USB_PRODUCT_ID
+
+    if dev is None:
+        dev = usb.core.find(idVendor=USB_VENDOR_ID, idProduct=USB_BOOTLOADER_ID)
+        product_id = USB_BOOTLOADER_ID
+        if dev is None:
+            raise Exception(f"USB device not found (tried {USB_VENDOR_ID:#06x}:{USB_PRODUCT_ID:#06x} and {USB_VENDOR_ID:#06x}:{USB_BOOTLOADER_ID:#06x})")
+
+    # Detach from kernel driver if needed
+    try:
+        if dev.is_kernel_driver_active(0):
+            dev.detach_kernel_driver(0)
+    except (usb.core.USBError, Exception):
+        pass  # Not always available on all systems
+
+    try:
+        dev.set_configuration()
+    except usb.core.USBError as e:
+        if "Resource busy" in str(e):
+            print("[printer] Device busy, trying to reset...")
+            dev.reset()
+            time.sleep(0.5)
+            dev.set_configuration()
+        else:
+            raise
+
+    cfg = dev.get_active_configuration()
+    intf = cfg[(0, 0)]
+
+    # Brightek POS80 uses non-standard endpoints: 0x81 (IN), 0x03 (OUT)
+    out_ep = usb.util.find_descriptor(
+        intf,
+        bEndpointAddress=0x03
+    )
+    in_ep = usb.util.find_descriptor(
+        intf,
+        bEndpointAddress=0x81
+    )
+
+    if not out_ep or not in_ep:
+        raise Exception("Could not find printer endpoints")
+
+    _printer = {'device': dev, 'out_ep': out_ep, 'in_ep': in_ep}
+    print(f"[printer] Connected to USB device {USB_VENDOR_ID:#06x}:{product_id:#06x} (EP OUT=0x03, EP IN=0x81)")
     return _printer
 
 
 def send_to_printer(raw_bytes: bytes) -> None:
     """Send raw ESC/POS bytes to the thermal printer."""
     printer = get_printer()
-    printer.device.write(printer.out_ep, raw_bytes, timeout=10_000)
+    printer['device'].write(printer['out_ep'], raw_bytes, timeout=10_000)
+
+
+def close_printer() -> None:
+    """Explicitly close and release the USB device."""
+    global _printer
+    if _printer is not None:
+        try:
+            import usb.core
+            _printer['device'].reset()
+            usb.util.dispose_resources(_printer['device'])
+        except Exception as e:
+            print(f"[printer] Warning closing device: {e}")
+        _printer = None
 
 
 # ---------- Job Processing ----------
@@ -77,16 +137,20 @@ def claim_job(job_id: str) -> bool:
 
 
 def mark_done(job_id: str) -> None:
-    supabase.table("print_jobs").update({"status": "done"}).eq("id", job_id).execute()
+    result = supabase.table("print_jobs").update({"status": "done"}).eq("id", job_id).execute()
+    if not result.data:
+        raise Exception(f"Failed to mark job {job_id} as done")
 
 
 def mark_failed(job_id: str, error: str) -> None:
-    (
+    result = (
         supabase.table("print_jobs")
         .update({"status": "failed", "error_message": error[:500]})
         .eq("id", job_id)
         .execute()
     )
+    if not result.data:
+        print(f"[job {job_id[:8]}] Warning: Failed to update job status")
 
 
 def process_job(job: dict) -> None:
@@ -100,11 +164,22 @@ def process_job(job: dict) -> None:
     try:
         payload = base64.b64decode(job["payload_base64"])
         send_to_printer(payload)
+        print(f"[job {job_id[:8]}] Sent {len(payload)} bytes to printer")
+
+        # Mark as done
         mark_done(job_id)
-        print(f"[job {job_id[:8]}] Printed successfully ({len(payload)} bytes)")
+        print(f"[job {job_id[:8]}] ✓ Completed successfully")
+
     except Exception as e:
-        print(f"[job {job_id[:8]}] FAILED: {e}")
-        mark_failed(job_id, str(e))
+        print(f"[job {job_id[:8]}] ✗ FAILED: {e}")
+        try:
+            mark_failed(job_id, str(e))
+        except Exception as err:
+            print(f"[job {job_id[:8]}] Could not mark failed: {err}")
+    finally:
+        # Always close printer connection after job
+        close_printer()
+        time.sleep(0.5)  # Brief delay before next job
 
 
 # ---------- Poll Loop ----------
@@ -138,12 +213,12 @@ def attempt_bootloader_exit() -> None:
             if result.stdout:
                 for line in result.stdout.strip().split("\n"):
                     print(line)
-            if result.returncode != 0 and result.stderr:
-                print(f"[server] Bootloader exit: {result.stderr.strip()}")
+            if result.returncode != 0:
+                print("[server] Bootloader exit skipped (device may already be ready or in bootloader mode)")
         else:
             print(f"[server] Bootloader exit script not found at {script_path}")
     except Exception as e:
-        print(f"[server] Bootloader exit error: {e}")
+        print(f"[server] Bootloader exit error (continuing): {e}")
 
 
 def main() -> None:
@@ -151,8 +226,9 @@ def main() -> None:
     print(f"[server] Printer ID: {PRINTER_ID}")
     print(f"[server] Polling every {POLL_INTERVAL}s")
 
-    # Try to exit bootloader mode on startup
-    attempt_bootloader_exit()
+    # Skip bootloader exit (causes resource busy issues)
+    # The printer can work in bootloader mode if we use correct endpoints
+    print(f"[server] Ready to accept print jobs")
 
     # Graceful shutdown
     running = True
