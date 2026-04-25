@@ -9,6 +9,8 @@ export interface CornerSticker {
   ditheredDataUrl?: string
   rotation?: number
   scale?: number
+  offsetX?: number
+  offsetY?: number
 }
 
 export type Block =

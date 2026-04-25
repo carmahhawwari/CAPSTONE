@@ -59,10 +59,11 @@ export async function ditherStickerImage(imageUrl: string): Promise<string> {
 
       try {
         const dithered = await applyImageAdjustments(dataUrl, {
-          brightness: 100,
-          contrast: 100,
-          grayscale: 100,
+          brightness: 0,
+          contrast: 0,
           dithering: 'floyd-steinberg',
+          thresholdValue: 128,
+          orderedScale: 1,
           fsStrength: 1,
         })
         resolve(dithered)

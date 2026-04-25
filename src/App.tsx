@@ -36,8 +36,8 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="lg:flex lg:justify-center lg:min-h-screen">
-        <div className="lg:w-[35vw]">
+      <div className="md:flex md:justify-center md:min-h-screen">
+        <div className="md:w-[max(24rem,35vw)]">
           {showSplash && <Splash onComplete={handleSplashComplete} />}
           <AuthProvider>
             <Routes>

@@ -13,7 +13,7 @@ export default function GiphyStickerPicker({ onSelect, onClose }: GiphyStickerPi
   const [loading, setLoading] = useState(false)
   const [ditherLoading, setDitherLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null)
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {

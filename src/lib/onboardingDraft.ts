@@ -9,6 +9,7 @@ export type OnboardingDraft = {
     blocks: Block[]
     prompt: string
     cornerSticker?: CornerSticker
+    headerVariant?: 'simple' | 'logo'
   } | null
   recipient: {
     name: string

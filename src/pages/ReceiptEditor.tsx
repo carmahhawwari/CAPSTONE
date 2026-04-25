@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Avatar from '@/components/Avatar'
 import TextBlock from '@/components/canvas/TextBlock'
@@ -29,6 +29,26 @@ const PROMPTS = [
 ]
 
 const FONTS_WITH_ITALIC = ['inter', 'normal', 'heading', 'handwriting', 'liquida', 'dottonoji', 'tsuchinoko', 'redaction'] as const
+const DEFAULT_CORNER_STICKER_ROTATION = 0
+const DEFAULT_CORNER_STICKER_SCALE = 1.1
+const MIN_CORNER_STICKER_SCALE = 0.5
+const MAX_CORNER_STICKER_SCALE = 2.5
+const CORNER_STICKER_DRAG_CLAMP = 0.35
+const CORNER_STICKER_SIZE = 224
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
+
+function normalizeCornerSticker(sticker: CornerSticker): CornerSticker {
+  return {
+    ...sticker,
+    rotation: sticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION,
+    scale: sticker.scale ?? DEFAULT_CORNER_STICKER_SCALE,
+    offsetX: sticker.offsetX ?? 0,
+    offsetY: sticker.offsetY ?? 0,
+  }
+}
 
 function supportsItalic(style: TextStyle): boolean {
   return FONTS_WITH_ITALIC.includes(style as any)
@@ -61,7 +81,26 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [cornerSticker, setCornerSticker] = useState<CornerSticker | null>(null)
   const [showGiphyPicker, setShowGiphyPicker] = useState(false)
   const [stickerActive, setStickerActive] = useState(false)
+  const [headerVariant, setHeaderVariant] = useState<'simple' | 'logo'>('simple')
   const receiptRef = useRef<HTMLDivElement>(null)
+  const cornerStickerAreaRef = useRef<HTMLDivElement>(null)
+  const activeStickerPointersRef = useRef(new Map<number, { x: number; y: number }>())
+  const stickerGestureRef = useRef<
+    | {
+      type: 'drag'
+      pointerId: number
+      startX: number
+      startY: number
+      initialOffsetX: number
+      initialOffsetY: number
+    }
+    | {
+      type: 'pinch'
+      startDistance: number
+      initialScale: number
+    }
+    | null
+  >(null)
 
   // Generate 3 random prompts + no prompt option
   const [prompts] = useState(() => {
@@ -185,9 +224,138 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         blocks,
         prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
         cornerSticker: cornerSticker ?? undefined,
+        headerVariant,
       },
     })
     navigate('/onboard/deliver')
+  }
+
+  const clampStickerOffsets = (offsetX: number, offsetY: number) => {
+    const area = cornerStickerAreaRef.current
+    if (!area) return { offsetX, offsetY }
+
+    const maxHorizontalOffset = area.clientWidth * CORNER_STICKER_DRAG_CLAMP
+    const maxVerticalOffset = area.clientHeight * CORNER_STICKER_DRAG_CLAMP
+
+    return {
+      offsetX: clamp(offsetX, -maxHorizontalOffset, maxHorizontalOffset),
+      offsetY: clamp(offsetY, -maxVerticalOffset, maxVerticalOffset),
+    }
+  }
+
+  const updateCornerSticker = (updates: Partial<CornerSticker> | ((current: CornerSticker) => Partial<CornerSticker>)) => {
+    setCornerSticker((current) => {
+      if (!current) return current
+      const nextUpdates = typeof updates === 'function' ? updates(current) : updates
+      return normalizeCornerSticker({ ...current, ...nextUpdates })
+    })
+  }
+
+  const handleSelectCornerSticker = (sticker: CornerSticker) => {
+    setCornerSticker(normalizeCornerSticker(sticker))
+    setStickerActive(true)
+  }
+
+  const getStickerPointerDistance = () => {
+    const pointers = [...activeStickerPointersRef.current.values()]
+    if (pointers.length < 2) return null
+    return Math.hypot(pointers[0].x - pointers[1].x, pointers[0].y - pointers[1].y)
+  }
+
+  const resetStickerGesture = () => {
+    stickerGestureRef.current = null
+  }
+
+  const handleCornerStickerPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!cornerSticker) return
+
+    if (!stickerActive) {
+      setStickerActive(true)
+      return
+    }
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    activeStickerPointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    e.currentTarget.setPointerCapture(e.pointerId)
+
+    if (activeStickerPointersRef.current.size === 1) {
+      stickerGestureRef.current = {
+        type: 'drag',
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        initialOffsetX: cornerSticker.offsetX ?? 0,
+        initialOffsetY: cornerSticker.offsetY ?? 0,
+      }
+      return
+    }
+
+    if (activeStickerPointersRef.current.size === 2) {
+      const startDistance = getStickerPointerDistance()
+      if (!startDistance) return
+      stickerGestureRef.current = {
+        type: 'pinch',
+        startDistance,
+        initialScale: cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE,
+      }
+    }
+  }
+
+  const handleCornerStickerPointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!activeStickerPointersRef.current.has(e.pointerId)) return
+
+    e.preventDefault()
+    activeStickerPointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    const gesture = stickerGestureRef.current
+    if (!gesture) return
+
+    if (gesture.type === 'drag') {
+      if (gesture.pointerId !== e.pointerId) return
+
+      const nextOffsets = clampStickerOffsets(
+        gesture.initialOffsetX + (e.clientX - gesture.startX),
+        gesture.initialOffsetY + (e.clientY - gesture.startY),
+      )
+
+      updateCornerSticker(nextOffsets)
+      return
+    }
+
+    const distance = getStickerPointerDistance()
+    if (!distance) return
+
+    updateCornerSticker({
+      scale: clamp(
+        gesture.initialScale * (distance / gesture.startDistance),
+        MIN_CORNER_STICKER_SCALE,
+        MAX_CORNER_STICKER_SCALE,
+      ),
+    })
+  }
+
+  const handleCornerStickerPointerUp = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+    activeStickerPointersRef.current.delete(e.pointerId)
+
+    if (activeStickerPointersRef.current.size === 1 && cornerSticker) {
+      const [[pointerId, pointer]] = activeStickerPointersRef.current.entries()
+      stickerGestureRef.current = {
+        type: 'drag',
+        pointerId,
+        startX: pointer.x,
+        startY: pointer.y,
+        initialOffsetX: cornerSticker.offsetX ?? 0,
+        initialOffsetY: cornerSticker.offsetY ?? 0,
+      }
+      return
+    }
+
+    resetStickerGesture()
   }
 
   const handleSend = () => {
@@ -208,6 +376,30 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     <div className="min-h-screen bg-white flex flex-col pb-16">
       <div className="px-6 pt-8 flex-1 overflow-y-auto">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Share an Inkling</h1>
+
+        {/* Header variant selector */}
+        <div className="mb-4 flex gap-2">
+          <button
+            onClick={() => setHeaderVariant('simple')}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              headerVariant === 'simple'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Simple
+          </button>
+          <button
+            onClick={() => setHeaderVariant('logo')}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              headerVariant === 'logo'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Logo
+          </button>
+        </div>
 
         {/* Friend picker - only for authenticated users */}
         {!onboarding && friends.length > 0 && (
@@ -252,15 +444,37 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           style={{ fontFamily: 'Georgia, serif' }}
         >
           {/* Header */}
-          <div className="text-xs text-gray-400 mb-2">
-            {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-          </div>
-          <div className="text-sm font-semibold text-gray-800">
-            To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
-          </div>
-          <div className="text-sm text-gray-600 pb-3 border-b border-dashed border-gray-200">
-            From: {user?.email?.split('@')[0] ?? 'Me'}
-          </div>
+          {headerVariant === 'simple' ? (
+            <>
+              <div className="text-center mb-2">
+                <h1 className="text-2xl font-bold text-gray-900">inklings</h1>
+                <div className="h-px bg-black mt-1" />
+              </div>
+              <div className="text-xs text-gray-400 mb-2">
+                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </div>
+              <div className="bg-black text-white px-3 py-2 text-sm font-semibold mb-3">
+                To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-center mb-3 flex justify-center">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="drop-shadow-sm">
+                  <g>
+                    <path d="M40 10 L35 25 L25 20 L30 35 L15 30 L30 40 L15 50 L30 45 L25 60 L35 55 L40 70 L45 55 L55 60 L50 45 L65 50 L50 40 L65 30 L50 35 L55 20 L45 25 Z" stroke="black" strokeWidth="1.5" fill="none" />
+                    <circle cx="30" cy="38" r="3" fill="black" />
+                    <circle cx="50" cy="38" r="3" fill="black" />
+                    <path d="M35 48 Q40 52 45 48" stroke="black" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                    <text x="40" y="75" fontSize="10" fontWeight="bold" textAnchor="middle" fill="black">inklings</text>
+                  </g>
+                </svg>
+              </div>
+              <div className="bg-black text-white px-3 py-2 text-sm font-semibold mb-3">
+                To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
+              </div>
+            </>
+          )}
 
           {/* Prompt Picker */}
           <div className="flex items-center gap-3 py-2">
@@ -344,35 +558,52 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
 
           {/* Corner sticker */}
-          <div className="relative h-56 mt-6 mb-0">
+          <div ref={cornerStickerAreaRef} className="relative h-56 mt-6 mb-0">
             {cornerSticker ? (
-              <div className="absolute bottom-0 right-0 group">
+              <div
+                className="absolute bottom-0 right-0 group"
+                style={{
+                  transform: `translate(${cornerSticker.offsetX ?? 0}px, ${cornerSticker.offsetY ?? 0}px)`,
+                }}
+              >
                 <button
-                  onClick={() => setStickerActive(!stickerActive)}
-                  className="focus:outline-none transform transition-all hover:scale-110 active:scale-90"
+                  type="button"
+                  onPointerDown={handleCornerStickerPointerDown}
+                  onPointerMove={handleCornerStickerPointerMove}
+                  onPointerUp={handleCornerStickerPointerUp}
+                  onPointerCancel={handleCornerStickerPointerUp}
+                  className={`focus:outline-none transform transition-all ${
+                    stickerActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer hover:scale-110 active:scale-90'
+                  }`}
                   style={{
-                    transform: `rotate(${cornerSticker.rotation ?? -12}deg) scale(${cornerSticker.scale ?? 1.5})`,
+                    transform: `rotate(${cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}deg) scale(${cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE})`,
+                    touchAction: stickerActive ? 'none' : 'auto',
                   }}
+                  aria-pressed={stickerActive}
                 >
                   {cornerSticker.ditheredDataUrl ? (
                     <img
                       src={cornerSticker.ditheredDataUrl}
                       alt="Corner sticker"
-                      className="w-56 h-56 object-contain drop-shadow-2xl"
+                      className="object-contain"
+                      style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE }}
                     />
                   ) : (
                     <img
                       src={cornerSticker.fullUrl}
                       crossOrigin="anonymous"
                       alt="Corner sticker"
-                      className="w-56 h-56 object-contain drop-shadow-2xl"
-                      style={{ filter: 'grayscale(100%)' }}
+                      className="object-contain"
+                      style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE, filter: 'grayscale(100%)' }}
                     />
                   )}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setCornerSticker(null)}
-                  className="absolute -top-4 -left-4 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md opacity-0 group-hover:opacity-100"
+                  className={`absolute -top-4 -left-4 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md ${
+                    stickerActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  }`}
                   aria-label="Remove corner sticker"
                 >
                   ×
@@ -497,14 +728,14 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <label className="text-xs font-medium text-gray-600">Rotation</label>
-                <span className="text-xs text-gray-500">{cornerSticker.rotation ?? -12}°</span>
+                <span className="text-xs text-gray-500">{cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}°</span>
               </div>
               <input
                 type="range"
                 min="-180"
                 max="180"
-                value={cornerSticker.rotation ?? -12}
-                onChange={e => setCornerSticker({ ...cornerSticker, rotation: parseFloat(e.target.value) })}
+                value={cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}
+                onChange={e => updateCornerSticker({ rotation: parseFloat(e.target.value) })}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
             </div>
@@ -513,22 +744,31 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <label className="text-xs font-medium text-gray-600">Scale</label>
-                <span className="text-xs text-gray-500">{(cornerSticker.scale ?? 1.5).toFixed(1)}×</span>
+                <span className="text-xs text-gray-500">{(cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE).toFixed(1)}×</span>
               </div>
               <input
                 type="range"
-                min="0.5"
-                max="2.5"
+                min={MIN_CORNER_STICKER_SCALE}
+                max={MAX_CORNER_STICKER_SCALE}
                 step="0.1"
-                value={cornerSticker.scale ?? 1.5}
-                onChange={e => setCornerSticker({ ...cornerSticker, scale: parseFloat(e.target.value) })}
+                value={cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE}
+                onChange={e => updateCornerSticker({ scale: parseFloat(e.target.value) })}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
             </div>
 
+            <p className="text-xs text-gray-500">
+              Use one finger to drag and two fingers to scale while this panel is open.
+            </p>
+
             {/* Reset Button */}
             <button
-              onClick={() => setCornerSticker({ ...cornerSticker, rotation: -12, scale: 1.5 })}
+              onClick={() => updateCornerSticker({
+                rotation: DEFAULT_CORNER_STICKER_ROTATION,
+                scale: DEFAULT_CORNER_STICKER_SCALE,
+                offsetX: 0,
+                offsetY: 0,
+              })}
               className="w-full px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Reset to default
@@ -555,7 +795,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         {/* GIPHY Sticker Picker Modal */}
         {showGiphyPicker && (
           <GiphyStickerPicker
-            onSelect={setCornerSticker}
+            onSelect={handleSelectCornerSticker}
             onClose={() => setShowGiphyPicker(false)}
           />
         )}
