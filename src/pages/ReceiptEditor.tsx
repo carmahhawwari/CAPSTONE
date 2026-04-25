@@ -121,6 +121,14 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     setCurrentPromptIndex((prev) => (prev - 1 + prompts.length) % prompts.length)
   }
 
+  const prevHeaderVariant = () => {
+    setHeaderVariant(headerVariant === 'simple' ? 'logo' : 'simple')
+  }
+
+  const nextHeaderVariant = () => {
+    setHeaderVariant(headerVariant === 'simple' ? 'logo' : 'simple')
+  }
+
   // For authenticated users: load friends
   useEffect(() => {
     if (!onboarding && user) {
@@ -380,30 +388,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       <div className="px-6 pt-8 flex-1 overflow-y-auto">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Share an Inkling</h1>
 
-        {/* Header variant selector */}
-        <div className="mb-4 flex gap-2">
-          <button
-            onClick={() => setHeaderVariant('simple')}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              headerVariant === 'simple'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Simple
-          </button>
-          <button
-            onClick={() => setHeaderVariant('logo')}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              headerVariant === 'logo'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Logo
-          </button>
-        </div>
-
         {/* Friend picker - only for authenticated users */}
         {!onboarding && friends.length > 0 && (
           <div className="mb-6">
@@ -489,6 +473,25 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             </div>
             <button
               onClick={nextPrompt}
+              className="text-gray-400 hover:text-gray-600 font-bold text-lg"
+            >
+              &gt;
+            </button>
+          </div>
+
+          {/* Header Variant Picker */}
+          <div className="flex items-center gap-3 py-2 mb-1">
+            <button
+              onClick={prevHeaderVariant}
+              className="text-gray-400 hover:text-gray-600 font-bold text-lg"
+            >
+              &lt;
+            </button>
+            <div className="flex-1 text-center">
+              <p className="text-xs text-gray-500 capitalize">{headerVariant}</p>
+            </div>
+            <button
+              onClick={nextHeaderVariant}
               className="text-gray-400 hover:text-gray-600 font-bold text-lg"
             >
               &gt;
