@@ -27,6 +27,12 @@ const PROMPTS = [
   'What\'s something you want to remember from this week?',
 ]
 
+const FONTS_WITH_ITALIC = ['inter', 'normal', 'heading', 'handwriting', 'liquida', 'dottonoji', 'tsuchinoko', 'redaction'] as const
+
+function supportsItalic(style: TextStyle): boolean {
+  return FONTS_WITH_ITALIC.includes(style as any)
+}
+
 interface ReceiptEditorProps {
   onboarding?: boolean
 }
@@ -315,29 +321,59 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                     onChange={fontWeight => updateBlock(activeBlock.id, { fontWeight })}
                   />
                 </div>
-                <button
-                  onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
-                  className={`mt-8 px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
-                    activeBlock.isItalic
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
-                  }`}
-                  style={{ fontStyle: 'italic' }}
-                >
-                  I
-                </button>
+                {supportsItalic(activeBlock.style) && (
+                  <button
+                    onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
+                    className={`mt-8 px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
+                      activeBlock.isItalic
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
+                    }`}
+                    style={{ fontStyle: 'italic' }}
+                  >
+                    I
+                  </button>
+                )}
               </div>
             )}
             {activeBlock.style === 'tsuchinoko' && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => updateBlock(activeBlock.id, { isBold: !activeBlock.isBold })}
+                  className={`px-3 py-2 rounded text-sm font-bold transition-colors ${
+                    activeBlock.isBold
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  Bold
+                </button>
+                {supportsItalic(activeBlock.style) && (
+                  <button
+                    onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
+                    className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
+                      activeBlock.isItalic
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
+                    }`}
+                    style={{ fontStyle: 'italic' }}
+                  >
+                    I
+                  </button>
+                )}
+              </div>
+            )}
+            {supportsItalic(activeBlock.style) && activeBlock.style !== 'inter' && activeBlock.style !== 'tsuchinoko' && (
               <button
-                onClick={() => updateBlock(activeBlock.id, { isBold: !activeBlock.isBold })}
-                className={`px-3 py-2 rounded text-sm font-bold transition-colors ${
-                  activeBlock.isBold
+                onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
+                className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
+                  activeBlock.isItalic
                     ? 'bg-blue-600 text-white'
                     : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
                 }`}
+                style={{ fontStyle: 'italic' }}
               >
-                Bold
+                I
               </button>
             )}
           </div>
