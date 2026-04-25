@@ -60,6 +60,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [cornerSticker, setCornerSticker] = useState<CornerSticker | null>(null)
   const [showGiphyPicker, setShowGiphyPicker] = useState(false)
+  const [stickerActive, setStickerActive] = useState(false)
   const receiptRef = useRef<HTMLDivElement>(null)
 
   // Generate 3 random prompts + no prompt option
@@ -347,10 +348,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             {cornerSticker ? (
               <div className="absolute bottom-0 right-0 group">
                 <button
-                  onClick={() => setShowGiphyPicker(true)}
+                  onClick={() => setStickerActive(!stickerActive)}
                   className="focus:outline-none transform transition-all hover:scale-110 active:scale-90"
                   style={{
-                    transform: 'rotate(-12deg) scale(1.5)',
+                    transform: `rotate(${cornerSticker.rotation ?? -12}deg) scale(${cornerSticker.scale ?? 1.5})`,
                   }}
                 >
                   {cornerSticker.ditheredDataUrl ? (
@@ -485,6 +486,62 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             adjustments={activeBlock.adjustments ?? DEFAULT_ADJUSTMENTS}
             onAdjustmentsChange={adjustments => updateBlock(activeBlock.id, { adjustments })}
           />
+        )}
+
+        {/* Corner Sticker Control Panel */}
+        {cornerSticker && stickerActive && (
+          <div className="mt-4 bg-gray-50 rounded-lg p-4 space-y-4 border border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-700">Adjust sticker</h3>
+
+            {/* Rotation Slider */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-medium text-gray-600">Rotation</label>
+                <span className="text-xs text-gray-500">{cornerSticker.rotation ?? -12}°</span>
+              </div>
+              <input
+                type="range"
+                min="-180"
+                max="180"
+                value={cornerSticker.rotation ?? -12}
+                onChange={e => setCornerSticker({ ...cornerSticker, rotation: parseFloat(e.target.value) })}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+            </div>
+
+            {/* Scale Slider */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-medium text-gray-600">Scale</label>
+                <span className="text-xs text-gray-500">{(cornerSticker.scale ?? 1.5).toFixed(1)}×</span>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="2.5"
+                step="0.1"
+                value={cornerSticker.scale ?? 1.5}
+                onChange={e => setCornerSticker({ ...cornerSticker, scale: parseFloat(e.target.value) })}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+            </div>
+
+            {/* Reset Button */}
+            <button
+              onClick={() => setCornerSticker({ ...cornerSticker, rotation: -12, scale: 1.5 })}
+              className="w-full px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Reset to default
+            </button>
+
+            {/* Close Panel */}
+            <button
+              onClick={() => setStickerActive(false)}
+              className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Done
+            </button>
+          </div>
         )}
 
         {/* Sticker Picker Modal */}
