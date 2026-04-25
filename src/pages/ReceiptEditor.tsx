@@ -16,11 +16,12 @@ import { DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
 import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
 import { getFriends } from '@/lib/friends'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Block, TextStyle, CornerSticker } from '@/types/canvas'
+import type { Block, TextStyle, CornerSticker, Signature } from '@/types/canvas'
 import type { FriendProfile } from '@/types/app'
-import { newBlockId } from '@/types/canvas'
+import { newBlockId, FONT_STYLES, STYLE_LABELS } from '@/types/canvas'
 import headerLogoSvg from '@/assets/icons/header-logo.svg'
-import headerSquidsSvg from '@/assets/icons/header-squids.svg'
+import headerSquidsCheckersSvg from '@/assets/icons/header-squids-checkers.svg'
+import headerSquidsV1Svg from '@/assets/icons/header-squids-v1.svg'
 import recipientBarSvg from '@/assets/icons/recipient-bar.svg'
 
 const PROMPTS = [
@@ -84,11 +85,31 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [cornerSticker, setCornerSticker] = useState<CornerSticker | null>(null)
   const [showGiphyPicker, setShowGiphyPicker] = useState(false)
   const [stickerActive, setStickerActive] = useState(false)
-  const [headerVariant, setHeaderVariant] = useState<'simple' | 'logo'>('simple')
+  const [signature, setSignature] = useState<Signature>({ text: 'Love, Me', style: 'handwriting' })
+  const [signatureActive, setSignatureActive] = useState(false)
+  const [headerVariant, setHeaderVariant] = useState<'simple' | 'squids-checkers' | 'squids-v1' | 'none'>('simple')
   const receiptRef = useRef<HTMLDivElement>(null)
   const cornerStickerAreaRef = useRef<HTMLDivElement>(null)
+  const signatureAreaRef = useRef<HTMLDivElement>(null)
   const activeStickerPointersRef = useRef(new Map<number, { x: number; y: number }>())
+  const activeSignaturePointersRef = useRef(new Map<number, { x: number; y: number }>())
   const stickerGestureRef = useRef<
+    | {
+      type: 'drag'
+      pointerId: number
+      startX: number
+      startY: number
+      initialOffsetX: number
+      initialOffsetY: number
+    }
+    | {
+      type: 'pinch'
+      startDistance: number
+      initialScale: number
+    }
+    | null
+  >(null)
+  const signatureGestureRef = useRef<
     | {
       type: 'drag'
       pointerId: number
@@ -122,11 +143,17 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   }
 
   const prevHeaderVariant = () => {
-    setHeaderVariant(headerVariant === 'simple' ? 'logo' : 'simple')
+    const variants = ['simple', 'squids-checkers', 'squids-v1', 'none'] as const
+    const currentIndex = variants.indexOf(headerVariant)
+    const prevIndex = (currentIndex - 1 + variants.length) % variants.length
+    setHeaderVariant(variants[prevIndex])
   }
 
   const nextHeaderVariant = () => {
-    setHeaderVariant(headerVariant === 'simple' ? 'logo' : 'simple')
+    const variants = ['simple', 'squids-checkers', 'squids-v1', 'none'] as const
+    const currentIndex = variants.indexOf(headerVariant)
+    const nextIndex = (currentIndex + 1) % variants.length
+    setHeaderVariant(variants[nextIndex])
   }
 
   // For authenticated users: load friends
@@ -145,6 +172,35 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       }).catch((e) => setError(e.message ?? 'Failed to load friends'))
     }
   }, [user, onboarding, searchParams])
+
+  // Load signature from draft
+  useEffect(() => {
+    if (onboarding && draft.content?.signature) {
+      setSignature(draft.content.signature)
+    }
+  }, [onboarding, draft.content?.signature])
+
+  // Handle deselecting signature with Escape key or outside click
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && signatureActive) {
+        setSignatureActive(false)
+      }
+    }
+
+    const handleClick = (e: MouseEvent) => {
+      if (signatureActive && signatureAreaRef.current && !signatureAreaRef.current.contains(e.target as Node)) {
+        setSignatureActive(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('click', handleClick)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('click', handleClick)
+    }
+  }, [signatureActive])
 
   const recipientName = onboarding ? draft.recipient?.name ?? '' : ''
   const selectedFriend = friends.find(f => f.profile.id === selectedFriendId)
@@ -235,6 +291,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         blocks,
         prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
         cornerSticker: cornerSticker ?? undefined,
+        signature,
         headerVariant,
       },
     })
@@ -275,6 +332,133 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
 
   const resetStickerGesture = () => {
     stickerGestureRef.current = null
+  }
+
+  const getSignaturePointerDistance = () => {
+    const pointers = [...activeSignaturePointersRef.current.values()]
+    if (pointers.length < 2) return null
+    return Math.hypot(pointers[0].x - pointers[1].x, pointers[0].y - pointers[1].y)
+  }
+
+  const resetSignatureGesture = () => {
+    signatureGestureRef.current = null
+  }
+
+  const clampSignatureOffsets = (offsetX: number, offsetY: number) => {
+    const area = signatureAreaRef.current
+    if (!area) return { offsetX, offsetY }
+
+    const maxHorizontalOffset = area.clientWidth * CORNER_STICKER_DRAG_CLAMP
+    const maxVerticalOffset = area.clientHeight * CORNER_STICKER_DRAG_CLAMP
+
+    return {
+      offsetX: clamp(offsetX, -maxHorizontalOffset, maxHorizontalOffset),
+      offsetY: clamp(offsetY, -maxVerticalOffset, maxVerticalOffset),
+    }
+  }
+
+  const updateSignature = (updates: Partial<Signature> | ((current: Signature) => Partial<Signature>)) => {
+    setSignature((current) => {
+      const nextUpdates = typeof updates === 'function' ? updates(current) : updates
+      return {
+        ...current,
+        ...nextUpdates,
+        rotation: nextUpdates.rotation ?? current.rotation ?? 0,
+        scale: nextUpdates.scale ?? current.scale ?? 1,
+        offsetX: nextUpdates.offsetX ?? current.offsetX ?? 0,
+        offsetY: nextUpdates.offsetY ?? current.offsetY ?? 0,
+      }
+    })
+  }
+
+  const handleSignaturePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!signatureActive) {
+      setSignatureActive(true)
+      return
+    }
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    activeSignaturePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    ;(e.currentTarget as any).setPointerCapture(e.pointerId)
+
+    if (activeSignaturePointersRef.current.size === 1) {
+      signatureGestureRef.current = {
+        type: 'drag',
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        initialOffsetX: signature.offsetX ?? 0,
+        initialOffsetY: signature.offsetY ?? 0,
+      }
+      return
+    }
+
+    if (activeSignaturePointersRef.current.size === 2) {
+      const startDistance = getSignaturePointerDistance()
+      if (!startDistance) return
+      signatureGestureRef.current = {
+        type: 'pinch',
+        startDistance,
+        initialScale: signature.scale ?? 1,
+      }
+    }
+  }
+
+  const handleSignaturePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!activeSignaturePointersRef.current.has(e.pointerId)) return
+
+    e.preventDefault()
+    activeSignaturePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    const gesture = signatureGestureRef.current
+    if (!gesture) return
+
+    if (gesture.type === 'drag') {
+      if (gesture.pointerId !== e.pointerId) return
+
+      const nextOffsets = clampSignatureOffsets(
+        gesture.initialOffsetX + (e.clientX - gesture.startX),
+        gesture.initialOffsetY + (e.clientY - gesture.startY),
+      )
+
+      updateSignature(nextOffsets)
+      return
+    }
+
+    const distance = getSignaturePointerDistance()
+    if (!distance) return
+
+    updateSignature({
+      scale: clamp(
+        gesture.initialScale * (distance / gesture.startDistance),
+        MIN_CORNER_STICKER_SCALE,
+        MAX_CORNER_STICKER_SCALE,
+      ),
+    })
+  }
+
+  const handleSignaturePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if ((e.currentTarget as any).hasPointerCapture(e.pointerId)) {
+      (e.currentTarget as any).releasePointerCapture(e.pointerId)
+    }
+    activeSignaturePointersRef.current.delete(e.pointerId)
+
+    if (activeSignaturePointersRef.current.size === 1) {
+      const [[pointerId, pointer]] = activeSignaturePointersRef.current.entries()
+      signatureGestureRef.current = {
+        type: 'drag',
+        pointerId,
+        startX: pointer.x,
+        startY: pointer.y,
+        initialOffsetX: signature.offsetX ?? 0,
+        initialOffsetY: signature.offsetY ?? 0,
+      }
+      return
+    }
+
+    resetSignatureGesture()
   }
 
   const handleCornerStickerPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -432,7 +616,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         >
           {/* Header */}
           {/* Header with Logo and Arrows */}
-          <div className="flex items-center justify-center gap-4 mb-2 mt-6">
+          <div className="flex items-center justify-center gap-4 mb-6 mt-6">
             <button
               onClick={prevHeaderVariant}
               className="text-gray-400 hover:text-gray-600 font-bold text-lg"
@@ -442,9 +626,11 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             <div className="flex-shrink-0">
               {headerVariant === 'simple' ? (
                 <img src={headerLogoSvg} alt="Inklings" className="h-16" />
-              ) : (
-                <img src={headerSquidsSvg} alt="Inklings squids" style={{ height: '138.24px' }} />
-              )}
+              ) : headerVariant === 'squids-checkers' ? (
+                <img src={headerSquidsCheckersSvg} alt="Inklings squids checkers" style={{ height: '138.24px' }} />
+              ) : headerVariant === 'squids-v1' ? (
+                <img src={headerSquidsV1Svg} alt="Inklings squids v1" style={{ height: '138.24px' }} />
+              ) : null}
             </div>
             <button
               onClick={nextHeaderVariant}
@@ -543,8 +729,41 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
 
           {/* Signature */}
-          <div className="pt-2 border-t border-dashed border-gray-200 text-sm text-gray-600 italic">
-            Love, Me
+          <div className="pt-2 border-t border-dashed border-gray-200">
+            <div
+              ref={signatureAreaRef}
+              className="relative h-20"
+              onPointerDown={handleSignaturePointerDown}
+              onPointerMove={handleSignaturePointerMove}
+              onPointerUp={handleSignaturePointerUp}
+              onPointerCancel={handleSignaturePointerUp}
+              style={{ touchAction: signatureActive ? 'none' : 'auto' }}
+            >
+              <div
+                className={`absolute left-0 top-0 ${signatureActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
+                style={{
+                  transform: `translate(${signature.offsetX ?? 0}px, ${signature.offsetY ?? 0}px) rotate(${signature.rotation ?? 0}deg) scale(${signature.scale ?? 1})`,
+                  transformOrigin: '0 0',
+                }}
+              >
+                <input
+                  type="text"
+                  value={signature.text}
+                  onChange={(e) => updateSignature({ text: e.target.value })}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onPointerMove={(e) => e.stopPropagation()}
+                  onPointerUp={(e) => e.stopPropagation()}
+                  className={`whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-400 px-1 py-0 bg-transparent border-0 ${signatureActive ? 'ring-2 ring-blue-400' : ''}`}
+                  style={{
+                    fontFamily: FONT_STYLES[signature.style].fontFamily,
+                    fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
+                    fontWeight: FONT_STYLES[signature.style].fontWeight,
+                    lineHeight: FONT_STYLES[signature.style].lineHeight,
+                    pointerEvents: signatureActive ? 'auto' : 'none',
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Corner sticker */}
@@ -697,6 +916,27 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 I
               </button>
             )}
+          </div>
+        )}
+
+        {/* Signature Font Picker - shown when signature is active */}
+        {signatureActive && (
+          <div className="mt-4 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(STYLE_LABELS).map(([style, label]) => (
+                <button
+                  key={style}
+                  onClick={() => updateSignature({ style: style as TextStyle })}
+                  className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
+                    signature.style === style
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

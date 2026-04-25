@@ -1,4 +1,4 @@
-import type { Block, CornerSticker } from '@/types/canvas'
+import type { Block, CornerSticker, Signature } from '@/types/canvas'
 import type { Json } from '@/types/database'
 import { supabase } from '@/lib/supabase'
 
@@ -9,7 +9,8 @@ export type OnboardingDraft = {
     blocks: Block[]
     prompt: string
     cornerSticker?: CornerSticker
-    headerVariant?: 'simple' | 'logo'
+    signature?: Signature
+    headerVariant?: 'simple' | 'squids-checkers' | 'squids-v1' | 'none'
   } | null
   recipient: {
     name: string

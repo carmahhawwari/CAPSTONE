@@ -1,15 +1,20 @@
 import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import archiveImg from '@/assets/archive.png'
 import printerImg from '@/assets/printer.png'
 
 export default function HomeScreen() {
   const navigate = useNavigate()
 
+  const handlePrintClick = () => {
+    navigate('/prints')
+  }
+
   return (
-    <div className="flex min-h-screen flex-col bg-bg-base px-6 pt-12 pb-8">
+    <div className="flex min-h-screen flex-col bg-bg-base px-6 pt-8 pb-8">
       <header className="flex items-end justify-between">
         <h1 className="text-regular-semibold text-text-primary">Home</h1>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <IconButton
             label="Profile"
             onClick={() => navigate('/profile')}
@@ -17,19 +22,19 @@ export default function HomeScreen() {
             <ProfileIcon />
           </IconButton>
           <IconButton
-            label="New"
-            onClick={() => navigate('/compose')}
+            label="Archive"
+            onClick={() => navigate('/archive')}
           >
-            <PlusIcon />
+            <ArchiveIcon />
           </IconButton>
         </div>
       </header>
 
-      <div className="mt-12 flex flex-col gap-5">
-        <Tile label="Printer" onClick={() => navigate('/prints')}>
+      <div className="mt-6 flex flex-col gap-3 w-4/5 mx-auto">
+        <Tile label="Printer" onClick={handlePrintClick}>
           <PrinterPlaceholder />
         </Tile>
-        <Tile label="Archive" onClick={() => navigate('/archive')}>
+        <Tile label="Send" onClick={() => navigate('/compose')}>
           <ArchivePlaceholder />
         </Tile>
       </div>
@@ -72,7 +77,7 @@ function Tile({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="border-fill-primary bg-bg-primary rounded-md flex aspect-[4/3] w-full items-center justify-center border-2 active:opacity-70"
+      className="bg-bg-primary rounded-md flex aspect-[16/9] w-full items-center justify-center active:opacity-70"
     >
       {children}
     </button>
@@ -100,7 +105,7 @@ function ProfileIcon() {
   )
 }
 
-function PlusIcon() {
+function ArchiveIcon() {
   return (
     <svg
       width="20"
@@ -111,10 +116,8 @@ function PlusIcon() {
       aria-hidden
     >
       <path
-        d="M12 5V19M5 12H19"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
+        d="M4 6h16v2H4V6zm1 3h14v9c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V9zm3 2v5h2v-5H8zm4 0v5h2v-5h-2z"
+        fill="currentColor"
       />
     </svg>
   )

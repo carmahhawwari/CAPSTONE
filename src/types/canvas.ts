@@ -13,6 +13,15 @@ export interface CornerSticker {
   offsetY?: number
 }
 
+export interface Signature {
+  text: string
+  style: TextStyle
+  rotation?: number
+  scale?: number
+  offsetX?: number
+  offsetY?: number
+}
+
 export type Block =
   | { id: string; type: 'text'; content: string; style: TextStyle; fontSizeMultiplier?: number; redactionLevel?: number; fontWeight?: number; isItalic?: boolean; isBold?: boolean }
   | { id: string; type: 'image'; dataUrl: string; adjustments?: ImageAdjustments }
