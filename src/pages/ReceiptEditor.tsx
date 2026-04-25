@@ -247,6 +247,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                       redactionLevel={block.redactionLevel}
                       fontWeight={block.fontWeight}
                       isItalic={block.isItalic}
+                      isBold={block.isBold}
                       isActive={activeBlockId === block.id}
                       onContentChange={content => updateBlock(block.id, { content })}
                       onFocus={() => setActiveBlockId(block.id)}
@@ -296,25 +297,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               current={activeBlock.style}
               onChange={style => updateBlock(activeBlock.id, { style: style as TextStyle })}
             />
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <FontSizeSlider
-                  value={activeBlock.fontSizeMultiplier ?? 1}
-                  onChange={fontSizeMultiplier => updateBlock(activeBlock.id, { fontSizeMultiplier })}
-                />
-              </div>
-              <button
-                onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
-                className={`mt-8 px-3 py-2 rounded text-sm font-semibold transition-colors ${
-                  activeBlock.isItalic
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
-                }`}
-                style={{ fontStyle: 'italic' }}
-              >
-                I
-              </button>
-            </div>
+            <FontSizeSlider
+              value={activeBlock.fontSizeMultiplier ?? 1}
+              onChange={fontSizeMultiplier => updateBlock(activeBlock.id, { fontSizeMultiplier })}
+            />
             {activeBlock.style === 'redaction' && (
               <RedactionLevelSlider
                 value={activeBlock.redactionLevel ?? 50}
@@ -322,10 +308,37 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               />
             )}
             {activeBlock.style === 'inter' && (
-              <FontWeightSlider
-                value={activeBlock.fontWeight ?? 400}
-                onChange={fontWeight => updateBlock(activeBlock.id, { fontWeight })}
-              />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <FontWeightSlider
+                    value={activeBlock.fontWeight ?? 400}
+                    onChange={fontWeight => updateBlock(activeBlock.id, { fontWeight })}
+                  />
+                </div>
+                <div className="flex gap-1 mt-8">
+                  <button
+                    onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
+                    className={`px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
+                      activeBlock.isItalic
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
+                    }`}
+                    style={{ fontStyle: 'italic' }}
+                  >
+                    I
+                  </button>
+                  <button
+                    onClick={() => updateBlock(activeBlock.id, { isBold: !activeBlock.isBold })}
+                    className={`px-3 py-1.5 rounded text-sm font-bold transition-colors ${
+                      activeBlock.isBold
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
+                    }`}
+                  >
+                    B
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}
