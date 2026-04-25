@@ -21,6 +21,7 @@ import type { FriendProfile } from '@/types/app'
 import { newBlockId } from '@/types/canvas'
 import headerLogoSvg from '@/assets/icons/header-logo.svg'
 import headerSquidsSvg from '@/assets/icons/header-squids.svg'
+import recipientBarSvg from '@/assets/icons/recipient-bar.svg'
 
 const PROMPTS = [
   'The best part of my day yesterday was...',
@@ -454,18 +455,20 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               <div className="text-xs text-gray-400 mb-2">
                 {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </div>
-              <div className="bg-black text-white px-3 py-2 text-sm font-semibold mb-3">
+              <div className="bg-black text-white px-3 py-2 text-sm font-semibold mb-1">
                 To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
               </div>
+              <img src={recipientBarSvg} alt="" className="w-full h-auto mb-3" />
             </>
           ) : (
             <>
               <div className="text-center mb-3 flex justify-center">
                 <img src={headerSquidsSvg} alt="Inklings squids" className="h-24" />
               </div>
-              <div className="bg-black text-white px-3 py-2 text-sm font-semibold mb-3">
+              <div className="bg-black text-white px-3 py-2 text-sm font-semibold mb-1">
                 To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
               </div>
+              <img src={recipientBarSvg} alt="" className="w-full h-auto mb-3" />
             </>
           )}
 
