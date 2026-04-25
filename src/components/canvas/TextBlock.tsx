@@ -105,11 +105,12 @@ export default function TextBlock({
         onFocus={onFocus}
         onBlur={syncContent}
         data-placeholder="Type something..."
+        data-font-weight={fontConfig.fontWeight}
         className="w-full outline-none min-h-[1.5em] empty:before:content-[attr(data-placeholder)] empty:before:text-gray-300"
         style={{
           fontFamily: fontConfig.fontFamily,
           fontSize: adjustedFontSize,
-          fontWeight: fontConfig.fontWeight,
+          fontWeight: fontConfig.fontWeight as any,
           fontStyle: isItalic ? 'italic' : 'normal',
           lineHeight: fontConfig.lineHeight,
           textTransform: fontConfig.textTransform ?? 'none',

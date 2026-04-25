@@ -20,11 +20,11 @@ import type { FriendProfile } from '@/types/app'
 import { newBlockId } from '@/types/canvas'
 
 const PROMPTS = [
-  'What was the best part of your day yesterday?',
-  'What is something you have been thankful for recently?',
-  'Tell me something you\'ve been excited about.',
-  'What made you smile today?',
-  'What\'s something you want to remember from this week?',
+  'The best part of my day yesterday was...',
+  'Something I\'ve been thankful for recently is...',
+  'Something I\'ve been excited about is...',
+  'Something that made me smile today was...',
+  'Something I want to remember from this week is...',
 ]
 
 const FONTS_WITH_ITALIC = ['inter', 'normal', 'heading', 'handwriting', 'liquida', 'dottonoji', 'tsuchinoko', 'redaction'] as const
