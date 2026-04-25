@@ -19,6 +19,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import type { Block, TextStyle, CornerSticker } from '@/types/canvas'
 import type { FriendProfile } from '@/types/app'
 import { newBlockId } from '@/types/canvas'
+import headerLogoSvg from '@/assets/icons/header-logo.svg'
+import headerSquidsSvg from '@/assets/icons/header-squids.svg'
 
 const PROMPTS = [
   'The best part of my day yesterday was...',
@@ -447,8 +449,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           {headerVariant === 'simple' ? (
             <>
               <div className="text-center mb-2">
-                <h1 className="text-2xl font-bold text-gray-900">inklings</h1>
-                <div className="h-px bg-black mt-1" />
+                <img src={headerLogoSvg} alt="Inklings" className="h-16 mx-auto" />
               </div>
               <div className="text-xs text-gray-400 mb-2">
                 {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -460,15 +461,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           ) : (
             <>
               <div className="text-center mb-3 flex justify-center">
-                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="drop-shadow-sm">
-                  <g>
-                    <path d="M40 10 L35 25 L25 20 L30 35 L15 30 L30 40 L15 50 L30 45 L25 60 L35 55 L40 70 L45 55 L55 60 L50 45 L65 50 L50 40 L65 30 L50 35 L55 20 L45 25 Z" stroke="black" strokeWidth="1.5" fill="none" />
-                    <circle cx="30" cy="38" r="3" fill="black" />
-                    <circle cx="50" cy="38" r="3" fill="black" />
-                    <path d="M35 48 Q40 52 45 48" stroke="black" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                    <text x="40" y="75" fontSize="10" fontWeight="bold" textAnchor="middle" fill="black">inklings</text>
-                  </g>
-                </svg>
+                <img src={headerSquidsSvg} alt="Inklings squids" className="h-24" />
               </div>
               <div className="bg-black text-white px-3 py-2 text-sm font-semibold mb-3">
                 To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
