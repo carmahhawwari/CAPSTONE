@@ -1,17 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import Avatar from '@/components/Avatar'
-import BottomNav from '@/components/BottomNav'
 import TextBlock from '@/components/canvas/TextBlock'
 import ImageBlock from '@/components/canvas/ImageBlock'
 import StickerBlock from '@/components/canvas/StickerBlock'
 import BlockToolbar from '@/components/canvas/BlockToolbar'
 import StickerPicker from '@/components/canvas/StickerPicker'
 import FontStylePicker from '@/components/canvas/FontStylePicker'
-import { getFriends, type FriendProfile } from '@/lib/friends'
-import { saveReceipt, sendReceipt } from '@/lib/receipts'
+import FontSizeSlider from '@/components/canvas/FontSizeSlider'
+import ImageAdjustmentPanel from '@/components/canvas/ImageAdjustmentPanel'
+import { DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
+import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
+import { getFriends } from '@/lib/friends'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Block, TextStyle } from '@/types/canvas'
+import type { FriendProfile } from '@/types/app'
 import { newBlockId } from '@/types/canvas'
 
 const PROMPTS = [
@@ -22,30 +25,65 @@ const PROMPTS = [
   'What\'s something you want to remember from this week?',
 ]
 
-function friendLabel(f: FriendProfile): string {
-  return f.display_name || f.username || 'Friend'
+interface ReceiptEditorProps {
+  onboarding?: boolean
 }
 
-export default function BlockBasedComposeScreen() {
+function friendLabel(f: FriendProfile): string {
+  return f.profile.display_name || f.profile.username || 'Friend'
+}
+
+export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps = {}) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useAuth()
-  const [friends, setFriends] = useState<FriendProfile[]>([])
-  const [selectedFriendId, setSelectedFriendId] = useState('')
+  const draft = loadDraft()
+
+  // State
   const [blocks, setBlocks] = useState<Block[]>([])
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null)
   const [showStickerPicker, setShowStickerPicker] = useState(false)
-  const [sending, setSending] = useState(false)
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [friends, setFriends] = useState<FriendProfile[]>([])
+  const [selectedFriendId, setSelectedFriendId] = useState('')
+  const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
   const receiptRef = useRef<HTMLDivElement>(null)
 
-  const [prompt] = useState(() => PROMPTS[Math.floor(Math.random() * PROMPTS.length)])
-  const selectedFriend = friends.find(f => f.id === selectedFriendId)
+  // Generate 3 random prompts + no prompt option
+  const [prompts] = useState(() => {
+    const shuffled = [...PROMPTS].sort(() => Math.random() - 0.5)
+    return [...shuffled.slice(0, 3), 'No prompt']
+  })
 
+  const currentPrompt = prompts[currentPromptIndex]
+
+  const nextPrompt = () => {
+    setCurrentPromptIndex((prev) => (prev + 1) % prompts.length)
+  }
+
+  const prevPrompt = () => {
+    setCurrentPromptIndex((prev) => (prev - 1 + prompts.length) % prompts.length)
+  }
+
+  // For authenticated users: load friends
   useEffect(() => {
-    if (!user) return
-    getFriends().then(setFriends).catch((e) => setError(e.message ?? 'Failed to load friends'))
-  }, [user])
+    if (!onboarding && user) {
+      getFriends(user.id).then((loadedFriends) => {
+        setFriends(loadedFriends)
+        // Auto-select friend from query parameter if provided
+        const toParam = searchParams.get('to')
+        if (toParam) {
+          const friendMatch = loadedFriends.find(f => f.profile.id === toParam)
+          if (friendMatch) {
+            setSelectedFriendId(friendMatch.profile.id)
+          }
+        }
+      }).catch((e) => setError(e.message ?? 'Failed to load friends'))
+    }
+  }, [user, onboarding, searchParams])
+
+  const recipientName = onboarding ? draft.recipient?.name ?? '' : ''
+  const selectedFriend = friends.find(f => f.profile.id === selectedFriendId)
 
   const addTextBlock = () => {
     const newBlock: Block = {
@@ -91,38 +129,22 @@ export default function BlockBasedComposeScreen() {
     setActiveBlockId(null)
   }
 
-  const handleSend = async () => {
-    if (!selectedFriendId || !selectedFriend || blocks.length === 0 || !receiptRef.current) return
-
-    setSending(true)
-    setError(null)
-    try {
-      await sendReceipt({
-        content: { blocks, prompt },
-        recipientId: selectedFriendId,
-        recipientName: friendLabel(selectedFriend),
-        receiptElement: receiptRef.current,
-      })
-      navigate(`/printing?to=${selectedFriendId}`)
-    } catch (err) {
-      console.error('Send failed:', err)
-      setError(err instanceof Error ? err.message : 'Send failed')
-      setSending(false)
-    }
+  const handleContinue = () => {
+    if (blocks.length === 0) return
+    saveDraft({ content: { blocks, prompt: currentPrompt === 'No prompt' ? '' : currentPrompt } })
+    navigate('/onboard/deliver')
   }
 
-  const handleSave = async () => {
+  const handleSend = () => {
+    if (!selectedFriendId || !selectedFriend || blocks.length === 0) return
+    // TODO: Implement actual sending to printer
+    navigate(`/printing?to=${selectedFriendId}`)
+  }
+
+  const handleSave = () => {
     if (blocks.length === 0) return
-    setSaving(true)
-    setError(null)
-    try {
-      await saveReceipt({ blocks, prompt })
-      navigate('/archive')
-    } catch (err) {
-      console.error('Save failed:', err)
-      setError(err instanceof Error ? err.message : 'Save failed')
-      setSaving(false)
-    }
+    // TODO: Implement actual saving to archive
+    navigate('/archive')
   }
 
   const activeBlock = blocks.find(b => b.id === activeBlockId)
@@ -132,32 +154,28 @@ export default function BlockBasedComposeScreen() {
       <div className="px-6 pt-8 flex-1 overflow-y-auto">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Create Receipt</h1>
 
-        {/* Friend picker */}
-        <div className="mb-6">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">To</label>
-          {friends.length === 0 ? (
-            <p className="text-xs text-gray-500 italic">
-              No friends yet — add some from Find Inklings to send a receipt.
-            </p>
-          ) : (
+        {/* Friend picker - only for authenticated users */}
+        {!onboarding && friends.length > 0 && (
+          <div className="mb-6">
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">To</label>
             <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
               {friends.map((f) => {
                 const label = friendLabel(f).split(' ')[0]
                 return (
                   <button
-                    key={f.id}
-                    onClick={() => setSelectedFriendId(f.id)}
+                    key={f.profile.id}
+                    onClick={() => setSelectedFriendId(f.profile.id)}
                     className={`flex flex-col items-center gap-1.5 flex-shrink-0 transition-opacity ${
-                      selectedFriendId && selectedFriendId !== f.id ? 'opacity-40' : 'opacity-100'
+                      selectedFriendId && selectedFriendId !== f.profile.id ? 'opacity-40' : 'opacity-100'
                     }`}
                   >
                     <div
                       className={`rounded-full p-0.5 transition-all ${
-                        selectedFriendId === f.id ? 'ring-2 ring-blue-600 ring-offset-2' : ''
+                        selectedFriendId === f.profile.id ? 'ring-2 ring-blue-600 ring-offset-2' : ''
                       }`}
                     >
-                      {f.avatar_url ? (
-                        <img src={f.avatar_url} alt="" width={48} height={48} className="rounded-full object-cover" style={{ width: 48, height: 48 }} />
+                      {f.profile.avatar_url ? (
+                        <img src={f.profile.avatar_url} alt="" width={48} height={48} className="rounded-full object-cover" style={{ width: 48, height: 48 }} />
                       ) : (
                         <Avatar avatarId={1} size={48} />
                       )}
@@ -169,8 +187,8 @@ export default function BlockBasedComposeScreen() {
                 )
               })}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Preview / Editor */}
         <div
@@ -183,14 +201,34 @@ export default function BlockBasedComposeScreen() {
             {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </div>
           <div className="text-sm font-semibold text-gray-800">
-            To: {selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___'}
+            To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
           </div>
           <div className="text-sm text-gray-600 pb-3 border-b border-dashed border-gray-200">
             From: {user?.email?.split('@')[0] ?? 'Me'}
           </div>
 
-          {/* Prompt */}
-          <p className="text-xs text-gray-500 italic leading-relaxed">{prompt}</p>
+          {/* Prompt Picker */}
+          <div className="flex items-center gap-3 py-2">
+            <button
+              onClick={prevPrompt}
+              className="text-gray-400 hover:text-gray-600 font-bold text-lg"
+            >
+              &lt;
+            </button>
+            <div className="flex-1 text-center">
+              {currentPrompt === 'No prompt' ? (
+                <p className="text-xs text-gray-400 italic">(no prompt)</p>
+              ) : (
+                <p className="text-xs text-gray-500 italic leading-relaxed">{currentPrompt}</p>
+              )}
+            </div>
+            <button
+              onClick={nextPrompt}
+              className="text-gray-400 hover:text-gray-600 font-bold text-lg"
+            >
+              &gt;
+            </button>
+          </div>
 
           {/* Blocks Editor */}
           <div className="space-y-2 my-4">
@@ -203,6 +241,7 @@ export default function BlockBasedComposeScreen() {
                     <TextBlock
                       content={block.content}
                       style={block.style}
+                      fontSizeMultiplier={block.fontSizeMultiplier}
                       isActive={activeBlockId === block.id}
                       onContentChange={content => updateBlock(block.id, { content })}
                       onFocus={() => setActiveBlockId(block.id)}
@@ -212,6 +251,7 @@ export default function BlockBasedComposeScreen() {
                   {block.type === 'image' && (
                     <ImageBlock
                       dataUrl={block.dataUrl}
+                      adjustments={block.adjustments}
                       isActive={activeBlockId === block.id}
                       onImageChange={dataUrl => updateBlock(block.id, { dataUrl })}
                       onFocus={() => setActiveBlockId(block.id)}
@@ -233,7 +273,7 @@ export default function BlockBasedComposeScreen() {
 
           {/* Signature */}
           <div className="pt-2 border-t border-dashed border-gray-200 text-sm text-gray-600 italic">
-            Love, Matthew
+            Love, Me
           </div>
         </div>
 
@@ -246,12 +286,25 @@ export default function BlockBasedComposeScreen() {
 
         {/* Font Style Picker - shown when text block is active */}
         {activeBlock?.type === 'text' && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-2">
             <FontStylePicker
               current={activeBlock.style}
               onChange={style => updateBlock(activeBlock.id, { style: style as TextStyle })}
             />
+            <FontSizeSlider
+              value={activeBlock.fontSizeMultiplier ?? 1}
+              onChange={fontSizeMultiplier => updateBlock(activeBlock.id, { fontSizeMultiplier })}
+            />
           </div>
+        )}
+
+        {/* Image Adjustment Panel - shown when image block is active */}
+        {activeBlock?.type === 'image' && (
+          <ImageAdjustmentPanel
+            dataUrl={activeBlock.dataUrl}
+            adjustments={activeBlock.adjustments ?? DEFAULT_ADJUSTMENTS}
+            onAdjustmentsChange={adjustments => updateBlock(activeBlock.id, { adjustments })}
+          />
         )}
 
         {/* Sticker Picker Modal */}
@@ -266,26 +319,36 @@ export default function BlockBasedComposeScreen() {
           <p className="mt-4 text-xs text-red-600">{error}</p>
         )}
 
-        {/* Send + Save buttons */}
+        {/* Buttons */}
         <div className="mt-6 flex gap-3">
-          <button
-            onClick={handleSave}
-            disabled={blocks.length === 0 || saving || sending}
-            className="flex-1 py-3.5 rounded-xl border border-gray-300 bg-white text-gray-900 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-gray-50 transition-colors"
-          >
-            {saving ? 'Saving…' : 'Save'}
-          </button>
-          <button
-            onClick={handleSend}
-            disabled={!selectedFriendId || blocks.length === 0 || sending || saving}
-            className="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-blue-700 transition-colors"
-          >
-            {sending ? 'Sending...' : 'Send to Printer'}
-          </button>
+          {onboarding ? (
+            <button
+              onClick={handleContinue}
+              disabled={blocks.length === 0}
+              className="w-full py-3.5 rounded-xl bg-black text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-gray-800 transition-colors"
+            >
+              Continue to Send
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleSave}
+                disabled={blocks.length === 0}
+                className="flex-1 py-3.5 rounded-xl border border-gray-300 bg-white text-gray-900 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-gray-50 transition-colors"
+              >
+                Save
+              </button>
+              <button
+                onClick={handleSend}
+                disabled={!selectedFriendId || blocks.length === 0}
+                className="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-blue-700 transition-colors"
+              >
+                Send to Printer
+              </button>
+            </>
+          )}
         </div>
       </div>
-
-      <BottomNav />
     </div>
   )
 }

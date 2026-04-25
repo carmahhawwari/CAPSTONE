@@ -77,9 +77,13 @@ export async function commitDraftForUser(authorId: string): Promise<CommitResult
     if (error) throw error
 
     if (recipientId !== authorId) {
-      await supabase
-        .from('follows')
-        .upsert({ follower_id: authorId, following_id: recipientId }, { onConflict: 'follower_id,following_id' })
+      try {
+        await supabase
+          .from('friends')
+          .insert({ requester_id: authorId, addressee_id: recipientId, status: 'pending' })
+      } catch {
+        // ignore if already exists
+      }
     }
 
     clearDraft()

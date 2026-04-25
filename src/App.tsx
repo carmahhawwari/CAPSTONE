@@ -11,7 +11,7 @@ import Profile from '@/pages/Profile'
 import FriendsScreen from '@/pages/FriendsScreen'
 import FriendDetailScreen from '@/pages/FriendDetailScreen'
 import ArchiveScreen from '@/pages/ArchiveScreen'
-import CreateReceipt from '@/pages/CreateReceipt'
+import ReceiptEditor from '@/pages/ReceiptEditor'
 import ReceiptSent from '@/pages/ReceiptSent'
 import ReceiptsToPrint from '@/pages/ReceiptsToPrint'
 import PrintingScreen from '@/pages/PrintingScreen'
@@ -48,7 +48,7 @@ function App() {
           <Route path="/friends" element={<ProtectedRoute><FriendsScreen /></ProtectedRoute>} />
           <Route path="/friends/:id" element={<ProtectedRoute><FriendDetailScreen /></ProtectedRoute>} />
           <Route path="/archive" element={<ProtectedRoute><ArchiveScreen /></ProtectedRoute>} />
-          <Route path="/compose" element={<ProtectedRoute><CreateReceipt /></ProtectedRoute>} />
+          <Route path="/compose" element={<ProtectedRoute><ReceiptEditor /></ProtectedRoute>} />
           <Route path="/receipt-sent" element={<ProtectedRoute><ReceiptSent /></ProtectedRoute>} />
           <Route path="/prints" element={<ProtectedRoute><ReceiptsToPrint /></ProtectedRoute>} />
           <Route path="/printing" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
@@ -56,7 +56,7 @@ function App() {
           <Route path="/onboard" element={<OnboardIntro />} />
           <Route path="/onboard/recipient" element={<OnboardRecipient />} />
           <Route path="/onboard/compose" element={<OnboardCompose />} />
-          <Route path="/onboard/deliver" element={<SignUp mode="onboard-delivery" />} />
+          <Route path="/onboard/deliver" element={<SignUp />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
         </Routes>

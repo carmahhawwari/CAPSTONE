@@ -5,6 +5,7 @@ import { FONT_STYLES } from '@/types/canvas'
 interface TextBlockProps {
   content: string
   style: TextStyle
+  fontSizeMultiplier?: number
   isActive: boolean
   onContentChange: (content: string) => void
   onFocus: () => void
@@ -21,6 +22,7 @@ function renderMarkdown(text: string): string {
 export default function TextBlock({
   content,
   style,
+  fontSizeMultiplier = 1,
   isActive,
   onContentChange,
   onFocus,
@@ -28,6 +30,7 @@ export default function TextBlock({
 }: TextBlockProps) {
   const ref = useRef<HTMLDivElement>(null)
   const fontConfig = FONT_STYLES[style]
+  const adjustedFontSize = fontConfig.fontSize * fontSizeMultiplier
 
   const syncContent = useCallback(() => {
     if (!ref.current) return
@@ -73,7 +76,7 @@ export default function TextBlock({
         className="w-full outline-none min-h-[1.5em] empty:before:content-[attr(data-placeholder)] empty:before:text-gray-300"
         style={{
           fontFamily: fontConfig.fontFamily,
-          fontSize: fontConfig.fontSize,
+          fontSize: adjustedFontSize,
           fontWeight: fontConfig.fontWeight,
           lineHeight: fontConfig.lineHeight,
           textTransform: fontConfig.textTransform ?? 'none',
