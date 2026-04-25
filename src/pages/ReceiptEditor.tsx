@@ -247,7 +247,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         {/* Preview / Editor */}
         <div
           ref={receiptRef}
-          className="bg-white border border-gray-200 rounded-sm shadow-sm p-5 mb-6 space-y-3"
+          className="bg-white border border-gray-200 rounded-sm shadow-sm p-5 mb-6 space-y-3 overflow-hidden"
           style={{ fontFamily: 'Georgia, serif' }}
         >
           {/* Header */}
