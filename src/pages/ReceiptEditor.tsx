@@ -454,17 +454,17 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             </button>
           </div>
 
-          {/* Date */}
-          <div className="text-xs text-gray-400 mb-3 text-center">
-            {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-          </div>
-
           {/* Recipient Bar */}
           <div className="relative mb-3">
             <img src={recipientBarSvg} alt="" className="w-full h-auto" />
             <div className="absolute inset-0 flex items-center px-3 text-sm text-white z-10" style={{ fontFamily: "var(--font-printvetica)" }}>
               To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
             </div>
+          </div>
+
+          {/* Date */}
+          <div className="text-xs text-gray-400 mb-3 text-center">
+            {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </div>
 
           {/* Prompt Picker */}
