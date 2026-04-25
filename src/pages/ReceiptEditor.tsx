@@ -457,7 +457,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           {/* Recipient Bar */}
           <div className="relative mb-3">
             <img src={recipientBarSvg} alt="" className="w-full h-auto" />
-            <div className="absolute inset-0 flex items-center px-3 text-sm text-white z-10" style={{ fontFamily: "var(--font-printvetica)" }}>
+            <div className="absolute inset-0 flex items-center px-3 text-white z-10" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
               To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
             </div>
           </div>
