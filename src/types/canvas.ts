@@ -1,4 +1,4 @@
-export type TextStyle = 'normal' | 'heading' | 'handwriting' | 'pixel' | 'shout' | 'artsy' | 'decorative' | 'comic' | 'bold'
+export type TextStyle = 'normal' | 'heading' | 'handwriting' | 'pixel' | 'shout' | 'artsy' | 'decorative' | 'comic' | 'bold' | 'liquida' | 'dottonoji' | 'tsuchinoko' | 'redaction' | 'redaction-10' | 'redaction-20' | 'redaction-35' | 'redaction-50' | 'redaction-70' | 'redaction-100'
 
 import type { ImageAdjustments } from '@/lib/imageProcessing'
 
@@ -71,6 +71,66 @@ export const FONT_STYLES: Record<TextStyle, FontStyleConfig> = {
     fontWeight: 900,
     lineHeight: 1.3,
   },
+  liquida: {
+    fontFamily: "liquida, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  dottonoji: {
+    fontFamily: "dottonoji, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  tsuchinoko: {
+    fontFamily: "tsuchinoko, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  redaction: {
+    fontFamily: "redaction, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  'redaction-10': {
+    fontFamily: "redaction, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  'redaction-20': {
+    fontFamily: "redaction, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  'redaction-35': {
+    fontFamily: "redaction, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  'redaction-50': {
+    fontFamily: "redaction, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  'redaction-70': {
+    fontFamily: "redaction, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  'redaction-100': {
+    fontFamily: "redaction, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
 }
 
 export const STYLE_LABELS: Record<TextStyle, string> = {
@@ -83,6 +143,16 @@ export const STYLE_LABELS: Record<TextStyle, string> = {
   decorative: 'Fancy',
   comic: 'Comic',
   bold: 'Bold',
+  liquida: 'Liquida',
+  dottonoji: 'Dottonoji',
+  tsuchinoko: 'Tsuchinoko',
+  redaction: 'Redaction',
+  'redaction-10': 'Redaction 10',
+  'redaction-20': 'Redaction 20',
+  'redaction-35': 'Redaction 35',
+  'redaction-50': 'Redaction 50',
+  'redaction-70': 'Redaction 70',
+  'redaction-100': 'Redaction 100',
 }
 
 let _blockId = 0
