@@ -36,9 +36,11 @@ function App() {
 
   return (
     <BrowserRouter>
-      {showSplash && <Splash onComplete={handleSplashComplete} />}
-      <AuthProvider>
-        <Routes>
+      <div className="lg:flex lg:justify-center lg:min-h-screen">
+        <div className="lg:w-[35vw]">
+          {showSplash && <Splash onComplete={handleSplashComplete} />}
+          <AuthProvider>
+            <Routes>
           <Route path="/" element={<OnboardIntro />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
@@ -59,8 +61,10 @@ function App() {
           <Route path="/onboard/deliver" element={<SignUp />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
-        </Routes>
-      </AuthProvider>
+            </Routes>
+          </AuthProvider>
+        </div>
+      </div>
     </BrowserRouter>
   )
 }
