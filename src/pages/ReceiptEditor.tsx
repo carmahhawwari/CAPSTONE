@@ -55,6 +55,8 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [friends, setFriends] = useState<FriendProfile[]>([])
   const [selectedFriendId, setSelectedFriendId] = useState('')
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const receiptRef = useRef<HTMLDivElement>(null)
 
   // Generate 3 random prompts + no prompt option
@@ -133,8 +135,43 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   }
 
   const deleteBlock = (id: string) => {
-    setBlocks(blocks.filter(block => block.id !== id))
-    setActiveBlockId(null)
+    setDeleteConfirmId(id)
+  }
+
+  const confirmDelete = () => {
+    if (deleteConfirmId) {
+      setBlocks(blocks.filter(block => block.id !== deleteConfirmId))
+      setActiveBlockId(null)
+      setDeleteConfirmId(null)
+    }
+  }
+
+  const cancelDelete = () => {
+    setDeleteConfirmId(null)
+  }
+
+  const handleDragStart = (blockId: string) => {
+    setDraggedBlockId(blockId)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = (targetBlockId: string) => {
+    if (!draggedBlockId || draggedBlockId === targetBlockId) return
+
+    const draggedIndex = blocks.findIndex(b => b.id === draggedBlockId)
+    const targetIndex = blocks.findIndex(b => b.id === targetBlockId)
+
+    if (draggedIndex === -1 || targetIndex === -1) return
+
+    const newBlocks = [...blocks]
+    const [draggedBlock] = newBlocks.splice(draggedIndex, 1)
+    newBlocks.splice(targetIndex, 0, draggedBlock)
+    setBlocks(newBlocks)
+    setDraggedBlockId(null)
   }
 
   const handleContinue = () => {
@@ -244,7 +281,15 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               <p className="text-xs text-gray-400 italic text-center py-6">Add text, images, or stickers...</p>
             ) : (
               blocks.map(block => (
-                <div key={block.id} onClick={() => setActiveBlockId(block.id)}>
+                <div
+                  key={block.id}
+                  draggable
+                  onClick={() => setActiveBlockId(block.id)}
+                  onDragStart={() => handleDragStart(block.id)}
+                  onDragOver={handleDragOver}
+                  onDrop={() => handleDrop(block.id)}
+                  className={`cursor-move select-none ${draggedBlockId === block.id ? 'opacity-50' : ''}`}
+                >
                   {block.type === 'text' && (
                     <TextBlock
                       content={block.content}
@@ -400,6 +445,31 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           <p className="mt-4 text-xs text-red-600">{error}</p>
         )}
 
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmId && (
+          <div className="fixed inset-0 bg-black/50 flex items-end z-50">
+            <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom">
+              <p className="text-sm text-gray-700">
+                Delete this block? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelDelete}
+                  className="flex-1 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 font-semibold text-sm active:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-3 rounded-lg bg-red-600 text-white font-semibold text-sm active:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Buttons */}
         <div className="mt-6 flex gap-3">
           {onboarding ? (
@@ -429,6 +499,20 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             </>
           )}
         </div>
+
+        {/* Mobile Trash Button */}
+        {blocks.length > 0 && (
+          <div className="mt-4 md:hidden">
+            <button
+              onClick={() => activeBlockId && deleteBlock(activeBlockId)}
+              disabled={!activeBlockId}
+              className="w-full py-3 rounded-lg bg-red-50 text-red-600 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-red-100 transition-colors flex items-center justify-center gap-2"
+            >
+              <span>🗑️</span>
+              Delete Block
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
