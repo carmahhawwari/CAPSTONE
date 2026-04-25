@@ -461,7 +461,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
             </div>
             {/* Date */}
-            <div className="absolute -top-6 right-0 text-xs text-white z-20" style={{ fontFamily: "var(--font-printvetica)" }}>
+            <div className="absolute top-1/2 right-0 text-xs text-white z-20" style={{ fontFamily: "var(--font-printvetica)", transform: 'translateY(-150%)' }}>
               {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </div>
           </div>
