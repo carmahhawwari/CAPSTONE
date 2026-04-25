@@ -36,35 +36,31 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex justify-center min-h-screen bg-gray-100">
-        <div className="w-full max-w-[428px] bg-white shadow-lg">
-          {showSplash && <Splash onComplete={handleSplashComplete} />}
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={<OnboardIntro />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/find-friends" element={<FindInklings />} />
-              <Route path="/home" element={<ProtectedRoute><HomeScreen /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/friends" element={<ProtectedRoute><FriendsScreen /></ProtectedRoute>} />
-              <Route path="/friends/:id" element={<ProtectedRoute><FriendDetailScreen /></ProtectedRoute>} />
-              <Route path="/archive" element={<ProtectedRoute><ArchiveScreen /></ProtectedRoute>} />
-              <Route path="/compose" element={<ProtectedRoute><ReceiptEditor /></ProtectedRoute>} />
-              <Route path="/receipt-sent" element={<ProtectedRoute><ReceiptSent /></ProtectedRoute>} />
-              <Route path="/prints" element={<ProtectedRoute><ReceiptsToPrint /></ProtectedRoute>} />
-              <Route path="/printing" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
-              <Route path="/test-print" element={<TestPrintScreen />} />
-              <Route path="/onboard" element={<OnboardIntro />} />
-              <Route path="/onboard/recipient" element={<OnboardRecipient />} />
-              <Route path="/onboard/compose" element={<OnboardCompose />} />
-              <Route path="/onboard/deliver" element={<SignUp />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-            </Routes>
-          </AuthProvider>
-        </div>
-      </div>
+      {showSplash && <Splash onComplete={handleSplashComplete} />}
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<OnboardIntro />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/find-friends" element={<FindInklings />} />
+          <Route path="/home" element={<ProtectedRoute><HomeScreen /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/friends" element={<ProtectedRoute><FriendsScreen /></ProtectedRoute>} />
+          <Route path="/friends/:id" element={<ProtectedRoute><FriendDetailScreen /></ProtectedRoute>} />
+          <Route path="/archive" element={<ProtectedRoute><ArchiveScreen /></ProtectedRoute>} />
+          <Route path="/compose" element={<ProtectedRoute><ReceiptEditor /></ProtectedRoute>} />
+          <Route path="/receipt-sent" element={<ProtectedRoute><ReceiptSent /></ProtectedRoute>} />
+          <Route path="/prints" element={<ProtectedRoute><ReceiptsToPrint /></ProtectedRoute>} />
+          <Route path="/printing" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
+          <Route path="/test-print" element={<TestPrintScreen />} />
+          <Route path="/onboard" element={<OnboardIntro />} />
+          <Route path="/onboard/recipient" element={<OnboardRecipient />} />
+          <Route path="/onboard/compose" element={<OnboardCompose />} />
+          <Route path="/onboard/deliver" element={<SignUp />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }
