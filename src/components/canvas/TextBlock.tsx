@@ -6,7 +6,6 @@ interface TextBlockProps {
   content: string
   style: TextStyle
   fontSizeMultiplier?: number
-  redactionLevel?: number
   isActive: boolean
   onContentChange: (content: string) => void
   onFocus: () => void
@@ -24,7 +23,6 @@ export default function TextBlock({
   content,
   style,
   fontSizeMultiplier = 1,
-  redactionLevel = 50,
   isActive,
   onContentChange,
   onFocus,
@@ -83,7 +81,6 @@ export default function TextBlock({
           lineHeight: fontConfig.lineHeight,
           textTransform: fontConfig.textTransform ?? 'none',
           color: '#000',
-          ...(style === 'redaction' && { '--redaction-level': `${redactionLevel}%` } as any),
         }}
       />
       {isActive && (

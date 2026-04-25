@@ -1,9 +1,9 @@
-export type TextStyle = 'normal' | 'heading' | 'handwriting' | 'pixel' | 'shout' | 'artsy' | 'decorative' | 'comic' | 'bold' | 'liquida' | 'dottonoji' | 'tsuchinoko' | 'redaction'
+export type TextStyle = 'normal' | 'heading' | 'handwriting' | 'pixel' | 'shout' | 'artsy' | 'decorative' | 'comic' | 'bold' | 'liquida' | 'dottonoji' | 'tsuchinoko' | 'redaction-10' | 'redaction-35' | 'redaction-50' | 'redaction-70'
 
 import type { ImageAdjustments } from '@/lib/imageProcessing'
 
 export type Block =
-  | { id: string; type: 'text'; content: string; style: TextStyle; fontSizeMultiplier?: number; redactionLevel?: number }
+  | { id: string; type: 'text'; content: string; style: TextStyle; fontSizeMultiplier?: number }
   | { id: string; type: 'image'; dataUrl: string; adjustments?: ImageAdjustments }
   | { id: string; type: 'sticker'; stickerId: string }
 
@@ -72,25 +72,43 @@ export const FONT_STYLES: Record<TextStyle, FontStyleConfig> = {
     lineHeight: 1.3,
   },
   liquida: {
-    fontFamily: "liquida, serif",
+    fontFamily: "Liquida, serif",
     fontSize: 18,
     fontWeight: 400,
     lineHeight: 1.4,
   },
   dottonoji: {
-    fontFamily: "dottonoji, serif",
+    fontFamily: "Dottonoji, serif",
     fontSize: 18,
     fontWeight: 400,
     lineHeight: 1.4,
   },
   tsuchinoko: {
-    fontFamily: "tsuchinoko, serif",
+    fontFamily: "Tsuchinoko, serif",
     fontSize: 18,
     fontWeight: 400,
     lineHeight: 1.4,
   },
-  redaction: {
-    fontFamily: "redaction, serif",
+  'redaction-10': {
+    fontFamily: "Redaction 10, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  'redaction-35': {
+    fontFamily: "Redaction 35, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  'redaction-50': {
+    fontFamily: "Redaction 50, serif",
+    fontSize: 18,
+    fontWeight: 400,
+    lineHeight: 1.4,
+  },
+  'redaction-70': {
+    fontFamily: "Redaction 70, serif",
     fontSize: 18,
     fontWeight: 400,
     lineHeight: 1.4,
@@ -110,7 +128,10 @@ export const STYLE_LABELS: Record<TextStyle, string> = {
   liquida: 'Liquida',
   dottonoji: 'Dottonoji',
   tsuchinoko: 'Tsuchinoko',
-  redaction: 'Redaction',
+  'redaction-10': 'Redaction 10',
+  'redaction-35': 'Redaction 35',
+  'redaction-50': 'Redaction 50',
+  'redaction-70': 'Redaction 70',
 }
 
 let _blockId = 0
