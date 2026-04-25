@@ -4,7 +4,6 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Splash from '@/components/Splash'
 import FindInklings from '@/pages/FindInklings'
-import Landing from '@/pages/Landing'
 import Login from '@/pages/Login'
 import SignUp from '@/pages/SignUp'
 import HomeScreen from '@/pages/HomeScreen'
@@ -17,6 +16,11 @@ import ReceiptSent from '@/pages/ReceiptSent'
 import ReceiptsToPrint from '@/pages/ReceiptsToPrint'
 import PrintingScreen from '@/pages/PrintingScreen'
 import TestPrintScreen from '@/pages/TestPrintScreen'
+import OnboardIntro from '@/pages/onboarding/OnboardIntro'
+import OnboardRecipient from '@/pages/onboarding/OnboardRecipient'
+import OnboardCompose from '@/pages/onboarding/OnboardCompose'
+import Privacy from '@/pages/Privacy'
+import Terms from '@/pages/Terms'
 
 const SPLASH_SEEN_KEY = 'inklings.splashSeen'
 
@@ -35,7 +39,7 @@ function App() {
       {showSplash && <Splash onComplete={handleSplashComplete} />}
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<OnboardIntro />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/find-friends" element={<FindInklings />} />
@@ -49,6 +53,12 @@ function App() {
           <Route path="/prints" element={<ProtectedRoute><ReceiptsToPrint /></ProtectedRoute>} />
           <Route path="/printing" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
           <Route path="/test-print" element={<TestPrintScreen />} />
+          <Route path="/onboard" element={<OnboardIntro />} />
+          <Route path="/onboard/recipient" element={<OnboardRecipient />} />
+          <Route path="/onboard/compose" element={<OnboardCompose />} />
+          <Route path="/onboard/deliver" element={<SignUp mode="onboard-delivery" />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

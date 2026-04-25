@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -43,8 +43,35 @@ export default function SignUp() {
     }
   }
 
-  const inputClass =
-    'font-inter text-mini text-text-primary placeholder:text-text-tertiary border-fill-tertiary bg-bg-tertiary rounded-md w-full border px-4 py-4 focus:outline-none focus:border-fill-primary'
+  const handleSendReceipt = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!recipientPhone.trim()) return
+    if (!supabase) {
+      setError('Supabase not configured')
+      return
+    }
+
+    setError(null)
+    setSubmitting(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('send-recipt', {
+        body: {
+          recipientPhone: recipientPhone.trim(),
+          senderName: senderName.trim() || 'someone',
+          message: draftMessage || 'a little note',
+        },
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+
+      clearDraft()
+      setSent(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
@@ -111,6 +138,7 @@ export default function SignUp() {
             disabled={loading}
           />
 
+        {isDelivery && sent && (
           <button
             type="submit"
             disabled={loading}
@@ -118,7 +146,7 @@ export default function SignUp() {
           >
             {loading ? 'Creating account...' : 'Continue'}
           </button>
-        </form>
+        )}
       </div>
     </div>
   )

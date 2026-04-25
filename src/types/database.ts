@@ -150,6 +150,33 @@ export interface Database {
         }
         Relationships: []
       }
+      receipts: {
+        Row: {
+          id: string
+          author_id: string
+          recipient_id: string | null
+          content: Json
+          print_job_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          author_id: string
+          recipient_id?: string | null
+          content: Json
+          print_job_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          author_id?: string
+          recipient_id?: string | null
+          content?: Json
+          print_job_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       print_jobs: {
         Row: {
           id: string

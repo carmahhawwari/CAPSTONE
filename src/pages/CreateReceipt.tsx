@@ -5,7 +5,11 @@ import { submitPrintJob } from '@/lib/printJob'
 import Receipt from '@/components/Receipt'
 import type { Receipt as ReceiptType } from '@/types/app'
 
-export default function CreateReceipt() {
+type Props = {
+  onboarding?: boolean
+}
+
+export default function CreateReceipt({ onboarding = false }: Props = {}) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [searchParams] = useSearchParams()

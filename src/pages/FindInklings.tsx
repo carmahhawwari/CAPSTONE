@@ -29,6 +29,28 @@ export default function FindInklings() {
   const navigate = useNavigate()
 
   useEffect(() => {
+    if (!supabase || !user) return
+    getFollowingIds().then(setFollowing).catch(() => {})
+  }, [user])
+
+  const handleAdd = async (targetId: string) => {
+    if (!supabase || !user || pending.has(targetId) || following.has(targetId)) return
+    setPending((s) => new Set(s).add(targetId))
+    try {
+      await addFriend(targetId)
+      setFollowing((s) => new Set(s).add(targetId))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add friend')
+    } finally {
+      setPending((s) => {
+        const next = new Set(s)
+        next.delete(targetId)
+        return next
+      })
+    }
+  }
+
+  useEffect(() => {
     if (!supabase) {
       setError('Supabase not configured')
       return

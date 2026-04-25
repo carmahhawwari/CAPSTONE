@@ -108,20 +108,56 @@ export default function ArchiveScreen() {
       </div>
 
       <div className="mt-6 flex flex-col gap-5 px-6 pb-8">
-        {filtered.length === 0 ? (
-          <p className="text-subheadline text-text-tertiary">
-            No letters yet.
-          </p>
+        {error && <p className="text-subheadline text-text-tertiary">{error}</p>}
+        {loading ? (
+          <p className="text-subheadline text-text-tertiary">Loading…</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-subheadline text-text-tertiary">No letters yet.</p>
         ) : (
-          filtered.map((r) => (
-            <div
-              key={r.id}
-              className="border-fill-primary bg-bg-primary rounded-md aspect-[16/10] w-full border-2"
-            />
-          ))
+          filtered.map((r) => {
+            const content = (r.content as { blocks?: Block[] } | null) ?? {}
+            const snippet = firstText(content.blocks ?? [])
+            return (
+              <div
+                key={r.id}
+                className="border-fill-primary bg-bg-primary rounded-md aspect-[16/10] w-full border-2 p-4 flex flex-col justify-between overflow-hidden"
+              >
+                <p className="text-subheadline text-text-primary line-clamp-4">
+                  {snippet || '(no text)'}
+                </p>
+                <p className="text-footnote text-text-tertiary">
+                  {new Date(r.created_at).toLocaleDateString()}
+                </p>
+              </div>
+            )
+          })
         )}
       </div>
     </div>
+  )
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        active
+          ? 'text-headline text-text-inverse bg-fill-primary rounded-full whitespace-nowrap px-5 py-2'
+          : 'text-headline text-text-primary whitespace-nowrap px-2 py-2'
+      }
+    >
+      {children}
+    </button>
   )
 }
 
