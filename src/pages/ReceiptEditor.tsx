@@ -436,23 +436,27 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               <div className="text-center mb-2">
                 <img src={headerLogoSvg} alt="Inklings" className="h-16 mx-auto" />
               </div>
-              <div className="text-xs text-gray-400 mb-2">
+              <div className="text-xs text-gray-400 mb-3">
                 {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </div>
-              <div className="bg-black text-white px-3 py-2 text-sm font-semibold mb-1">
-                To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
+              <div className="relative mb-3">
+                <img src={recipientBarSvg} alt="" className="w-full h-auto" />
+                <div className="absolute inset-0 flex items-center px-3 text-sm font-semibold text-white z-10">
+                  To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
+                </div>
               </div>
-              <img src={recipientBarSvg} alt="" className="w-full h-auto mb-3" />
             </>
           ) : (
             <>
               <div className="text-center mb-3 flex justify-center">
                 <img src={headerSquidsSvg} alt="Inklings squids" className="h-24" />
               </div>
-              <div className="bg-black text-white px-3 py-2 text-sm font-semibold mb-1">
-                To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
+              <div className="relative mb-3">
+                <img src={recipientBarSvg} alt="" className="w-full h-auto" />
+                <div className="absolute inset-0 flex items-center px-3 text-sm font-semibold text-white z-10">
+                  To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
+                </div>
               </div>
-              <img src={recipientBarSvg} alt="" className="w-full h-auto mb-3" />
             </>
           )}
 
