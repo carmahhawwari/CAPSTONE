@@ -31,11 +31,11 @@ function FontButton({ style, current, onChange }: { style: TextStyle; current: T
 
 export default function FontStylePicker({ current, onChange }: FontStylePickerProps) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {/* Standard Type */}
       <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 px-1">Standard</p>
-        <div className="flex gap-1.5 overflow-x-auto py-2 px-1 scrollbar-hide">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">Standard</p>
+        <div className="flex flex-wrap gap-2">
           {STANDARD_STYLES.map(s => (
             <FontButton key={s} style={s} current={current} onChange={onChange} />
           ))}
@@ -44,8 +44,8 @@ export default function FontStylePicker({ current, onChange }: FontStylePickerPr
 
       {/* Display Type */}
       <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 px-1">Display</p>
-        <div className="flex gap-1.5 overflow-x-auto py-2 px-1 scrollbar-hide">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">Display</p>
+        <div className="flex flex-wrap gap-2">
           {DISPLAY_STYLES.map(s => (
             <FontButton key={s} style={s} current={current} onChange={onChange} />
           ))}
