@@ -6,6 +6,7 @@ interface TextBlockProps {
   content: string
   style: TextStyle
   fontSizeMultiplier?: number
+  redactionLevel?: number
   isActive: boolean
   onContentChange: (content: string) => void
   onFocus: () => void
@@ -23,14 +24,23 @@ export default function TextBlock({
   content,
   style,
   fontSizeMultiplier = 1,
+  redactionLevel = 50,
   isActive,
   onContentChange,
   onFocus,
   onDelete,
 }: TextBlockProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const fontConfig = FONT_STYLES[style]
+  let fontConfig = FONT_STYLES[style]
   const adjustedFontSize = fontConfig.fontSize * fontSizeMultiplier
+
+  // Override fontFamily for redaction based on level
+  if (style === 'redaction') {
+    fontConfig = {
+      ...fontConfig,
+      fontFamily: `redaction-${redactionLevel}, sans-serif`,
+    }
+  }
 
   const syncContent = useCallback(() => {
     if (!ref.current) return

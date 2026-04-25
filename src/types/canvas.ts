@@ -1,9 +1,9 @@
-export type TextStyle = 'normal' | 'heading' | 'handwriting' | 'pixel' | 'shout' | 'artsy' | 'decorative' | 'comic' | 'bold' | 'liquida' | 'dottonoji' | 'tsuchinoko' | 'redaction-10' | 'redaction-35' | 'redaction-50' | 'redaction-70'
+export type TextStyle = 'normal' | 'heading' | 'handwriting' | 'pixel' | 'shout' | 'artsy' | 'decorative' | 'comic' | 'bold' | 'liquida' | 'dottonoji' | 'tsuchinoko' | 'redaction'
 
 import type { ImageAdjustments } from '@/lib/imageProcessing'
 
 export type Block =
-  | { id: string; type: 'text'; content: string; style: TextStyle; fontSizeMultiplier?: number }
+  | { id: string; type: 'text'; content: string; style: TextStyle; fontSizeMultiplier?: number; redactionLevel?: number }
   | { id: string; type: 'image'; dataUrl: string; adjustments?: ImageAdjustments }
   | { id: string; type: 'sticker'; stickerId: string }
 
@@ -89,26 +89,8 @@ export const FONT_STYLES: Record<TextStyle, FontStyleConfig> = {
     fontWeight: 400,
     lineHeight: 1.4,
   },
-  'redaction-10': {
-    fontFamily: "redaction-10, sans-serif",
-    fontSize: 18,
-    fontWeight: 400,
-    lineHeight: 1.4,
-  },
-  'redaction-35': {
-    fontFamily: "redaction-35, sans-serif",
-    fontSize: 18,
-    fontWeight: 400,
-    lineHeight: 1.4,
-  },
-  'redaction-50': {
+  redaction: {
     fontFamily: "redaction-50, sans-serif",
-    fontSize: 18,
-    fontWeight: 400,
-    lineHeight: 1.4,
-  },
-  'redaction-70': {
-    fontFamily: "redaction-70, sans-serif",
     fontSize: 18,
     fontWeight: 400,
     lineHeight: 1.4,
@@ -128,10 +110,7 @@ export const STYLE_LABELS: Record<TextStyle, string> = {
   liquida: 'Liquida',
   dottonoji: 'Dottonoji',
   tsuchinoko: 'Tsuchinoko',
-  'redaction-10': 'Redaction 10',
-  'redaction-35': 'Redaction 35',
-  'redaction-50': 'Redaction 50',
-  'redaction-70': 'Redaction 70',
+  redaction: 'Redaction',
 }
 
 let _blockId = 0
