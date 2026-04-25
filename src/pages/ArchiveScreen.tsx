@@ -47,23 +47,21 @@ export default function ArchiveScreen() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-bg-base items-center justify-center">
-        <p className="text-text-tertiary">Loading...</p>
+      <div className="flex min-h-screen flex-col bg-white items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
       </div>
     )
   }
 
-  const filtered = receipts
-
   return (
-    <div className="flex min-h-screen flex-col bg-bg-base">
+    <div className="flex min-h-screen flex-col bg-white">
       <div className="sticky top-0 z-10">
-        <header className="bg-bg-base relative flex items-start justify-between gap-4 px-6 pt-12 pb-3">
+        <header className="bg-white relative flex items-start justify-between gap-4 px-6 pt-8 pb-4">
           <div className="flex min-w-0 flex-1 flex-col gap-4">
-            <h1 className="text-regular-semibold text-text-primary">Archives</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Archive</h1>
             <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
               {friends.length === 0 ? (
-                <p className="text-subheadline text-text-tertiary">No friends yet</p>
+                <p className="text-sm text-gray-400">No friends yet</p>
               ) : (
                 friends.map((f) => {
                   const label = (f.profile.display_name || f.profile.username || 'Friend').split(' ')[0]
@@ -75,8 +73,8 @@ export default function ArchiveScreen() {
                       onClick={() => setActiveFriendId(f.profile.id)}
                       className={
                         isActive
-                          ? 'text-headline text-text-inverse bg-fill-primary rounded-full whitespace-nowrap px-5 py-2'
-                          : 'text-headline text-text-primary whitespace-nowrap px-2 py-2'
+                          ? 'text-sm font-semibold text-white bg-blue-600 rounded-full whitespace-nowrap px-4 py-2'
+                          : 'text-sm font-semibold text-gray-700 whitespace-nowrap px-3 py-2'
                       }
                     >
                       {label}
@@ -100,64 +98,32 @@ export default function ArchiveScreen() {
             aria-hidden
             className="pointer-events-none absolute left-0 right-0 top-full h-6"
             style={{
-              background:
-                'linear-gradient(to bottom, var(--color-bg-base), rgba(253, 253, 253, 0))',
+              background: 'linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0))',
             }}
           />
         </header>
       </div>
 
       <div className="mt-6 flex flex-col gap-5 px-6 pb-8">
-        {error && <p className="text-subheadline text-text-tertiary">{error}</p>}
-        {loading ? (
-          <p className="text-subheadline text-text-tertiary">Loading…</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-subheadline text-text-tertiary">No letters yet.</p>
+        {receipts.length === 0 ? (
+          <p className="text-sm text-gray-400">No letters yet.</p>
         ) : (
-          filtered.map((r) => {
-            const content = (r.content as { blocks?: Block[] } | null) ?? {}
-            const snippet = firstText(content.blocks ?? [])
-            return (
-              <div
-                key={r.id}
-                className="border-fill-primary bg-bg-primary rounded-md aspect-[16/10] w-full border-2 p-4 flex flex-col justify-between overflow-hidden"
-              >
-                <p className="text-subheadline text-text-primary line-clamp-4">
-                  {snippet || '(no text)'}
-                </p>
-                <p className="text-footnote text-text-tertiary">
-                  {new Date(r.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            )
-          })
+          receipts.map((r) => (
+            <div
+              key={r.id}
+              className="border-blue-200 bg-gray-50 rounded-lg border p-4 flex flex-col justify-between overflow-hidden"
+            >
+              <p className="text-sm text-gray-700 line-clamp-4">
+                {r.content || '(no text)'}
+              </p>
+              <p className="text-xs text-gray-400 mt-3">
+                {r.date}
+              </p>
+            </div>
+          ))
         )}
       </div>
     </div>
-  )
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={
-        active
-          ? 'text-headline text-text-inverse bg-fill-primary rounded-full whitespace-nowrap px-5 py-2'
-          : 'text-headline text-text-primary whitespace-nowrap px-2 py-2'
-      }
-    >
-      {children}
-    </button>
   )
 }
 
@@ -175,7 +141,7 @@ function IconButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="border-fill-primary flex h-11 w-11 items-center justify-center rounded-full border-2"
+      className="border-gray-300 flex h-11 w-11 items-center justify-center rounded-full border-2 text-gray-700 hover:text-gray-900"
     >
       {children}
     </button>

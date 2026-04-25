@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -43,35 +43,7 @@ export default function SignUp() {
     }
   }
 
-  const handleSendReceipt = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!recipientPhone.trim()) return
-    if (!supabase) {
-      setError('Supabase not configured')
-      return
-    }
-
-    setError(null)
-    setSubmitting(true)
-    try {
-      const { data, error } = await supabase.functions.invoke('send-recipt', {
-        body: {
-          recipientPhone: recipientPhone.trim(),
-          senderName: senderName.trim() || 'someone',
-          message: draftMessage || 'a little note',
-        },
-      })
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
-
-      clearDraft()
-      setSent(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  const inputClass = 'w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
@@ -134,19 +106,17 @@ export default function SignUp() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Phone number (optional)"
-            className={inputClass}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={loading}
           />
-
-        {isDelivery && sent && (
           <button
             type="submit"
             disabled={loading}
-            className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 w-full py-4 disabled:opacity-50"
+            className="w-full px-4 py-2 mt-4 bg-blue-500 text-white rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
           >
-            {loading ? 'Creating account...' : 'Continue'}
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
-        )}
+        </form>
       </div>
     </div>
   )

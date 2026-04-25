@@ -11,23 +11,23 @@ export default function OnboardIntro() {
   }, [user, loading, navigate])
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg-base px-6">
+    <div className="flex min-h-screen flex-col bg-white px-6">
       <div className="flex flex-1 flex-col justify-center">
-        <h1 className="text-regular-semibold text-text-primary">Inklings</h1>
-        <p className="text-body text-text-primary mt-2">
+        <h1 className="text-4xl font-bold text-gray-900">Inklings</h1>
+        <p className="text-lg text-gray-700 mt-2">
           Send a little paper note to someone. We'll walk you through it.
         </p>
 
         <Link
           to="/onboard/recipient"
-          className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 w-full py-4 text-center"
+          className="bg-black text-white font-semibold rounded-md mt-8 w-full py-4 text-center block"
         >
           Start your first receipt
         </Link>
 
         <Link
           to="/login"
-          className="text-callout text-text-primary mt-4 w-full text-center"
+          className="text-gray-700 mt-4 w-full text-center block"
         >
           I already have an account
         </Link>

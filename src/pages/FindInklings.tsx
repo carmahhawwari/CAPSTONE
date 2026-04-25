@@ -29,28 +29,6 @@ export default function FindInklings() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!supabase || !user) return
-    getFollowingIds().then(setFollowing).catch(() => {})
-  }, [user])
-
-  const handleAdd = async (targetId: string) => {
-    if (!supabase || !user || pending.has(targetId) || following.has(targetId)) return
-    setPending((s) => new Set(s).add(targetId))
-    try {
-      await addFriend(targetId)
-      setFollowing((s) => new Set(s).add(targetId))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add friend')
-    } finally {
-      setPending((s) => {
-        const next = new Set(s)
-        next.delete(targetId)
-        return next
-      })
-    }
-  }
-
-  useEffect(() => {
     if (!supabase) {
       setError('Supabase not configured')
       return
@@ -163,12 +141,12 @@ export default function FindInklings() {
   }
 
   return (
-    <div className="flex h-screen flex-col items-center bg-bg-base px-6 py-12">
+    <div className="flex h-screen flex-col items-center bg-white px-6 py-12">
       <div className="flex w-full max-w-sm flex-1 flex-col min-h-0">
-        <h1 className="text-regular-semibold text-text-primary">
+        <h1 className="text-2xl font-bold text-gray-900">
           Find your inklings
         </h1>
-        <p className="text-subheadline text-text-secondary mt-2">
+        <p className="text-sm text-gray-600 mt-2">
           Add or invite your friends to inklings to start sharing and receiving
           messages.
         </p>
@@ -178,18 +156,18 @@ export default function FindInklings() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search ..."
-          className="font-inter text-mini text-text-primary placeholder:text-text-tertiary border-fill-tertiary bg-bg-tertiary rounded-md mt-6 w-full border px-4 py-4 focus:outline-none focus:border-fill-primary"
+          className="text-sm text-gray-900 placeholder:text-gray-400 border-gray-200 bg-gray-50 rounded-md mt-6 w-full border px-4 py-4 focus:outline-none focus:border-blue-500"
         />
 
         <div className="mt-4 flex-1 overflow-y-auto">
           {error && (
-            <p className="text-subheadline text-text-tertiary">
+            <p className="text-sm text-gray-500">
               {error}
             </p>
           )}
 
           {!error && users.length === 0 && !loading && (
-            <p className="text-subheadline text-text-tertiary">
+            <p className="text-sm text-gray-400">
               {query.trim() ? 'No matches.' : 'No users yet.'}
             </p>
           )}
@@ -205,7 +183,7 @@ export default function FindInklings() {
               return (
                 <div
                   key={u.id}
-                  className="border-fill-tertiary bg-bg-primary rounded-md flex items-center justify-between border px-4 py-3"
+                  className="border-gray-200 bg-white rounded-md flex items-center justify-between border px-4 py-3"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     {u.avatar_url ? (
@@ -215,14 +193,14 @@ export default function FindInklings() {
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="bg-fill-quaternary h-10 w-10 rounded-full" />
+                      <div className="bg-gray-200 h-10 w-10 rounded-full" />
                     )}
                     <div className="min-w-0">
-                      <div className="text-body text-text-primary truncate">
+                      <div className="text-sm font-medium text-gray-900 truncate">
                         {name}
                       </div>
                       {handle && (
-                        <div className="text-subheadline text-text-tertiary truncate">
+                        <div className="text-xs text-gray-500 truncate">
                           {handle}
                         </div>
                       )}
@@ -232,10 +210,10 @@ export default function FindInklings() {
                     type="button"
                     onClick={() => handleFriendAction(u.id, friendshipInfo.status, friendshipInfo.rowId)}
                     disabled={isDisabled}
-                    className={`text-callout rounded-md px-4 py-2 shrink-0 transition-opacity ${
+                    className={`text-xs rounded-md px-4 py-2 shrink-0 transition-opacity font-medium ${
                       isDisabled
-                        ? 'text-text-tertiary bg-fill-quaternary'
-                        : 'text-text-inverse bg-fill-primary'
+                        ? 'text-gray-500 bg-gray-100'
+                        : 'text-white bg-blue-600 hover:bg-blue-700'
                     } ${isLoading ? 'opacity-50' : ''}`}
                   >
                     {isLoading ? 'Loading...' : getButtonLabel(friendshipInfo.status)}
@@ -249,14 +227,14 @@ export default function FindInklings() {
         <button
           type="button"
           onClick={handleInvite}
-          className="text-headline text-text-inverse bg-fill-primary rounded-md mt-4 w-full py-4 shrink-0"
+          className="text-base font-semibold text-white bg-blue-600 rounded-md mt-4 w-full py-4 shrink-0"
         >
           Invite contacts
         </button>
 
         <Link
           to="/home"
-          className="text-subheadline text-text-primary mt-3 self-center underline shrink-0"
+          className="text-sm text-gray-600 mt-3 self-center underline shrink-0"
         >
           skip
         </Link>

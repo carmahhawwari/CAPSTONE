@@ -5,6 +5,11 @@ import { FONT_STYLES } from '@/types/canvas'
 interface TextBlockProps {
   content: string
   style: TextStyle
+  fontSizeMultiplier?: number
+  redactionLevel?: number
+  fontWeight?: number
+  isItalic?: boolean
+  isBold?: boolean
   isActive: boolean
   onContentChange: (content: string) => void
   onFocus: () => void
@@ -21,13 +26,43 @@ function renderMarkdown(text: string): string {
 export default function TextBlock({
   content,
   style,
+  fontSizeMultiplier = 1,
+  redactionLevel = 50,
+  fontWeight,
+  isItalic = false,
+  isBold = false,
   isActive,
   onContentChange,
   onFocus,
   onDelete,
 }: TextBlockProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const fontConfig = FONT_STYLES[style]
+  let fontConfig = FONT_STYLES[style]
+  const adjustedFontSize = fontConfig.fontSize * fontSizeMultiplier
+
+  // Override fontFamily for redaction based on level
+  if (style === 'redaction') {
+    fontConfig = {
+      ...fontConfig,
+      fontFamily: `redaction-${redactionLevel}, sans-serif`,
+    }
+  }
+
+  // Override fontWeight if provided
+  if (fontWeight !== undefined) {
+    fontConfig = {
+      ...fontConfig,
+      fontWeight,
+    }
+  }
+
+  // Override fontWeight for bold (used by tsuchinoko)
+  if (isBold) {
+    fontConfig = {
+      ...fontConfig,
+      fontWeight: 700,
+    }
+  }
 
   const syncContent = useCallback(() => {
     if (!ref.current) return
@@ -70,11 +105,13 @@ export default function TextBlock({
         onFocus={onFocus}
         onBlur={syncContent}
         data-placeholder="Type something..."
+        data-font-weight={fontConfig.fontWeight}
         className="w-full outline-none min-h-[1.5em] empty:before:content-[attr(data-placeholder)] empty:before:text-gray-300"
         style={{
           fontFamily: fontConfig.fontFamily,
-          fontSize: fontConfig.fontSize,
-          fontWeight: fontConfig.fontWeight,
+          fontSize: adjustedFontSize,
+          fontWeight: fontConfig.fontWeight as any,
+          fontStyle: isItalic ? 'italic' : 'normal',
           lineHeight: fontConfig.lineHeight,
           textTransform: fontConfig.textTransform ?? 'none',
           color: '#000',

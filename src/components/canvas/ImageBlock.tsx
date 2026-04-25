@@ -1,7 +1,10 @@
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
+import type { ImageAdjustments } from '@/lib/imageProcessing'
+import { DEFAULT_ADJUSTMENTS, applyImageAdjustments } from '@/lib/imageProcessing'
 
 interface ImageBlockProps {
   dataUrl: string
+  adjustments?: ImageAdjustments
   isActive: boolean
   onImageChange: (dataUrl: string) => void
   onFocus: () => void
@@ -10,12 +13,23 @@ interface ImageBlockProps {
 
 export default function ImageBlock({
   dataUrl,
+  adjustments = DEFAULT_ADJUSTMENTS,
   isActive,
   onImageChange,
   onFocus,
   onDelete,
 }: ImageBlockProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [displayUrl, setDisplayUrl] = useState(dataUrl)
+
+  useEffect(() => {
+    if (!dataUrl) return
+    const apply = async () => {
+      const url = await applyImageAdjustments(dataUrl, adjustments)
+      setDisplayUrl(url)
+    }
+    apply()
+  }, [dataUrl, adjustments])
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -62,7 +76,7 @@ export default function ImageBlock({
       onClick={onFocus}
     >
       <img
-        src={dataUrl}
+        src={displayUrl}
         alt=""
         className="w-full h-auto max-h-[400px] object-cover rounded"
       />
