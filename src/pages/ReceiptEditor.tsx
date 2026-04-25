@@ -431,34 +431,41 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           style={{ fontFamily: 'Georgia, serif' }}
         >
           {/* Header */}
-          {headerVariant === 'simple' ? (
-            <>
-              <div className="text-center mb-2">
-                <img src={headerLogoSvg} alt="Inklings" className="h-16 mx-auto" />
-              </div>
-              <div className="text-xs text-gray-400 mb-3">
-                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </div>
-              <div className="relative mb-3">
-                <img src={recipientBarSvg} alt="" className="w-full h-auto" />
-                <div className="absolute inset-0 flex items-center px-3 text-sm text-white z-10" style={{ fontFamily: "var(--font-printvetica)" }}>
-                  To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-center mb-3 flex justify-center">
+          {/* Header with Logo and Arrows */}
+          <div className="flex items-center justify-center gap-4 mb-2">
+            <button
+              onClick={prevHeaderVariant}
+              className="text-gray-400 hover:text-gray-600 font-bold text-lg"
+            >
+              &lt;
+            </button>
+            <div className="flex-shrink-0">
+              {headerVariant === 'simple' ? (
+                <img src={headerLogoSvg} alt="Inklings" className="h-16" />
+              ) : (
                 <img src={headerSquidsSvg} alt="Inklings squids" className="h-24" />
-              </div>
-              <div className="relative mb-3">
-                <img src={recipientBarSvg} alt="" className="w-full h-auto" />
-                <div className="absolute inset-0 flex items-center px-3 text-sm text-white z-10" style={{ fontFamily: "var(--font-printvetica)" }}>
-                  To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
-                </div>
-              </div>
-            </>
-          )}
+              )}
+            </div>
+            <button
+              onClick={nextHeaderVariant}
+              className="text-gray-400 hover:text-gray-600 font-bold text-lg"
+            >
+              &gt;
+            </button>
+          </div>
+
+          {/* Date */}
+          <div className="text-xs text-gray-400 mb-3 text-center">
+            {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          </div>
+
+          {/* Recipient Bar */}
+          <div className="relative mb-3">
+            <img src={recipientBarSvg} alt="" className="w-full h-auto" />
+            <div className="absolute inset-0 flex items-center px-3 text-sm text-white z-10" style={{ fontFamily: "var(--font-printvetica)" }}>
+              To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
+            </div>
+          </div>
 
           {/* Prompt Picker */}
           <div className="flex items-center gap-3 py-2">
@@ -477,25 +484,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             </div>
             <button
               onClick={nextPrompt}
-              className="text-gray-400 hover:text-gray-600 font-bold text-lg"
-            >
-              &gt;
-            </button>
-          </div>
-
-          {/* Header Variant Picker */}
-          <div className="flex items-center gap-3 py-2 mb-1">
-            <button
-              onClick={prevHeaderVariant}
-              className="text-gray-400 hover:text-gray-600 font-bold text-lg"
-            >
-              &lt;
-            </button>
-            <div className="flex-1 text-center">
-              <p className="text-xs text-gray-500 capitalize">{headerVariant}</p>
-            </div>
-            <button
-              onClick={nextHeaderVariant}
               className="text-gray-400 hover:text-gray-600 font-bold text-lg"
             >
               &gt;
