@@ -460,11 +460,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             <div className="absolute inset-0 flex items-center px-3 text-white z-10" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
               To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
             </div>
-          </div>
-
-          {/* Date */}
-          <div className="text-xs text-gray-400 mb-3 text-center">
-            {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            {/* Date */}
+            <div className="absolute -top-6 right-0 text-xs text-white z-20" style={{ fontFamily: "var(--font-printvetica)" }}>
+              {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </div>
           </div>
 
           {/* Prompt Picker */}
