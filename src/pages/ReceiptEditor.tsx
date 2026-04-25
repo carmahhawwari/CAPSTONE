@@ -432,7 +432,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         >
           {/* Header */}
           {/* Header with Logo and Arrows */}
-          <div className="flex items-center justify-center gap-4 mb-2">
+          <div className="flex items-center justify-center gap-4 mb-2 mt-6">
             <button
               onClick={prevHeaderVariant}
               className="text-gray-400 hover:text-gray-600 font-bold text-lg"
