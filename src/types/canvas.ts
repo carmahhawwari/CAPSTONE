@@ -2,6 +2,12 @@ export type TextStyle = 'normal' | 'heading' | 'handwriting' | 'pixel' | 'shout'
 
 import type { ImageAdjustments } from '@/lib/imageProcessing'
 
+export interface CornerSticker {
+  id: string
+  previewUrl: string
+  fullUrl: string
+}
+
 export type Block =
   | { id: string; type: 'text'; content: string; style: TextStyle; fontSizeMultiplier?: number; redactionLevel?: number; fontWeight?: number; isItalic?: boolean; isBold?: boolean }
   | { id: string; type: 'image'; dataUrl: string; adjustments?: ImageAdjustments }

@@ -1,0 +1,100 @@
+import { useState, useCallback, useRef } from 'react'
+import { searchGiphyStickers } from '@/lib/giphy'
+import type { CornerSticker } from '@/types/canvas'
+
+interface GiphyStickerPickerProps {
+  onSelect: (sticker: CornerSticker) => void
+  onClose: () => void
+}
+
+export default function GiphyStickerPicker({ onSelect, onClose }: GiphyStickerPickerProps) {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<CornerSticker[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null)
+
+  const handleSearch = useCallback(async (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      setResults([])
+      setError(null)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    try {
+      const stickers = await searchGiphyStickers(searchQuery)
+      setResults(stickers)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Search failed')
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const handleQueryChange = (newQuery: string) => {
+    setQuery(newQuery)
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(() => handleSearch(newQuery), 400)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/30" />
+      <div
+        className="relative bg-white rounded-t-2xl w-full max-w-md px-6 pt-4 pb-8 animate-in slide-in-from-bottom"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Search for a sticker</h3>
+
+        <input
+          type="text"
+          value={query}
+          onChange={e => handleQueryChange(e.target.value)}
+          placeholder="e.g. 'happy', 'celebration', 'star'..."
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+          autoFocus
+        />
+
+        {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+
+        {loading && <p className="text-xs text-gray-500 text-center py-4">Searching...</p>}
+
+        {results.length === 0 && !loading && query && !error && (
+          <p className="text-xs text-gray-500 text-center py-4">No results found</p>
+        )}
+
+        {results.length > 0 && (
+          <div className="grid grid-cols-4 gap-2 max-h-60 overflow-y-auto">
+            {results.map(sticker => (
+              <button
+                key={sticker.id}
+                onClick={() => {
+                  onSelect(sticker)
+                  onClose()
+                }}
+                className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              >
+                <img
+                  src={sticker.previewUrl}
+                  alt=""
+                  className="w-12 h-12 object-contain"
+                  style={{ filter: 'grayscale(100%)' }}
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!query && (
+          <p className="text-xs text-gray-400 text-center py-4 italic">
+            Try searching for stickers like 'heart', 'star', 'gift', etc.
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}

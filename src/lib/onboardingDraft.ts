@@ -1,4 +1,4 @@
-import type { Block } from '@/types/canvas'
+import type { Block, CornerSticker } from '@/types/canvas'
 import type { Json } from '@/types/database'
 import { supabase } from '@/lib/supabase'
 
@@ -8,6 +8,7 @@ export type OnboardingDraft = {
   content: {
     blocks: Block[]
     prompt: string
+    cornerSticker?: CornerSticker
   } | null
   recipient: {
     name: string

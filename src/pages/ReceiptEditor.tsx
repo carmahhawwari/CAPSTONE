@@ -6,6 +6,7 @@ import ImageBlock from '@/components/canvas/ImageBlock'
 import StickerBlock from '@/components/canvas/StickerBlock'
 import BlockToolbar from '@/components/canvas/BlockToolbar'
 import StickerPicker from '@/components/canvas/StickerPicker'
+import GiphyStickerPicker from '@/components/canvas/GiphyStickerPicker'
 import FontStylePicker from '@/components/canvas/FontStylePicker'
 import FontSizeSlider from '@/components/canvas/FontSizeSlider'
 import FontWeightSlider from '@/components/canvas/FontWeightSlider'
@@ -15,7 +16,7 @@ import { DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
 import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
 import { getFriends } from '@/lib/friends'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Block, TextStyle } from '@/types/canvas'
+import type { Block, TextStyle, CornerSticker } from '@/types/canvas'
 import type { FriendProfile } from '@/types/app'
 import { newBlockId } from '@/types/canvas'
 
@@ -57,6 +58,8 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [cornerSticker, setCornerSticker] = useState<CornerSticker | null>(null)
+  const [showGiphyPicker, setShowGiphyPicker] = useState(false)
   const receiptRef = useRef<HTMLDivElement>(null)
 
   // Generate 3 random prompts + no prompt option
@@ -176,7 +179,13 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
 
   const handleContinue = () => {
     if (blocks.length === 0) return
-    saveDraft({ content: { blocks, prompt: currentPrompt === 'No prompt' ? '' : currentPrompt } })
+    saveDraft({
+      content: {
+        blocks,
+        prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
+        cornerSticker: cornerSticker ?? undefined,
+      },
+    })
     navigate('/onboard/deliver')
   }
 
@@ -332,6 +341,39 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           <div className="pt-2 border-t border-dashed border-gray-200 text-sm text-gray-600 italic">
             Love, Me
           </div>
+
+          {/* Corner sticker */}
+          <div className="flex justify-end mt-2">
+            <div className="relative">
+              <button
+                onClick={() => setShowGiphyPicker(true)}
+                className="focus:outline-none"
+              >
+                {cornerSticker ? (
+                  <img
+                    src={cornerSticker.fullUrl}
+                    crossOrigin="anonymous"
+                    alt="Corner sticker"
+                    className="w-20 h-20 object-contain"
+                    style={{ filter: 'grayscale(100%)' }}
+                  />
+                ) : (
+                  <div className="w-16 h-16 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-300 text-2xl hover:text-gray-400 transition-colors">
+                    +
+                  </div>
+                )}
+              </button>
+              {cornerSticker && (
+                <button
+                  onClick={() => setCornerSticker(null)}
+                  className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
+                  aria-label="Remove corner sticker"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Block Toolbar */}
@@ -438,6 +480,14 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           <StickerPicker
             onSelect={handleAddSticker}
             onClose={() => setShowStickerPicker(false)}
+          />
+        )}
+
+        {/* GIPHY Sticker Picker Modal */}
+        {showGiphyPicker && (
+          <GiphyStickerPicker
+            onSelect={setCornerSticker}
+            onClose={() => setShowGiphyPicker(false)}
           />
         )}
 
