@@ -1,51 +1,59 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { getFriends, type FriendProfile } from '@/lib/friends'
-import { getArchive, type ReceiptWithProfiles } from '@/lib/receipts'
-import type { Block } from '@/types/canvas'
-
-const SAVED_TAB = '__saved__'
-
-function firstText(blocks: Block[]): string {
-  for (const b of blocks) {
-    if (b.type === 'text' && b.content?.trim()) return b.content
-  }
-  return ''
-}
+import { getFriends } from '@/lib/friends'
+import { getReceiptsByFriend } from '@/lib/receipts'
+import type { FriendProfile, Receipt } from '@/types/app'
 
 export default function ArchiveScreen() {
-  const navigate = useNavigate()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [friends, setFriends] = useState<FriendProfile[]>([])
-  const [receipts, setReceipts] = useState<ReceiptWithProfiles[]>([])
-  const [activeTab, setActiveTab] = useState<string>(SAVED_TAB)
+  const [activeFriendId, setActiveFriendId] = useState<string | null>(null)
+  const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) return
-    setLoading(true)
-    Promise.all([getFriends(), getArchive()])
-      .then(([fs, rs]) => {
-        setFriends(fs)
-        setReceipts(rs)
-        if (fs.length > 0) setActiveTab(fs[0].id)
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'))
-      .finally(() => setLoading(false))
-  }, [user])
-
-  const filtered = useMemo(() => {
-    if (activeTab === SAVED_TAB) {
-      return receipts.filter((r) => r.recipient_id === null && r.author_id === user?.id)
+    if (!user?.id) {
+      setLoading(false)
+      return
     }
-    return receipts.filter(
-      (r) =>
-        (r.author_id === activeTab && r.recipient_id === user?.id) ||
-        (r.author_id === user?.id && r.recipient_id === activeTab),
+
+    const loadFriends = async () => {
+      const friendsList = await getFriends(user.id)
+      setFriends(friendsList)
+      if (friendsList.length > 0) {
+        setActiveFriendId(friendsList[0].profile.id)
+      }
+      setLoading(false)
+    }
+
+    loadFriends()
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id || !activeFriendId) {
+      setReceipts([])
+      return
+    }
+
+    const loadReceipts = async () => {
+      const recs = await getReceiptsByFriend(user.id, activeFriendId)
+      setReceipts(recs)
+    }
+
+    loadReceipts()
+  }, [user?.id, activeFriendId])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col bg-bg-base items-center justify-center">
+        <p className="text-text-tertiary">Loading...</p>
+      </div>
     )
-  }, [activeTab, receipts, user?.id])
+  }
+
+  const filtered = receipts
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-base">
@@ -54,24 +62,28 @@ export default function ArchiveScreen() {
           <div className="flex min-w-0 flex-1 flex-col gap-4">
             <h1 className="text-regular-semibold text-text-primary">Archives</h1>
             <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
-              <TabButton
-                active={activeTab === SAVED_TAB}
-                onClick={() => setActiveTab(SAVED_TAB)}
-              >
-                Saved
-              </TabButton>
-              {friends.map((f) => {
-                const label = (f.display_name || f.username || 'Friend').split(' ')[0]
-                return (
-                  <TabButton
-                    key={f.id}
-                    active={activeTab === f.id}
-                    onClick={() => setActiveTab(f.id)}
-                  >
-                    {label}
-                  </TabButton>
-                )
-              })}
+              {friends.length === 0 ? (
+                <p className="text-subheadline text-text-tertiary">No friends yet</p>
+              ) : (
+                friends.map((f) => {
+                  const label = (f.profile.display_name || f.profile.username || 'Friend').split(' ')[0]
+                  const isActive = activeFriendId === f.profile.id
+                  return (
+                    <button
+                      key={f.friendRowId}
+                      type="button"
+                      onClick={() => setActiveFriendId(f.profile.id)}
+                      className={
+                        isActive
+                          ? 'text-headline text-text-inverse bg-fill-primary rounded-full whitespace-nowrap px-5 py-2'
+                          : 'text-headline text-text-primary whitespace-nowrap px-2 py-2'
+                      }
+                    >
+                      {label}
+                    </button>
+                  )
+                })
+              )}
             </div>
           </div>
 

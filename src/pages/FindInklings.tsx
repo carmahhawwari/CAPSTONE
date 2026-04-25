@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import { addFriend, getFollowingIds } from '@/lib/friends'
+import { getFriendshipStatus, sendFriendRequest, acceptFriendRequest } from '@/lib/friends'
 
 type Profile = {
   id: string
@@ -11,14 +11,21 @@ type Profile = {
   avatar_url: string | null
 }
 
+type FriendshipStatus = 'none' | 'pending_sent' | 'pending_received' | 'accepted'
+
+type FriendshipMap = {
+  status: FriendshipStatus
+  rowId?: string
+}
+
 export default function FindInklings() {
+  const { user } = useAuth()
   const [query, setQuery] = useState('')
   const [users, setUsers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [following, setFollowing] = useState<Set<string>>(new Set())
-  const [pending, setPending] = useState<Set<string>>(new Set())
-  const { user } = useAuth()
+  const [friendships, setFriendships] = useState<Map<string, FriendshipMap>>(new Map())
+  const [actionStates, setActionStates] = useState<Map<string, boolean>>(new Map())
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -67,14 +74,31 @@ export default function FindInklings() {
         builder = builder.or(`display_name.ilike.${pattern},username.ilike.${pattern}`)
       }
 
+      // Filter out current user
+      if (user?.id) {
+        builder = builder.neq('id', user.id)
+      }
+
       const { data, error: qErr } = await builder
       if (cancelled) return
 
       if (qErr) {
         setError(qErr.message)
         setUsers([])
+        setFriendships(new Map())
       } else {
-        setUsers((data ?? []).filter((u) => u.id !== user?.id))
+        const profiles = data ?? []
+        setUsers(profiles)
+
+        // Fetch friendship status for each user
+        if (user?.id) {
+          const map = new Map<string, FriendshipMap>()
+          for (const profile of profiles) {
+            const status = await getFriendshipStatus(user.id, profile.id)
+            map.set(profile.id, status)
+          }
+          setFriendships(map)
+        }
       }
       setLoading(false)
     }, 200)
@@ -87,6 +111,55 @@ export default function FindInklings() {
 
   const handleInvite = () => {
     navigate('/home')
+  }
+
+  const handleFriendAction = async (userId: string, status: FriendshipStatus, rowId?: string) => {
+    if (!user?.id) return
+
+    setActionStates(prev => new Map(prev).set(userId, true))
+
+    try {
+      if (status === 'none') {
+        const result = await sendFriendRequest(user.id, userId)
+        if (result.success) {
+          setFriendships(prev => {
+            const map = new Map(prev)
+            map.set(userId, { status: 'pending_sent', rowId: userId })
+            return map
+          })
+        }
+      } else if (status === 'pending_received' && rowId) {
+        const result = await acceptFriendRequest(rowId)
+        if (result.success) {
+          setFriendships(prev => {
+            const map = new Map(prev)
+            map.set(userId, { status: 'accepted', rowId })
+            return map
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Friend action error:', err)
+    } finally {
+      setActionStates(prev => new Map(prev).set(userId, false))
+    }
+  }
+
+  const getButtonLabel = (status: FriendshipStatus): string => {
+    switch (status) {
+      case 'none':
+        return 'Add'
+      case 'pending_sent':
+        return 'Pending'
+      case 'pending_received':
+        return 'Accept'
+      case 'accepted':
+        return 'Friends'
+    }
+  }
+
+  const isButtonDisabled = (status: FriendshipStatus, userId: string): boolean => {
+    return status === 'pending_sent' || status === 'accepted' || actionStates.get(userId) === true
   }
 
   return (
@@ -125,6 +198,10 @@ export default function FindInklings() {
             {users.map((u) => {
               const name = u.display_name || u.username || 'Untitled'
               const handle = u.display_name && u.username ? `@${u.username}` : null
+              const friendshipInfo = friendships.get(u.id) ?? { status: 'none' as FriendshipStatus }
+              const isLoading = actionStates.get(u.id) === true
+              const isDisabled = isButtonDisabled(friendshipInfo.status, u.id)
+
               return (
                 <div
                   key={u.id}
@@ -153,11 +230,15 @@ export default function FindInklings() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleAdd(u.id)}
-                    disabled={following.has(u.id) || pending.has(u.id)}
-                    className="text-callout text-text-inverse bg-fill-primary rounded-md px-4 py-2 shrink-0 disabled:opacity-40"
+                    onClick={() => handleFriendAction(u.id, friendshipInfo.status, friendshipInfo.rowId)}
+                    disabled={isDisabled}
+                    className={`text-callout rounded-md px-4 py-2 shrink-0 transition-opacity ${
+                      isDisabled
+                        ? 'text-text-tertiary bg-fill-quaternary'
+                        : 'text-text-inverse bg-fill-primary'
+                    } ${isLoading ? 'opacity-50' : ''}`}
                   >
-                    {following.has(u.id) ? 'Added' : pending.has(u.id) ? 'Adding…' : 'Add'}
+                    {isLoading ? 'Loading...' : getButtonLabel(friendshipInfo.status)}
                   </button>
                 </div>
               )

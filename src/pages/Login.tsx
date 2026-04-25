@@ -1,15 +1,27 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Login() {
+  const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Auth bypassed — advance to home.
-    navigate('/home')
+    setLoading(true)
+    setError('')
+
+    try {
+      await signIn(email, password)
+      navigate('/home')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed')
+      setLoading(false)
+    }
   }
 
   const inputClass =
@@ -23,6 +35,12 @@ export default function Login() {
           Enter your email and password to log back into your account
         </p>
 
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="mt-10 flex w-full flex-col gap-3">
           <input
             type="email"
@@ -31,6 +49,7 @@ export default function Login() {
             required
             placeholder="Email"
             className={inputClass}
+            disabled={loading}
           />
           <input
             type="password"
@@ -39,13 +58,15 @@ export default function Login() {
             required
             placeholder="Password"
             className={inputClass}
+            disabled={loading}
           />
 
           <button
             type="submit"
-            className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 w-full py-4"
+            disabled={loading}
+            className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 w-full py-4 disabled:opacity-50"
           >
-            Continue
+            {loading ? 'Logging in...' : 'Continue'}
           </button>
 
           <Link

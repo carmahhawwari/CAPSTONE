@@ -87,24 +87,30 @@ export interface Database {
         }
         Relationships: []
       }
-      follows: {
+      friends: {
         Row: {
           id: string
-          follower_id: string
-          following_id: string
+          requester_id: string
+          addressee_id: string
+          status: 'pending' | 'accepted'
           created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
-          follower_id: string
-          following_id: string
+          requester_id: string
+          addressee_id: string
+          status?: 'pending' | 'accepted'
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
-          follower_id?: string
-          following_id?: string
+          requester_id?: string
+          addressee_id?: string
+          status?: 'pending' | 'accepted'
           created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -177,7 +183,9 @@ export interface Database {
           printer_id: string | null
           sender_id: string | null
           recipient_name: string | null
+          recipient_id: string | null
           payload_base64: string
+          message_text: string | null
           status: string
           error_message: string | null
           sender_latitude: number | null
@@ -190,7 +198,9 @@ export interface Database {
           printer_id?: string | null
           sender_id?: string | null
           recipient_name?: string | null
+          recipient_id?: string | null
           payload_base64: string
+          message_text?: string | null
           status?: string
           error_message?: string | null
           sender_latitude?: number | null
@@ -203,7 +213,9 @@ export interface Database {
           printer_id?: string | null
           sender_id?: string | null
           recipient_name?: string | null
+          recipient_id?: string | null
           payload_base64?: string
+          message_text?: string | null
           status?: string
           error_message?: string | null
           sender_latitude?: number | null
