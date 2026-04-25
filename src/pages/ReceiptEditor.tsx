@@ -160,7 +160,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   return (
     <div className="min-h-screen bg-white flex flex-col pb-16">
       <div className="px-6 pt-8 flex-1 overflow-y-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Create Receipt</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Share an Inkling</h1>
 
         {/* Friend picker - only for authenticated users */}
         {!onboarding && friends.length > 0 && (
