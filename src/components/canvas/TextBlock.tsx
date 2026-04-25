@@ -7,6 +7,7 @@ interface TextBlockProps {
   style: TextStyle
   fontSizeMultiplier?: number
   redactionLevel?: number
+  fontWeight?: number
   isActive: boolean
   onContentChange: (content: string) => void
   onFocus: () => void
@@ -25,6 +26,7 @@ export default function TextBlock({
   style,
   fontSizeMultiplier = 1,
   redactionLevel = 50,
+  fontWeight,
   isActive,
   onContentChange,
   onFocus,
@@ -39,6 +41,14 @@ export default function TextBlock({
     fontConfig = {
       ...fontConfig,
       fontFamily: `redaction-${redactionLevel}, sans-serif`,
+    }
+  }
+
+  // Override fontWeight if provided
+  if (fontWeight !== undefined) {
+    fontConfig = {
+      ...fontConfig,
+      fontWeight,
     }
   }
 

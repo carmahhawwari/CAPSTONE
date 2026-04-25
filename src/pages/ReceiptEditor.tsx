@@ -8,6 +8,7 @@ import BlockToolbar from '@/components/canvas/BlockToolbar'
 import StickerPicker from '@/components/canvas/StickerPicker'
 import FontStylePicker from '@/components/canvas/FontStylePicker'
 import FontSizeSlider from '@/components/canvas/FontSizeSlider'
+import FontWeightSlider from '@/components/canvas/FontWeightSlider'
 import RedactionLevelSlider from '@/components/canvas/RedactionLevelSlider'
 import ImageAdjustmentPanel from '@/components/canvas/ImageAdjustmentPanel'
 import { DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
@@ -244,6 +245,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                       style={block.style}
                       fontSizeMultiplier={block.fontSizeMultiplier}
                       redactionLevel={block.redactionLevel}
+                      fontWeight={block.fontWeight}
                       isActive={activeBlockId === block.id}
                       onContentChange={content => updateBlock(block.id, { content })}
                       onFocus={() => setActiveBlockId(block.id)}
@@ -301,6 +303,12 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               <RedactionLevelSlider
                 value={activeBlock.redactionLevel ?? 50}
                 onChange={redactionLevel => updateBlock(activeBlock.id, { redactionLevel })}
+              />
+            )}
+            {activeBlock.style === 'inter' && (
+              <FontWeightSlider
+                value={activeBlock.fontWeight ?? 400}
+                onChange={fontWeight => updateBlock(activeBlock.id, { fontWeight })}
               />
             )}
           </div>

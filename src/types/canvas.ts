@@ -3,7 +3,7 @@ export type TextStyle = 'normal' | 'heading' | 'handwriting' | 'pixel' | 'shout'
 import type { ImageAdjustments } from '@/lib/imageProcessing'
 
 export type Block =
-  | { id: string; type: 'text'; content: string; style: TextStyle; fontSizeMultiplier?: number; redactionLevel?: number }
+  | { id: string; type: 'text'; content: string; style: TextStyle; fontSizeMultiplier?: number; redactionLevel?: number; fontWeight?: number }
   | { id: string; type: 'image'; dataUrl: string; adjustments?: ImageAdjustments }
   | { id: string; type: 'sticker'; stickerId: string }
 
