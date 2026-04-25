@@ -343,35 +343,35 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
 
           {/* Corner sticker */}
-          <div className="relative h-32 mt-4 mb-0">
+          <div className="relative h-56 mt-6 mb-0">
             {cornerSticker ? (
               <div className="absolute bottom-0 right-0 group">
                 <button
                   onClick={() => setShowGiphyPicker(true)}
-                  className="focus:outline-none transform transition-all hover:scale-105 active:scale-95"
+                  className="focus:outline-none transform transition-all hover:scale-110 active:scale-90"
                   style={{
-                    transform: 'rotate(-8deg) scale(1.2)',
+                    transform: 'rotate(-12deg) scale(1.5)',
                   }}
                 >
                   {cornerSticker.ditheredDataUrl ? (
                     <img
                       src={cornerSticker.ditheredDataUrl}
                       alt="Corner sticker"
-                      className="w-32 h-32 object-contain drop-shadow-lg"
+                      className="w-56 h-56 object-contain drop-shadow-2xl"
                     />
                   ) : (
                     <img
                       src={cornerSticker.fullUrl}
                       crossOrigin="anonymous"
                       alt="Corner sticker"
-                      className="w-32 h-32 object-contain drop-shadow-lg"
+                      className="w-56 h-56 object-contain drop-shadow-2xl"
                       style={{ filter: 'grayscale(100%)' }}
                     />
                   )}
                 </button>
                 <button
                   onClick={() => setCornerSticker(null)}
-                  className="absolute -top-3 -left-3 w-6 h-6 rounded-full bg-red-500 text-white text-sm flex items-center justify-center hover:bg-red-600 transition-colors shadow-md opacity-0 group-hover:opacity-100"
+                  className="absolute -top-4 -left-4 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md opacity-0 group-hover:opacity-100"
                   aria-label="Remove corner sticker"
                 >
                   ×
@@ -380,7 +380,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             ) : (
               <button
                 onClick={() => setShowGiphyPicker(true)}
-                className="absolute bottom-0 right-0 w-20 h-20 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-300 text-3xl hover:text-gray-400 hover:border-gray-300 transition-all focus:outline-none"
+                className="absolute bottom-0 right-0 w-28 h-28 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-300 text-5xl hover:text-gray-400 hover:border-gray-300 transition-all focus:outline-none"
               >
                 +
               </button>
