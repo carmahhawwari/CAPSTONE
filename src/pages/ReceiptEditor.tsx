@@ -443,7 +443,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               {headerVariant === 'simple' ? (
                 <img src={headerLogoSvg} alt="Inklings" className="h-16" />
               ) : (
-                <img src={headerSquidsSvg} alt="Inklings squids" style={{ height: '115.2px' }} />
+                <img src={headerSquidsSvg} alt="Inklings squids" style={{ height: '138.24px' }} />
               )}
             </div>
             <button
