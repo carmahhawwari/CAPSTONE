@@ -1,7 +1,7 @@
 import type { TextStyle } from '@/types/canvas'
 import { FONT_STYLES, STYLE_LABELS } from '@/types/canvas'
 
-const STYLES: TextStyle[] = ['normal', 'heading', 'handwriting', 'pixel', 'shout', 'artsy', 'decorative', 'comic', 'bold', 'liquida', 'dottonoji', 'tsuchinoko', 'redaction']
+const STYLES: TextStyle[] = ['normal', 'heading', 'handwriting', 'pixel', 'shout', 'artsy', 'decorative', 'comic', 'bold', 'liquida', 'dottonoji', 'tsuchinoko', 'redaction', 'inter']
 
 interface FontStylePickerProps {
   current: TextStyle
