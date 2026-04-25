@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
 import archiveImg from '@/assets/archive.png'
 import printerImg from '@/assets/printer.png'
 
