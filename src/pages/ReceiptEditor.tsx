@@ -247,7 +247,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                       redactionLevel={block.redactionLevel}
                       fontWeight={block.fontWeight}
                       isItalic={block.isItalic}
-                      isBold={block.isBold}
                       isActive={activeBlockId === block.id}
                       onContentChange={content => updateBlock(block.id, { content })}
                       onFocus={() => setActiveBlockId(block.id)}
@@ -315,29 +314,17 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                     onChange={fontWeight => updateBlock(activeBlock.id, { fontWeight })}
                   />
                 </div>
-                <div className="flex gap-1 mt-8">
-                  <button
-                    onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
-                    className={`px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
-                      activeBlock.isItalic
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
-                    }`}
-                    style={{ fontStyle: 'italic' }}
-                  >
-                    I
-                  </button>
-                  <button
-                    onClick={() => updateBlock(activeBlock.id, { isBold: !activeBlock.isBold })}
-                    className={`px-3 py-1.5 rounded text-sm font-bold transition-colors ${
-                      activeBlock.isBold
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
-                    }`}
-                  >
-                    B
-                  </button>
-                </div>
+                <button
+                  onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
+                  className={`mt-8 px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
+                    activeBlock.isItalic
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
+                  }`}
+                  style={{ fontStyle: 'italic' }}
+                >
+                  I
+                </button>
               </div>
             )}
           </div>

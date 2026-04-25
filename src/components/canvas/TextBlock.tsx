@@ -9,7 +9,6 @@ interface TextBlockProps {
   redactionLevel?: number
   fontWeight?: number
   isItalic?: boolean
-  isBold?: boolean
   isActive: boolean
   onContentChange: (content: string) => void
   onFocus: () => void
@@ -30,7 +29,6 @@ export default function TextBlock({
   redactionLevel = 50,
   fontWeight,
   isItalic = false,
-  isBold = false,
   isActive,
   onContentChange,
   onFocus,
@@ -101,7 +99,7 @@ export default function TextBlock({
         style={{
           fontFamily: fontConfig.fontFamily,
           fontSize: adjustedFontSize,
-          fontWeight: isBold ? 700 : fontConfig.fontWeight,
+          fontWeight: fontConfig.fontWeight,
           fontStyle: isItalic ? 'italic' : 'normal',
           lineHeight: fontConfig.lineHeight,
           textTransform: fontConfig.textTransform ?? 'none',
