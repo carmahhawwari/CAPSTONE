@@ -6,6 +6,7 @@ export interface CornerSticker {
   id: string
   previewUrl: string
   fullUrl: string
+  ditheredDataUrl?: string
 }
 
 export type Block =

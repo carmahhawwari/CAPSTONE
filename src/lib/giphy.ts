@@ -1,4 +1,5 @@
 import type { CornerSticker } from '@/types/canvas'
+import { applyImageAdjustments } from '@/lib/imageProcessing'
 
 const API_KEY = import.meta.env.VITE_GIPHY_API_KEY
 
@@ -38,4 +39,38 @@ export async function searchGiphyStickers(query: string, limit = 20): Promise<Co
     previewUrl: item.images.fixed_height_still?.url || '',
     fullUrl: item.images.original_still?.url || '',
   }))
+}
+
+export async function ditherStickerImage(imageUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = async () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Could not get canvas context'))
+        return
+      }
+      ctx.drawImage(img, 0, 0)
+      const dataUrl = canvas.toDataURL('image/png')
+
+      try {
+        const dithered = await applyImageAdjustments(dataUrl, {
+          brightness: 100,
+          contrast: 100,
+          grayscale: 100,
+          dithering: 'floyd-steinberg',
+          fsStrength: 1,
+        })
+        resolve(dithered)
+      } catch (err) {
+        reject(err)
+      }
+    }
+    img.onerror = () => reject(new Error('Failed to load image'))
+    img.src = imageUrl
+  })
 }

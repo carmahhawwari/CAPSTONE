@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { searchGiphyStickers } from '@/lib/giphy'
+import { searchGiphyStickers, ditherStickerImage } from '@/lib/giphy'
 import type { CornerSticker } from '@/types/canvas'
 
 interface GiphyStickerPickerProps {
@@ -11,6 +11,7 @@ export default function GiphyStickerPicker({ onSelect, onClose }: GiphyStickerPi
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<CornerSticker[]>([])
   const [loading, setLoading] = useState(false)
+  const [ditherLoading, setDitherLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
 
@@ -38,6 +39,19 @@ export default function GiphyStickerPicker({ onSelect, onClose }: GiphyStickerPi
     setQuery(newQuery)
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
     debounceTimer.current = setTimeout(() => handleSearch(newQuery), 400)
+  }
+
+  const handleSelectSticker = async (sticker: CornerSticker) => {
+    setDitherLoading(sticker.id)
+    try {
+      const dithered = await ditherStickerImage(sticker.fullUrl)
+      onSelect({ ...sticker, ditheredDataUrl: dithered })
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process sticker')
+    } finally {
+      setDitherLoading(null)
+    }
   }
 
   return (
@@ -72,18 +86,20 @@ export default function GiphyStickerPicker({ onSelect, onClose }: GiphyStickerPi
             {results.map(sticker => (
               <button
                 key={sticker.id}
-                onClick={() => {
-                  onSelect(sticker)
-                  onClose()
-                }}
-                className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                onClick={() => handleSelectSticker(sticker)}
+                disabled={ditherLoading === sticker.id}
+                className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-50"
               >
-                <img
-                  src={sticker.previewUrl}
-                  alt=""
-                  className="w-12 h-12 object-contain"
-                  style={{ filter: 'grayscale(100%)' }}
-                />
+                {ditherLoading === sticker.id ? (
+                  <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                ) : (
+                  <img
+                    src={sticker.previewUrl}
+                    alt=""
+                    className="w-12 h-12 object-contain"
+                    style={{ filter: 'grayscale(100%)' }}
+                  />
+                )}
               </button>
             ))}
           </div>
