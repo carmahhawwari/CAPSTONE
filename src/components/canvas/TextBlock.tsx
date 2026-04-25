@@ -9,6 +9,7 @@ interface TextBlockProps {
   redactionLevel?: number
   fontWeight?: number
   isItalic?: boolean
+  isBold?: boolean
   isActive: boolean
   onContentChange: (content: string) => void
   onFocus: () => void
@@ -29,6 +30,7 @@ export default function TextBlock({
   redactionLevel = 50,
   fontWeight,
   isItalic = false,
+  isBold = false,
   isActive,
   onContentChange,
   onFocus,
@@ -51,6 +53,14 @@ export default function TextBlock({
     fontConfig = {
       ...fontConfig,
       fontWeight,
+    }
+  }
+
+  // Override fontWeight for bold (used by tsuchinoko)
+  if (isBold) {
+    fontConfig = {
+      ...fontConfig,
+      fontWeight: 700,
     }
   }
 

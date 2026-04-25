@@ -247,6 +247,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                       redactionLevel={block.redactionLevel}
                       fontWeight={block.fontWeight}
                       isItalic={block.isItalic}
+                      isBold={block.isBold}
                       isActive={activeBlockId === block.id}
                       onContentChange={content => updateBlock(block.id, { content })}
                       onFocus={() => setActiveBlockId(block.id)}
@@ -326,6 +327,18 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                   I
                 </button>
               </div>
+            )}
+            {activeBlock.style === 'tsuchinoko' && (
+              <button
+                onClick={() => updateBlock(activeBlock.id, { isBold: !activeBlock.isBold })}
+                className={`px-3 py-2 rounded text-sm font-bold transition-colors ${
+                  activeBlock.isBold
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
+                }`}
+              >
+                Bold
+              </button>
             )}
           </div>
         )}
