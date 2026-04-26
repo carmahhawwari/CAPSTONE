@@ -19,7 +19,7 @@ export default function RedactionLevelSlider({ value, onChange }: RedactionLevel
             onClick={() => onChange(level)}
             className={`flex-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
               value === level
-                ? 'bg-blue-600 text-white'
+                ? 'bg-fill-primary text-white'
                 : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
             }`}
           >

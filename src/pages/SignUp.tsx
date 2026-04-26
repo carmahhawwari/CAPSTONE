@@ -83,7 +83,7 @@ export default function SignUp() {
     }
   }
 
-  const inputClass = 'w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const inputClass = 'w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fill-primary'
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
@@ -146,13 +146,13 @@ export default function SignUp() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Phone number (optional)"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fill-primary"
             disabled={loading}
           />
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-2 mt-4 bg-blue-500 text-white rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
+            className="w-full px-4 py-2 mt-4 bg-fill-primary text-white rounded-md font-medium hover:opacity-80 disabled:opacity-50"
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>

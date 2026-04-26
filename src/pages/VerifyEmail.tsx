@@ -82,7 +82,7 @@ export default function VerifyEmail() {
           </p>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+        <div className="bg-bg-secondary border border-fill-tertiary rounded-lg p-4 space-y-3">
           <p className="text-sm text-gray-700">
             Check your email and click the verification link to confirm your account.
           </p>
@@ -104,7 +104,7 @@ export default function VerifyEmail() {
           <button
             onClick={handleCheckVerification}
             disabled={loading}
-            className="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-3 rounded-lg bg-fill-primary text-white font-semibold text-sm hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Checking...' : "I've verified my email"}
           </button>

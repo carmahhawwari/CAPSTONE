@@ -61,7 +61,7 @@ export default function ImageAdjustmentPanel({
           step="10"
           value={adjustments.brightness}
           onChange={(e) => handleChange('brightness', parseInt(e.target.value))}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
         />
       </div>
 
@@ -78,7 +78,7 @@ export default function ImageAdjustmentPanel({
           step="10"
           value={adjustments.contrast}
           onChange={(e) => handleChange('contrast', parseInt(e.target.value))}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
         />
       </div>
 
@@ -92,7 +92,7 @@ export default function ImageAdjustmentPanel({
               onClick={() => handleChange('dithering', method)}
               className={`py-1.5 px-2 rounded text-xs font-medium transition-colors ${
                 adjustments.dithering === method
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-fill-primary text-white'
                   : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
               }`}
             >
@@ -115,7 +115,7 @@ export default function ImageAdjustmentPanel({
               step="5"
               value={adjustments.thresholdValue}
               onChange={(e) => handleChange('thresholdValue', parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
             />
             <p className="text-xs text-gray-500 mt-1">Lower = more black | Higher = more white</p>
           </div>
@@ -134,7 +134,7 @@ export default function ImageAdjustmentPanel({
               step="0.1"
               value={adjustments.orderedScale}
               onChange={(e) => handleChange('orderedScale', parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
             />
             <p className="text-xs text-gray-500 mt-1">Weaker (0.5) = smoother | Stronger (2.0) = more pattern</p>
           </div>
@@ -153,7 +153,7 @@ export default function ImageAdjustmentPanel({
               step="0.1"
               value={adjustments.fsStrength}
               onChange={(e) => handleChange('fsStrength', parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
             />
             <p className="text-xs text-gray-500 mt-1">Weaker (0.5) = less diffusion | Stronger (1.5) = more tonal range</p>
           </div>

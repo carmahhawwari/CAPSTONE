@@ -120,7 +120,7 @@ export default function AdminScreen() {
         {!showAddForm && (
           <button
             onClick={() => setShowAddForm(true)}
-            className="mb-6 px-4 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700"
+            className="mb-6 px-4 py-2 bg-fill-primary text-white rounded font-medium hover:opacity-80"
           >
             + Add Printer
           </button>
