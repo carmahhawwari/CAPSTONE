@@ -10,7 +10,7 @@ import HomeScreen from '@/pages/HomeScreen'
 import Profile from '@/pages/Profile'
 import FriendsScreen from '@/pages/FriendsScreen'
 import FriendDetailScreen from '@/pages/FriendDetailScreen'
-import ArchiveScreen from '@/pages/ArchiveScreen'
+import LettersScreen from '@/pages/ArchiveScreen'
 import ReceiptEditor from '@/pages/ReceiptEditor'
 import ReceiptSent from '@/pages/ReceiptSent'
 import PrintingScreen from '@/pages/PrintingScreen'
@@ -19,6 +19,7 @@ import AdminScreen from '@/pages/AdminScreen'
 import OnboardIntro from '@/pages/onboarding/OnboardIntro'
 import OnboardRecipient from '@/pages/onboarding/OnboardRecipient'
 import OnboardCompose from '@/pages/onboarding/OnboardCompose'
+import VerifyEmail from '@/pages/VerifyEmail'
 import Privacy from '@/pages/Privacy'
 import Terms from '@/pages/Terms'
 
@@ -49,16 +50,19 @@ function App() {
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/friends" element={<ProtectedRoute><FriendsScreen /></ProtectedRoute>} />
           <Route path="/friends/:id" element={<ProtectedRoute><FriendDetailScreen /></ProtectedRoute>} />
-          <Route path="/archive" element={<ProtectedRoute><ArchiveScreen /></ProtectedRoute>} />
+          <Route path="/archive" element={<ProtectedRoute><LettersScreen /></ProtectedRoute>} />
+          <Route path="/letters" element={<ProtectedRoute><LettersScreen /></ProtectedRoute>} />
           <Route path="/compose" element={<ProtectedRoute><ReceiptEditor /></ProtectedRoute>} />
           <Route path="/receipt-sent" element={<ProtectedRoute><ReceiptSent /></ProtectedRoute>} />
           <Route path="/prints" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminScreen /></ProtectedRoute>} />
           <Route path="/test-print" element={<TestPrintScreen />} />
           <Route path="/onboard" element={<OnboardIntro />} />
+          <Route path="*" element={<OnboardIntro />} />
           <Route path="/onboard/recipient" element={<OnboardRecipient />} />
           <Route path="/onboard/compose" element={<OnboardCompose />} />
           <Route path="/onboard/deliver" element={<SignUp />} />
+          <Route path="/onboard/verify-email" element={<ProtectedRoute><VerifyEmail /></ProtectedRoute>} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
             </Routes>

@@ -1,55 +1,123 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
+import { getFriends } from '@/lib/friends'
 import printerImg from '@/assets/printer.png'
 import wifiSymbol from '@/assets/wifi-symbol.svg'
 import { checkNearestPrinter } from '@/lib/printJob'
+import type { FriendProfile } from '@/types/app'
 
-type PrintState = 'locating' | 'no-location' | 'no-printer' | 'printing' | 'done' | 'failed'
+type PrintState = 'confirm' | 'locating' | 'no-location' | 'no-printer' | 'printing' | 'done' | 'failed'
 
 export default function PrintingScreen() {
   const navigate = useNavigate()
-  const [state, setState] = useState<PrintState>('locating')
+  const [searchParams] = useSearchParams()
+  const { user } = useAuth()
+  const [state, setState] = useState<PrintState>('confirm')
+  const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null)
+  const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
+  const [messageCount] = useState(1)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const checkPrinter = async () => {
+    const loadRecipientInfo = async () => {
       try {
-        const printerId = await checkNearestPrinter()
+        const friendId = searchParams.get('to')
+        const email = searchParams.get('email')
 
-        if (printerId === null) {
-          // No location data or no printer in range
-          setState('no-printer')
-          return
+        if (email) {
+          setRecipientEmail(email)
+        } else if (friendId && user?.id) {
+          const friends = await getFriends(user.id)
+          const friend = friends.find(f => f.friendRowId === friendId)
+          if (friend) {
+            setSelectedFriend(friend)
+          }
         }
-
-        // Printer found - show printing state
-        setState('printing')
-
-        // Auto-complete after 3 seconds (simulating print job processing)
-        const timer = setTimeout(() => {
-          setState('done')
-          setTimeout(() => navigate('/home'), 1000)
-        }, 3000)
-
-        return () => clearTimeout(timer)
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to locate printer'
-
-        // Check if it's a location permission issue
-        if (message.includes('position') || !navigator.geolocation) {
-          setState('no-location')
-        } else {
-          setState('no-printer')
-        }
+        console.error('Failed to load recipient info:', err)
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    checkPrinter()
-  }, [navigate])
+    loadRecipientInfo()
+  }, [searchParams, user?.id])
+
+  useEffect(() => {
+    if (state !== 'confirm') {
+      const checkPrinter = async () => {
+        try {
+          const printerId = await checkNearestPrinter()
+
+          if (printerId === null) {
+            setState('no-printer')
+            return
+          }
+
+          setState('printing')
+
+          const timer = setTimeout(() => {
+            setState('done')
+            setTimeout(() => navigate('/home'), 1000)
+          }, 3000)
+
+          return () => clearTimeout(timer)
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Failed to locate printer'
+
+          if (message.includes('position') || !navigator.geolocation) {
+            setState('no-location')
+          } else {
+            setState('no-printer')
+          }
+        }
+      }
+
+      checkPrinter()
+    }
+  }, [state, navigate])
 
   const handleBack = () => navigate('/home')
 
+  const handleConfirmPrint = () => {
+    setState('locating')
+  }
+
+  const recipientName = selectedFriend
+    ? selectedFriend.profile.display_name || selectedFriend.profile.username || 'Friend'
+    : recipientEmail?.split('@')[0] || 'Unknown'
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
+      {/* Confirmation State */}
+      {state === 'confirm' && !isLoading && (
+        <div className="flex flex-col items-center justify-center gap-8 w-full max-w-sm">
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-1">
+              {messageCount === 1 ? '1 message' : `${messageCount} messages`} waiting
+            </p>
+            <p className="text-2xl font-bold text-gray-900">
+              {recipientName}
+            </p>
+          </div>
+
+          <button
+            onClick={handleConfirmPrint}
+            className="w-full px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800"
+          >
+            Confirm Printing
+          </button>
+
+          <button
+            onClick={handleBack}
+            className="w-full px-6 py-2 text-gray-700 text-center font-medium hover:text-gray-900"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       {/* Locating or Printing State */}
       {(state === 'locating' || state === 'printing') && (
         <>

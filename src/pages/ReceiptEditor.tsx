@@ -83,11 +83,17 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [cornerSticker, setCornerSticker] = useState<CornerSticker | null>(null)
+  const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
   const [showGiphyPicker, setShowGiphyPicker] = useState(false)
   const [stickerActive, setStickerActive] = useState(false)
-  const [signature, setSignature] = useState<Signature>({ text: 'Love, Me', style: 'handwriting' })
+  const [signature, setSignature] = useState<Signature>(() => {
+    const sunetId = user?.email?.split('@')[0] || ''
+    return { text: sunetId ? `Love, ${sunetId}` : 'Love, ', style: 'inter' }
+  })
   const [signatureActive, setSignatureActive] = useState(false)
   const [headerVariant, setHeaderVariant] = useState<'simple' | 'squids-checkers' | 'squids-v1' | 'none'>('simple')
+  const [showFriendPicker, setShowFriendPicker] = useState(false)
+  const [friendSearchQuery, setFriendSearchQuery] = useState('')
   const receiptRef = useRef<HTMLDivElement>(null)
   const cornerStickerAreaRef = useRef<HTMLDivElement>(null)
   const signatureAreaRef = useRef<HTMLDivElement>(null)
@@ -163,7 +169,11 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         setFriends(loadedFriends)
         // Auto-select friend from query parameter if provided
         const toParam = searchParams.get('to')
-        if (toParam) {
+        const emailParam = searchParams.get('email')
+
+        if (emailParam) {
+          setRecipientEmail(decodeURIComponent(emailParam))
+        } else if (toParam) {
           const friendMatch = loadedFriends.find(f => f.profile.id === toParam)
           if (friendMatch) {
             setSelectedFriendId(friendMatch.profile.id)
@@ -209,8 +219,8 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     const newBlock: Block = {
       id: newBlockId(),
       type: 'text',
-      content: '',
-      style: 'normal',
+      content: 'Love, ',
+      style: 'inter',
     }
     setBlocks([...blocks, newBlock])
     setActiveBlockId(newBlock.id)
@@ -554,10 +564,28 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   }
 
   const handleSend = () => {
-    if (!selectedFriendId || !selectedFriend || blocks.length === 0) return
-    // TODO: Implement actual sending to printer
+    if (blocks.length === 0) return
+    if (recipientEmail) {
+      navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`)
+      return
+    }
+    if (!selectedFriendId || !selectedFriend) {
+      setShowFriendPicker(true)
+      return
+    }
     navigate(`/printing?to=${selectedFriendId}`)
   }
+
+  const handleSelectFriendFromPicker = (friendId: string) => {
+    setSelectedFriendId(friendId)
+    setShowFriendPicker(false)
+    setFriendSearchQuery('')
+    navigate(`/printing?to=${friendId}`)
+  }
+
+  const filteredFriends = friends.filter(f =>
+    friendLabel(f).toLowerCase().includes(friendSearchQuery.toLowerCase())
+  )
 
   const handleSave = () => {
     if (blocks.length === 0) return
@@ -644,7 +672,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           <div className="relative mb-3">
             <img src={recipientBarSvg} alt="" className="w-full h-auto" />
             <div className="absolute inset-0 flex items-center px-3 text-white z-10" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
-              To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
+              To: {recipientName || recipientEmail || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
             </div>
             {/* Date */}
             <div className="absolute top-1/2 right-3 text-xs text-white z-20" style={{ fontFamily: "var(--font-printvetica)", transform: 'translateY(-50%)' }}>
@@ -684,11 +712,14 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 <div
                   key={block.id}
                   draggable
-                  onClick={() => setActiveBlockId(block.id)}
+                  onClick={() => {
+                    setActiveBlockId(block.id)
+                    setStickerActive(false)
+                  }}
                   onDragStart={() => handleDragStart(block.id)}
                   onDragOver={handleDragOver}
                   onDrop={() => handleDrop(block.id)}
-                  className={`cursor-move select-none ${draggedBlockId === block.id ? 'opacity-50' : ''}`}
+                  className={`relative group cursor-move select-none ${draggedBlockId === block.id ? 'opacity-50' : ''}`}
                 >
                   {block.type === 'text' && (
                     <TextBlock
@@ -723,51 +754,94 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                       onDelete={() => deleteBlock(block.id)}
                     />
                   )}
+                  {activeBlockId === block.id && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); deleteBlock(block.id) }}
+                      className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
+                      aria-label="Delete block"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ))
             )}
           </div>
 
-          {/* Signature */}
-          <div className="pt-2 border-t border-dashed border-gray-200">
-            <div
-              ref={signatureAreaRef}
-              className="relative h-20"
-              onPointerDown={handleSignaturePointerDown}
-              onPointerMove={handleSignaturePointerMove}
-              onPointerUp={handleSignaturePointerUp}
-              onPointerCancel={handleSignaturePointerUp}
-              style={{ touchAction: signatureActive ? 'none' : 'auto' }}
-            >
+          {/* Signature and Corner sticker - Same row */}
+          <div className="pt-2 mt-6 flex gap-4 items-end">
+            {/* Signature - Left side */}
+            <div className="flex-1">
               <div
-                className={`absolute left-0 top-0 ${signatureActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
-                style={{
-                  transform: `translate(${signature.offsetX ?? 0}px, ${signature.offsetY ?? 0}px) rotate(${signature.rotation ?? 0}deg) scale(${signature.scale ?? 1})`,
-                  transformOrigin: '0 0',
-                }}
+                ref={signatureAreaRef}
+                className="relative h-20"
+                onPointerDown={handleSignaturePointerDown}
+                onPointerMove={handleSignaturePointerMove}
+                onPointerUp={handleSignaturePointerUp}
+                onPointerCancel={handleSignaturePointerUp}
+                style={{ touchAction: signatureActive ? 'none' : 'auto' }}
               >
-                <input
-                  type="text"
-                  value={signature.text}
-                  onChange={(e) => updateSignature({ text: e.target.value })}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onPointerMove={(e) => e.stopPropagation()}
-                  onPointerUp={(e) => e.stopPropagation()}
-                  className={`whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-400 px-1 py-0 bg-transparent border-0 ${signatureActive ? 'ring-2 ring-blue-400' : ''}`}
+                <div
+                  className={`absolute left-0 top-0 ${signatureActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
                   style={{
-                    fontFamily: FONT_STYLES[signature.style].fontFamily,
-                    fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
-                    fontWeight: FONT_STYLES[signature.style].fontWeight,
-                    lineHeight: FONT_STYLES[signature.style].lineHeight,
-                    pointerEvents: signatureActive ? 'auto' : 'none',
+                    transform: `translate(${signature.offsetX ?? 0}px, ${signature.offsetY ?? 0}px) rotate(${signature.rotation ?? 0}deg) scale(${signature.scale ?? 1})`,
+                    transformOrigin: '0 0',
                   }}
-                />
+                >
+                  {(() => {
+                    const sunetId = user?.email?.split('@')[0] || ''
+                    const defaultText = sunetId ? `Love, ${sunetId}` : 'Love, '
+                    const isEdited = signature.text !== defaultText
+                    const sunetPart = sunetId ? sunetId : ''
+
+                    return (
+                      <div>
+                        <div>
+                          <input
+                            type="text"
+                            value={signature.text}
+                            onChange={(e) => updateSignature({ text: e.target.value })}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onPointerMove={(e) => e.stopPropagation()}
+                            onPointerUp={(e) => e.stopPropagation()}
+                            className={`whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-400 px-1 py-0 bg-transparent border-0 ${signatureActive ? 'ring-2 ring-blue-400' : ''}`}
+                            style={{
+                              fontFamily: FONT_STYLES[signature.style].fontFamily,
+                              fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
+                              fontWeight: FONT_STYLES[signature.style].fontWeight,
+                              lineHeight: FONT_STYLES[signature.style].lineHeight,
+                              pointerEvents: signatureActive ? 'auto' : 'none',
+                            }}
+                          />
+                        </div>
+                        {!isEdited && sunetPart && (
+                          <div style={{
+                            fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
+                            color: '#999',
+                            marginTop: '2px',
+                          }}>
+                            ({sunetId})
+                          </div>
+                        )}
+                        {isEdited && sunetPart && (
+                          <div style={{
+                            fontSize: `${FONT_STYLES[signature.style].fontSize * 0.6}px`,
+                            color: '#999',
+                            marginTop: '2px',
+                          }}>
+                            ({sunetId})
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Corner sticker */}
-          <div ref={cornerStickerAreaRef} className="relative h-56 mt-6 mb-0">
+            {/* Corner sticker - Right side */}
+            <div ref={cornerStickerAreaRef} className="relative h-56 w-56 flex-shrink-0">
             {cornerSticker ? (
               <div
                 className="absolute bottom-0 right-0 group"
@@ -809,7 +883,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCornerSticker(null)}
+                  onClick={() => {
+                    setCornerSticker(null)
+                    setStickerActive(false)
+                  }}
                   className={`absolute -top-4 -left-4 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md ${
                     stickerActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                   }`}
@@ -826,6 +903,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 +
               </button>
             )}
+            </div>
           </div>
         </div>
 
@@ -1030,6 +1108,55 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           />
         )}
 
+        {/* Friend Selection Modal */}
+        {showFriendPicker && (
+          <div className="fixed inset-0 bg-black/50 flex items-end z-50">
+            <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom max-h-[80vh] overflow-y-auto">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Send to</h2>
+                <input
+                  type="text"
+                  placeholder="Search friends..."
+                  value={friendSearchQuery}
+                  onChange={(e) => setFriendSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                {filteredFriends.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-6">No friends found</p>
+                ) : (
+                  filteredFriends.map((f) => (
+                    <button
+                      key={f.profile.id}
+                      onClick={() => handleSelectFriendFromPicker(f.profile.id)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                    >
+                      {f.profile.avatar_url ? (
+                        <img src={f.profile.avatar_url} alt="" width={40} height={40} className="rounded-full object-cover flex-shrink-0" style={{ width: 40, height: 40 }} />
+                      ) : (
+                        <div className="flex-shrink-0">
+                          <Avatar avatarId={1} size={40} />
+                        </div>
+                      )}
+                      <span className="text-sm font-medium text-gray-900">{friendLabel(f)}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+
+              <button
+                onClick={() => setShowFriendPicker(false)}
+                className="w-full py-3 rounded-lg border border-gray-300 bg-white text-gray-900 font-semibold text-sm active:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {error && (
           <p className="mt-4 text-xs text-red-600">{error}</p>
         )}
@@ -1039,7 +1166,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           <div className="fixed inset-0 bg-black/50 flex items-end z-50">
             <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom">
               <p className="text-sm text-gray-700">
-                Delete this block? This action cannot be undone.
+                Are you sure you want to delete this section? This action cannot be undone.
               </p>
               <div className="flex gap-3">
                 <button
@@ -1080,7 +1207,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               </button>
               <button
                 onClick={handleSend}
-                disabled={!selectedFriendId || blocks.length === 0}
+                disabled={blocks.length === 0}
                 className="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-blue-700 transition-colors"
               >
                 Send to Printer
@@ -1089,19 +1216,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           )}
         </div>
 
-        {/* Mobile Trash Button */}
-        {blocks.length > 0 && (
-          <div className="mt-4 md:hidden">
-            <button
-              onClick={() => activeBlockId && deleteBlock(activeBlockId)}
-              disabled={!activeBlockId}
-              className="w-full py-3 rounded-lg bg-red-50 text-red-600 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-red-100 transition-colors flex items-center justify-center gap-2"
-            >
-              <span>🗑️</span>
-              Delete Block
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )
