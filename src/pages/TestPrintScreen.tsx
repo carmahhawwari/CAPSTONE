@@ -39,6 +39,7 @@ export default function TestPrintScreen() {
     if (!supabase) return
 
     const fetchPrinters = async () => {
+      if (!supabase) return
       const { data } = await supabase
         .from('printers')
         .select('*')
