@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
+import { savePrintJob } from '@/lib/receipts'
 import printerImg from '@/assets/printer.png'
 import wifiSymbol from '@/assets/wifi-symbol.svg'
 import { checkNearestPrinter } from '@/lib/printJob'
@@ -12,12 +13,14 @@ type PrintState = 'confirm' | 'locating' | 'no-location' | 'no-printer' | 'print
 export default function PrintingScreen() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const { user } = useAuth()
   const [state, setState] = useState<PrintState>('confirm')
   const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null)
   const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
   const [messageCount] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
+  const content = (location.state as any)?.content || ''
 
   useEffect(() => {
     const loadRecipientInfo = async () => {
@@ -77,6 +80,23 @@ export default function PrintingScreen() {
       checkPrinter()
     }
   }, [state, navigate])
+
+  useEffect(() => {
+    if (state === 'done' && user?.id && content) {
+      const savePrint = async () => {
+        const payload = btoa(content)
+        await savePrintJob({
+          sender_id: user.id,
+          recipient_id: selectedFriend?.profile.id,
+          recipient_name:
+            selectedFriend?.profile.display_name || selectedFriend?.profile.username || recipientEmail || 'Unknown',
+          message_text: content,
+          payload_base64: payload,
+        })
+      }
+      savePrint()
+    }
+  }, [state, user?.id, content, selectedFriend, recipientEmail])
 
   const handleBack = () => navigate('/home')
 

@@ -4,13 +4,13 @@ import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
 
 export default function OnboardRecipient() {
   const navigate = useNavigate()
-  const [name, setName] = useState(() => loadDraft().recipient?.name ?? '')
+  const [sunet, setSunet] = useState(() => loadDraft().recipient?.name ?? '')
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
+    if (!sunet.trim()) return
     const existingPhone = loadDraft().recipient?.phone ?? ''
-    saveDraft({ recipient: { name: name.trim(), phone: existingPhone } })
+    saveDraft({ recipient: { name: sunet.trim().toLowerCase(), phone: existingPhone } })
     navigate('/onboard/compose')
   }
 
@@ -20,20 +20,22 @@ export default function OnboardRecipient() {
         <h1 className="text-3xl font-bold text-gray-900">
           Who do you want to send this to?
         </h1>
-        <p className="text-sm text-gray-600 mt-2">
-          Just a name for now — you can add their number at the end.
-        </p>
 
         <form onSubmit={handleContinue} className="mt-10 flex w-full flex-col gap-3">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            placeholder="Their name"
-            className="w-full px-4 py-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
-            autoFocus
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={sunet}
+              onChange={(e) => setSunet(e.target.value.toLowerCase())}
+              required
+              placeholder="Enter SUNet ID"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black pr-32"
+              autoFocus
+            />
+            <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+              @stanford.edu
+            </span>
+          </div>
 
           <button
             type="submit"

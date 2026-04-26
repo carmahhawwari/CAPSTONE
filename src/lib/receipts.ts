@@ -1,6 +1,14 @@
 import { supabase } from './supabase'
 import type { Receipt } from '@/types/app'
 
+export interface PrintJobInput {
+  sender_id: string
+  recipient_id?: string
+  recipient_name: string
+  message_text: string
+  payload_base64: string
+}
+
 /**
  * Get all receipts (print jobs) sent to a specific friend.
  * Uses recipient_id to match jobs sent to that profile.
@@ -39,6 +47,33 @@ export async function getReceiptsByFriend(
   } catch (error) {
     console.error('getReceiptsByFriend exception:', error)
     return []
+  }
+}
+
+/**
+ * Save a print job to the archive.
+ */
+export async function savePrintJob(job: PrintJobInput): Promise<{ success: boolean; error?: string }> {
+  if (!supabase) return { success: false, error: 'Supabase not configured' }
+
+  try {
+    const { error } = await supabase.from('print_jobs').insert({
+      sender_id: job.sender_id,
+      recipient_id: job.recipient_id || null,
+      recipient_name: job.recipient_name,
+      message_text: job.message_text,
+      payload_base64: job.payload_base64,
+    })
+
+    if (error) {
+      console.error('savePrintJob error:', error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('savePrintJob exception:', error)
+    return { success: false, error: String(error) }
   }
 }
 
