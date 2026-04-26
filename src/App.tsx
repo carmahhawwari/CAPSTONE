@@ -15,6 +15,7 @@ import ReceiptEditor from '@/pages/ReceiptEditor'
 import ReceiptSent from '@/pages/ReceiptSent'
 import PrintingScreen from '@/pages/PrintingScreen'
 import TestPrintScreen from '@/pages/TestPrintScreen'
+import AdminScreen from '@/pages/AdminScreen'
 import OnboardIntro from '@/pages/onboarding/OnboardIntro'
 import OnboardRecipient from '@/pages/onboarding/OnboardRecipient'
 import OnboardCompose from '@/pages/onboarding/OnboardCompose'
@@ -52,6 +53,7 @@ function App() {
           <Route path="/compose" element={<ProtectedRoute><ReceiptEditor /></ProtectedRoute>} />
           <Route path="/receipt-sent" element={<ProtectedRoute><ReceiptSent /></ProtectedRoute>} />
           <Route path="/prints" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminScreen /></ProtectedRoute>} />
           <Route path="/test-print" element={<TestPrintScreen />} />
           <Route path="/onboard" element={<OnboardIntro />} />
           <Route path="/onboard/recipient" element={<OnboardRecipient />} />
