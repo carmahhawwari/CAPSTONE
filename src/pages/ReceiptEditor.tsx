@@ -87,6 +87,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [showGiphyPicker, setShowGiphyPicker] = useState(false)
   const [stickerActive, setStickerActive] = useState(false)
   const [signature, setSignature] = useState<Signature>(() => {
+    if (onboarding) {
+      const draftSignature = loadDraft().content?.signature
+      if (draftSignature) return draftSignature
+    }
     const sunetId = user?.email?.split('@')[0] || ''
     return { text: sunetId ? `Love, ${sunetId}` : 'Love, ', style: 'inter' }
   })
@@ -182,13 +186,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       }).catch((e) => setError(e.message ?? 'Failed to load friends'))
     }
   }, [user, onboarding, searchParams])
-
-  // Load signature from draft
-  useEffect(() => {
-    if (onboarding && draft.content?.signature) {
-      setSignature(draft.content.signature)
-    }
-  }, [onboarding, draft.content?.signature])
 
   // Handle deselecting signature with Escape key or outside click
   useEffect(() => {
