@@ -7,7 +7,9 @@ export default function OnboardIntro() {
   const { user, loading } = useAuth()
 
   useEffect(() => {
-    if (!loading && user) navigate('/home', { replace: true })
+    if (!loading && user) {
+      navigate('/home', { replace: true })
+    }
   }, [user, loading, navigate])
 
   return (

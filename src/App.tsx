@@ -58,6 +58,7 @@ function App() {
           <Route path="/admin" element={<ProtectedRoute><AdminScreen /></ProtectedRoute>} />
           <Route path="/test-print" element={<TestPrintScreen />} />
           <Route path="/onboard" element={<OnboardIntro />} />
+          <Route path="*" element={<OnboardIntro />} />
           <Route path="/onboard/recipient" element={<OnboardRecipient />} />
           <Route path="/onboard/compose" element={<OnboardCompose />} />
           <Route path="/onboard/deliver" element={<SignUp />} />
