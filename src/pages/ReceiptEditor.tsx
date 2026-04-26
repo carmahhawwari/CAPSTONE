@@ -740,10 +740,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               style={{ touchAction: signatureActive ? 'none' : 'auto' }}
             >
               <div
-                className={`absolute left-0 top-0 ${signatureActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
+                className={`absolute left-0 bottom-0 ${signatureActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
                 style={{
                   transform: `translate(${signature.offsetX ?? 0}px, ${signature.offsetY ?? 0}px) rotate(${signature.rotation ?? 0}deg) scale(${signature.scale ?? 1})`,
-                  transformOrigin: '0 0',
+                  transformOrigin: '0 100%',
                 }}
               >
                 <input
