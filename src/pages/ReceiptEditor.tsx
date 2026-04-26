@@ -797,14 +797,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
 
                     return (
                       <div>
-                        <div
-                          style={{
-                            fontFamily: FONT_STYLES[signature.style].fontFamily,
-                            fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
-                            fontWeight: FONT_STYLES[signature.style].fontWeight,
-                            lineHeight: FONT_STYLES[signature.style].lineHeight,
-                          }}
-                        >
+                        <div>
                           <input
                             type="text"
                             value={signature.text}
@@ -819,22 +812,25 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                               fontWeight: FONT_STYLES[signature.style].fontWeight,
                               lineHeight: FONT_STYLES[signature.style].lineHeight,
                               pointerEvents: signatureActive ? 'auto' : 'none',
-                              color: isEdited ? 'inherit' : 'currentColor',
                             }}
                           />
-                          {!isEdited && sunetPart && (
-                            <span style={{ color: '#999', marginLeft: '-' + sunetPart.length + 'ch' }}>
-                              {sunetPart}
-                            </span>
-                          )}
                         </div>
+                        {!isEdited && sunetPart && (
+                          <div style={{
+                            fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
+                            color: '#999',
+                            marginTop: '2px',
+                          }}>
+                            ({sunetId})
+                          </div>
+                        )}
                         {isEdited && sunetPart && (
                           <div style={{
                             fontSize: `${FONT_STYLES[signature.style].fontSize * 0.6}px`,
                             color: '#999',
                             marginTop: '2px',
                           }}>
-                            {sunetId}
+                            ({sunetId})
                           </div>
                         )}
                       </div>
