@@ -29,6 +29,7 @@ export default function TestPrintScreen() {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null)
   const [printers, setPrinters] = useState<Printer[]>([])
   const [selectedPrinterId, setSelectedPrinterId] = useState<string | null>(null)
+  const [useGeofence, setUseGeofence] = useState(false)
 
   useEffect(() => {
     if (loading) {
@@ -94,6 +95,7 @@ export default function TestPrintScreen() {
         recipientName: 'Test',
         messageText: 'Test image print',
         printerId: selectedPrinterId ?? undefined,
+        skipGeofence: !useGeofence,
       })
 
       setStatus('done')
@@ -195,6 +197,24 @@ export default function TestPrintScreen() {
             </select>
           </div>
         )}
+
+        {/* Geofence test checkbox */}
+        <div className="mb-4">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={useGeofence}
+              onChange={(e) => setUseGeofence(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm font-medium text-gray-700">Test geofence routing</span>
+          </label>
+          <p className="text-xs text-gray-500 mt-1">
+            {useGeofence
+              ? 'Will use your location to find nearest printer'
+              : 'Will use first active printer (default)'}
+          </p>
+        </div>
 
         {/* Image upload */}
         <div className="mb-4 bg-white border border-gray-200 rounded p-4">
