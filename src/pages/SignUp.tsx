@@ -38,7 +38,7 @@ export default function SignUp({ mode = 'create-account' }: Props = {}) {
 
   // Onboard-delivery state
   const [recipientName, setRecipientName] = useState('')
-  const [recipientPhone, setRecipientPhone] = useState('')
+  const [recipientEmail, setRecipientEmail] = useState('')
   const [senderName, setSenderName] = useState('')
   const [draftMessage, setDraftMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -51,7 +51,6 @@ export default function SignUp({ mode = 'create-account' }: Props = {}) {
     const draft = loadDraft()
     if (draft.recipient) {
       setRecipientName(draft.recipient.name)
-      setRecipientPhone(draft.recipient.phone)
     }
     const blocks = draft.content?.blocks ?? []
     setDraftMessage(messageFromBlocks(blocks))
@@ -70,8 +69,8 @@ export default function SignUp({ mode = 'create-account' }: Props = {}) {
     ? sent
       ? `Your Inklings is on its way to ${recipientName || 'your friend'}.`
       : recipientName
-        ? `We'll text your receipt to ${recipientName}.`
-        : "We'll text your receipt."
+        ? `We'll email your receipt to ${recipientName}.`
+        : "We'll email your receipt."
     : 'For your password, use at least 8 chars, and a symbol'
 
   const handleCreateAccount = async (e: React.FormEvent) => {
@@ -105,7 +104,7 @@ export default function SignUp({ mode = 'create-account' }: Props = {}) {
 
   const handleSendReceipt = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!recipientPhone.trim()) return
+    if (!recipientEmail.trim()) return
     if (!supabase) {
       setError('Supabase not configured')
       return
@@ -114,9 +113,9 @@ export default function SignUp({ mode = 'create-account' }: Props = {}) {
     setError(null)
     setSubmitting(true)
     try {
-      const { data, error } = await supabase.functions.invoke('send-recipt', {
+      const { data, error } = await supabase.functions.invoke('send-recipt-email', {
         body: {
-          recipientPhone: recipientPhone.trim(),
+          recipientEmail: recipientEmail.trim(),
           senderName: senderName.trim() || 'someone',
           message: draftMessage || 'a little note',
         },
@@ -208,11 +207,11 @@ export default function SignUp({ mode = 'create-account' }: Props = {}) {
         {isDelivery && !sent && (
           <form onSubmit={handleSendReceipt} className="mt-10 flex w-full flex-col gap-3">
             <input
-              type="tel"
-              value={recipientPhone}
-              onChange={(e) => setRecipientPhone(e.target.value)}
+              type="email"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
               required
-              placeholder={recipientName ? `${recipientName}'s phone` : 'Recipient phone'}
+              placeholder={recipientName ? `${recipientName}'s email` : 'Recipient email'}
               className={inputClass}
             />
 
