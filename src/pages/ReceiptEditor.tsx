@@ -729,7 +729,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
 
           {/* Signature and Corner sticker - bottom row */}
-          <div className="pt-2 border-t border-dashed border-gray-200">
+          <div className="pt-2">
             <div
               ref={signatureAreaRef}
               className="relative h-20 flex items-end"
