@@ -642,12 +642,13 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
         )}
 
-        {/* Preview / Editor */}
+        {/* Preview / Editor — receipt-shaped with torn bottom edge */}
         <div
           ref={receiptRef}
-          className="bg-white border border-gray-200 rounded-sm shadow-sm p-5 mb-6 space-y-3 overflow-hidden"
-          style={{ fontFamily: 'Georgia, serif' }}
+          className="bg-white shadow-md mb-6 overflow-hidden"
+          style={{ fontFamily: 'Georgia, serif', borderTop: '1px solid rgba(0,0,0,0.08)', borderLeft: '1px solid rgba(0,0,0,0.08)', borderRight: '1px solid rgba(0,0,0,0.08)' }}
         >
+        <div className="p-5 space-y-3">
           {/* Header */}
           {/* Header with Logo and Arrows */}
           <div className="flex items-center justify-center gap-4 mb-6 mt-6">
@@ -915,6 +916,34 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             )}
             </div>
           </div>
+        </div>
+        {/* Torn zigzag bottom edge */}
+        <div
+          aria-hidden
+          className="h-3 w-full bg-white"
+          style={{
+            maskImage:
+              'linear-gradient(white, white), repeating-linear-gradient(135deg, transparent 0 6px, white 6px 12px)',
+            WebkitMaskImage:
+              'linear-gradient(white, white), repeating-linear-gradient(135deg, transparent 0 6px, white 6px 12px)',
+            maskComposite: 'exclude',
+            WebkitMaskComposite: 'xor',
+          }}
+        />
+        <svg
+          aria-hidden
+          className="block w-full"
+          height="14"
+          viewBox="0 0 100 14"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,0 L100,0 L100,4 L96,10 L92,4 L88,10 L84,4 L80,10 L76,4 L72,10 L68,4 L64,10 L60,4 L56,10 L52,4 L48,10 L44,4 L40,10 L36,4 L32,10 L28,4 L24,10 L20,4 L16,10 L12,4 L8,10 L4,4 L0,10 Z"
+            fill="white"
+            stroke="rgba(0,0,0,0.08)"
+            strokeWidth="0.5"
+          />
+        </svg>
         </div>
 
         {/* Block Toolbar */}
