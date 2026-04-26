@@ -30,7 +30,7 @@ export default function VerifyEmail() {
   }, [resendCooldown])
 
   const handleResendEmail = async () => {
-    if (!user) return
+    if (!user || !supabase) return
     setLoading(true)
     setError('')
 
@@ -52,7 +52,7 @@ export default function VerifyEmail() {
   }
 
   const handleCheckVerification = async () => {
-    if (!user) return
+    if (!user || !supabase) return
     setLoading(true)
     setError('')
 
@@ -106,7 +106,7 @@ export default function VerifyEmail() {
             disabled={loading}
             className="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Checking...' : 'I've verified my email'}
+            {loading ? 'Checking...' : "I've verified my email"}
           </button>
 
           <button
@@ -116,12 +116,12 @@ export default function VerifyEmail() {
           >
             {resendCooldown > 0
               ? `Resend in ${resendCooldown}s`
-              : 'Didn\'t receive the email? Resend'}
+              : "Didn't receive the email? Resend"}
           </button>
         </div>
 
         <p className="text-xs text-gray-500 text-center">
-          Check your spam folder if you don't see the email
+          Check your spam folder if you don&apos;t see the email
         </p>
       </div>
     </div>
