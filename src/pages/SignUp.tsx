@@ -36,7 +36,7 @@ export default function SignUp() {
         }
       }
 
-      navigate('/find-friends')
+      navigate('/onboard/verify-email')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed')
       setLoading(false)

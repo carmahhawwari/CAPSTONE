@@ -19,6 +19,7 @@ import AdminScreen from '@/pages/AdminScreen'
 import OnboardIntro from '@/pages/onboarding/OnboardIntro'
 import OnboardRecipient from '@/pages/onboarding/OnboardRecipient'
 import OnboardCompose from '@/pages/onboarding/OnboardCompose'
+import VerifyEmail from '@/pages/VerifyEmail'
 import Privacy from '@/pages/Privacy'
 import Terms from '@/pages/Terms'
 
@@ -60,6 +61,7 @@ function App() {
           <Route path="/onboard/recipient" element={<OnboardRecipient />} />
           <Route path="/onboard/compose" element={<OnboardCompose />} />
           <Route path="/onboard/deliver" element={<SignUp />} />
+          <Route path="/onboard/verify-email" element={<ProtectedRoute><VerifyEmail /></ProtectedRoute>} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
             </Routes>
