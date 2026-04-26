@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { renderToPrintBuffer } from '@/lib/escpos'
 import type { DitherMethod } from '@/lib/escpos'
 import { submitPrintJob } from '@/lib/printJob'
 import { useAuth } from '@/contexts/AuthContext'
+import { useIsAdmin } from '@/lib/admin'
+import { supabase } from '@/lib/supabase'
+import type { Database } from '@/types/database'
 
 type Status = 'idle' | 'rendering' | 'sending' | 'done' | 'error'
+type Printer = Database['public']['Tables']['printers']['Row']
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const out = new ArrayBuffer(bytes.byteLength)
@@ -14,12 +19,40 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 
 export default function TestPrintScreen() {
   const { user } = useAuth()
+  const navigate = useNavigate()
+  const isAdmin = useIsAdmin()
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
   const [lastSize, setLastSize] = useState<number | null>(null)
   const [ditherMethod, setDitherMethod] = useState<DitherMethod>('floyd-steinberg')
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null)
+  const [printers, setPrinters] = useState<Printer[]>([])
+  const [selectedPrinterId, setSelectedPrinterId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate('/home')
+      return
+    }
+
+    if (!supabase) return
+
+    const fetchPrinters = async () => {
+      const { data } = await supabase
+        .from('printers')
+        .select('*')
+        .eq('is_active', true)
+      if (data) {
+        setPrinters(data)
+        if (data.length > 0) {
+          setSelectedPrinterId(data[0].id)
+        }
+      }
+    }
+
+    fetchPrinters()
+  }, [isAdmin, navigate])
 
   async function handleImageSelected(file: File | null) {
     if (!file) {
@@ -55,7 +88,7 @@ export default function TestPrintScreen() {
         receiptElement: imageContainerRef.current,
         recipientName: 'Test',
         messageText: 'Test image print',
-        skipGeofence: true,
+        printerId: selectedPrinterId ?? undefined,
       })
 
       setStatus('done')
@@ -129,6 +162,24 @@ export default function TestPrintScreen() {
             <option value="threshold">Threshold (hard black/white)</option>
           </select>
         </div>
+
+        {/* Printer selector */}
+        {printers.length > 0 && (
+          <div className="mb-4">
+            <label className="text-sm font-medium text-gray-700 block mb-1">Printer</label>
+            <select
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+              value={selectedPrinterId || ''}
+              onChange={(e) => setSelectedPrinterId(e.target.value)}
+            >
+              {printers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Image upload */}
         <div className="mb-4 bg-white border border-gray-200 rounded p-4">
