@@ -34,6 +34,25 @@ function getCurrentPosition(): Promise<GeolocationPosition | null> {
 }
 
 /**
+ * Check which printer is nearest to the user's current location via geofence.
+ * Returns the printer UUID if one is within range, or null if not.
+ * Throws if geolocation is unavailable.
+ */
+export async function checkNearestPrinter(): Promise<string | null> {
+  if (!supabase) throw new Error('Supabase not configured')
+
+  const position = await getCurrentPosition()
+  if (!position) return null
+
+  const lat = position.coords.latitude
+  const lng = position.coords.longitude
+
+  // Query the nearest_printer function
+  const { data: printerId } = await supabase.rpc('nearest_printer', { lat, lng })
+  return printerId ?? null
+}
+
+/**
  * Render a receipt element to ESC/POS, find the nearest printer via geofence,
  * and insert a print job into Supabase.
  *
