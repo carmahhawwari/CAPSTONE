@@ -36,6 +36,19 @@ export default function HomeScreen() {
     navigate(`/compose?to=${friendId}`)
   }
 
+  const handleSelectEmail = (email: string) => {
+    setShowFriendPicker(false)
+    setFriendSearchQuery('')
+    navigate(`/compose?email=${encodeURIComponent(email)}`)
+  }
+
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@stanford\.edu$/.test(email)
+  }
+
+  const isEmailInput = friendSearchQuery.includes('@')
+  const queryIsValidEmail = isEmailInput && isValidEmail(friendSearchQuery)
+
   const filteredFriends = friends.filter(f =>
     (f.profile.display_name || f.profile.username || 'Friend')
       .toLowerCase()
@@ -94,28 +107,48 @@ export default function HomeScreen() {
             <div className="space-y-2">
               {loading ? (
                 <p className="text-sm text-gray-500 text-center py-6">Loading friends...</p>
-              ) : filteredFriends.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-6">No friends found</p>
               ) : (
-                filteredFriends.map((f) => {
-                  const label = f.profile.display_name || f.profile.username || 'Friend'
-                  return (
+                <>
+                  {queryIsValidEmail && (
                     <button
-                      key={f.profile.id}
-                      onClick={() => handleSelectFriend(f.profile.id)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                      onClick={() => handleSelectEmail(friendSearchQuery)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors text-left border border-blue-200 bg-blue-50"
                     >
-                      {f.profile.avatar_url ? (
-                        <img src={f.profile.avatar_url} alt="" width={40} height={40} className="rounded-full object-cover flex-shrink-0" style={{ width: 40, height: 40 }} />
-                      ) : (
-                        <div className="flex-shrink-0">
-                          <Avatar avatarId={1} size={40} />
-                        </div>
-                      )}
-                      <span className="text-sm font-medium text-gray-900">{label}</span>
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-blue-700">@</span>
+                      </div>
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-gray-900">{friendSearchQuery}</span>
+                        <p className="text-xs text-gray-500">New recipient</p>
+                      </div>
                     </button>
-                  )
-                })
+                  )}
+                  {filteredFriends.length === 0 && !queryIsValidEmail ? (
+                    <p className="text-sm text-gray-500 text-center py-6">
+                      {friendSearchQuery ? 'No friends found' : 'Search friends or enter a @stanford.edu email'}
+                    </p>
+                  ) : (
+                    filteredFriends.map((f) => {
+                      const label = f.profile.display_name || f.profile.username || 'Friend'
+                      return (
+                        <button
+                          key={f.profile.id}
+                          onClick={() => handleSelectFriend(f.profile.id)}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                        >
+                          {f.profile.avatar_url ? (
+                            <img src={f.profile.avatar_url} alt="" width={40} height={40} className="rounded-full object-cover flex-shrink-0" style={{ width: 40, height: 40 }} />
+                          ) : (
+                            <div className="flex-shrink-0">
+                              <Avatar avatarId={1} size={40} />
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-gray-900">{label}</span>
+                        </button>
+                      )
+                    })
+                  )}
+                </>
               )}
             </div>
 

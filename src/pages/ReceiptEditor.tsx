@@ -83,6 +83,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [cornerSticker, setCornerSticker] = useState<CornerSticker | null>(null)
+  const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
   const [showGiphyPicker, setShowGiphyPicker] = useState(false)
   const [stickerActive, setStickerActive] = useState(false)
   const [signature, setSignature] = useState<Signature>({ text: 'Love, Me', style: 'handwriting' })
@@ -165,7 +166,11 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         setFriends(loadedFriends)
         // Auto-select friend from query parameter if provided
         const toParam = searchParams.get('to')
-        if (toParam) {
+        const emailParam = searchParams.get('email')
+
+        if (emailParam) {
+          setRecipientEmail(decodeURIComponent(emailParam))
+        } else if (toParam) {
           const friendMatch = loadedFriends.find(f => f.profile.id === toParam)
           if (friendMatch) {
             setSelectedFriendId(friendMatch.profile.id)
@@ -557,6 +562,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
 
   const handleSend = () => {
     if (blocks.length === 0) return
+    if (recipientEmail) {
+      navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`)
+      return
+    }
     if (!selectedFriendId || !selectedFriend) {
       setShowFriendPicker(true)
       return
@@ -660,7 +669,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           <div className="relative mb-3">
             <img src={recipientBarSvg} alt="" className="w-full h-auto" />
             <div className="absolute inset-0 flex items-center px-3 text-white z-10" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
-              To: {recipientName || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
+              To: {recipientName || recipientEmail || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
             </div>
             {/* Date */}
             <div className="absolute top-1/2 right-3 text-xs text-white z-20" style={{ fontFamily: "var(--font-printvetica)", transform: 'translateY(-50%)' }}>
