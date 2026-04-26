@@ -88,6 +88,8 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [signature, setSignature] = useState<Signature>({ text: 'Love, Me', style: 'handwriting' })
   const [signatureActive, setSignatureActive] = useState(false)
   const [headerVariant, setHeaderVariant] = useState<'simple' | 'squids-checkers' | 'squids-v1' | 'none'>('simple')
+  const [showFriendPicker, setShowFriendPicker] = useState(false)
+  const [friendSearchQuery, setFriendSearchQuery] = useState('')
   const receiptRef = useRef<HTMLDivElement>(null)
   const cornerStickerAreaRef = useRef<HTMLDivElement>(null)
   const signatureAreaRef = useRef<HTMLDivElement>(null)
@@ -554,10 +556,24 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   }
 
   const handleSend = () => {
-    if (!selectedFriendId || !selectedFriend || blocks.length === 0) return
-    // TODO: Implement actual sending to printer
+    if (blocks.length === 0) return
+    if (!selectedFriendId || !selectedFriend) {
+      setShowFriendPicker(true)
+      return
+    }
     navigate(`/printing?to=${selectedFriendId}`)
   }
+
+  const handleSelectFriendFromPicker = (friendId: string) => {
+    setSelectedFriendId(friendId)
+    setShowFriendPicker(false)
+    setFriendSearchQuery('')
+    navigate(`/printing?to=${friendId}`)
+  }
+
+  const filteredFriends = friends.filter(f =>
+    friendLabel(f).toLowerCase().includes(friendSearchQuery.toLowerCase())
+  )
 
   const handleSave = () => {
     if (blocks.length === 0) return
@@ -1040,6 +1056,55 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           />
         )}
 
+        {/* Friend Selection Modal */}
+        {showFriendPicker && (
+          <div className="fixed inset-0 bg-black/50 flex items-end z-50">
+            <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom max-h-[80vh] overflow-y-auto">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Send to</h2>
+                <input
+                  type="text"
+                  placeholder="Search friends..."
+                  value={friendSearchQuery}
+                  onChange={(e) => setFriendSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                {filteredFriends.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-6">No friends found</p>
+                ) : (
+                  filteredFriends.map((f) => (
+                    <button
+                      key={f.profile.id}
+                      onClick={() => handleSelectFriendFromPicker(f.profile.id)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                    >
+                      {f.profile.avatar_url ? (
+                        <img src={f.profile.avatar_url} alt="" width={40} height={40} className="rounded-full object-cover flex-shrink-0" style={{ width: 40, height: 40 }} />
+                      ) : (
+                        <div className="flex-shrink-0">
+                          <Avatar avatarId={1} size={40} />
+                        </div>
+                      )}
+                      <span className="text-sm font-medium text-gray-900">{friendLabel(f)}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+
+              <button
+                onClick={() => setShowFriendPicker(false)}
+                className="w-full py-3 rounded-lg border border-gray-300 bg-white text-gray-900 font-semibold text-sm active:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {error && (
           <p className="mt-4 text-xs text-red-600">{error}</p>
         )}
@@ -1090,7 +1155,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               </button>
               <button
                 onClick={handleSend}
-                disabled={!selectedFriendId || blocks.length === 0}
+                disabled={blocks.length === 0}
                 className="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-blue-700 transition-colors"
               >
                 Send to Printer
