@@ -789,22 +789,57 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                     transformOrigin: '0 0',
                   }}
                 >
-                  <input
-                    type="text"
-                    value={signature.text}
-                    onChange={(e) => updateSignature({ text: e.target.value })}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onPointerMove={(e) => e.stopPropagation()}
-                    onPointerUp={(e) => e.stopPropagation()}
-                    className={`whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-400 px-1 py-0 bg-transparent border-0 ${signatureActive ? 'ring-2 ring-blue-400' : ''}`}
-                    style={{
-                      fontFamily: FONT_STYLES[signature.style].fontFamily,
-                      fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
-                      fontWeight: FONT_STYLES[signature.style].fontWeight,
-                      lineHeight: FONT_STYLES[signature.style].lineHeight,
-                      pointerEvents: signatureActive ? 'auto' : 'none',
-                    }}
-                  />
+                  {(() => {
+                    const sunetId = user?.email?.split('@')[0] || ''
+                    const defaultText = sunetId ? `Love, ${sunetId}` : 'Love, '
+                    const isEdited = signature.text !== defaultText
+                    const sunetPart = sunetId ? sunetId : ''
+
+                    return (
+                      <div>
+                        <div
+                          style={{
+                            fontFamily: FONT_STYLES[signature.style].fontFamily,
+                            fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
+                            fontWeight: FONT_STYLES[signature.style].fontWeight,
+                            lineHeight: FONT_STYLES[signature.style].lineHeight,
+                          }}
+                        >
+                          <input
+                            type="text"
+                            value={signature.text}
+                            onChange={(e) => updateSignature({ text: e.target.value })}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onPointerMove={(e) => e.stopPropagation()}
+                            onPointerUp={(e) => e.stopPropagation()}
+                            className={`whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-400 px-1 py-0 bg-transparent border-0 ${signatureActive ? 'ring-2 ring-blue-400' : ''}`}
+                            style={{
+                              fontFamily: FONT_STYLES[signature.style].fontFamily,
+                              fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
+                              fontWeight: FONT_STYLES[signature.style].fontWeight,
+                              lineHeight: FONT_STYLES[signature.style].lineHeight,
+                              pointerEvents: signatureActive ? 'auto' : 'none',
+                              color: isEdited ? 'inherit' : 'currentColor',
+                            }}
+                          />
+                          {!isEdited && sunetPart && (
+                            <span style={{ color: '#999', marginLeft: '-' + sunetPart.length + 'ch' }}>
+                              {sunetPart}
+                            </span>
+                          )}
+                        </div>
+                        {isEdited && sunetPart && (
+                          <div style={{
+                            fontSize: `${FONT_STYLES[signature.style].fontSize * 0.6}px`,
+                            color: '#999',
+                            marginTop: '2px',
+                          }}>
+                            {sunetId}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             </div>
