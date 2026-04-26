@@ -1231,9 +1231,9 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       </div>
 
       {/* Fixed bottom CTA with white gradient fade-in */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[max(24rem,35vw)]">
-        <div className="h-12 bg-gradient-to-t from-white to-transparent" />
-        <div className="pointer-events-auto bg-white px-6 pb-6 pt-2 flex gap-3">
+      <div className="fixed inset-x-0 bottom-0 z-40 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[max(24rem,35vw)]">
+        <div className="h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+        <div className="bg-white px-6 pb-6 pt-2 flex gap-3">
           {onboarding ? (
             <button
               onClick={handleContinue}
