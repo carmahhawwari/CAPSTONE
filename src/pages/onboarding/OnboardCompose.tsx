@@ -1,5 +1,5 @@
-import CreateReceipt from '@/pages/CreateReceipt'
+import ReceiptEditor from '@/pages/ReceiptEditor'
 
 export default function OnboardCompose() {
-  return <CreateReceipt onboarding />
+  return <ReceiptEditor onboarding />
 }

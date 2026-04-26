@@ -7,6 +7,8 @@ interface SubmitPrintJobOptions {
   recipientName: string
   messageText?: string
   recipientId?: string
+  skipGeofence?: boolean
+  printerId?: string
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -34,12 +36,31 @@ function getCurrentPosition(): Promise<GeolocationPosition | null> {
 }
 
 /**
+ * Check which printer is nearest to the user's current location via geofence.
+ * Returns the printer UUID if one is within range, or null if not.
+ * Throws if geolocation is unavailable.
+ */
+export async function checkNearestPrinter(): Promise<string | null> {
+  if (!supabase) throw new Error('Supabase not configured')
+
+  const position = await getCurrentPosition()
+  if (!position) return null
+
+  const lat = position.coords.latitude
+  const lng = position.coords.longitude
+
+  // Query the nearest_printer function
+  const { data: printerId } = await supabase.rpc('nearest_printer', { lat, lng })
+  return printerId ?? null
+}
+
+/**
  * Render a receipt element to ESC/POS, find the nearest printer via geofence,
  * and insert a print job into Supabase.
  *
  * Returns the job ID on success, or throws on failure.
  */
-export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId }: SubmitPrintJobOptions): Promise<string> {
+export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, skipGeofence, printerId: specifiedPrinterId }: SubmitPrintJobOptions): Promise<string> {
   // 1. Render receipt to ESC/POS binary
   const buffer = await renderToPrintBuffer(receiptElement)
   const payload = bufferToBase64(buffer)
@@ -60,10 +81,41 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
 
   if (!supabase) throw new Error('Supabase not configured')
 
-  // 2. Get sender's location for geofence routing
-  const position = await getCurrentPosition()
-  const lat = position?.coords.latitude ?? null
-  const lng = position?.coords.longitude ?? null
+  // If a printer is explicitly specified, use it directly (admin override)
+  if (specifiedPrinterId) {
+    const position = await getCurrentPosition()
+    const lat = position?.coords.latitude ?? null
+    const lng = position?.coords.longitude ?? null
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const { data: job, error } = await supabase
+      .from('print_jobs')
+      .insert({
+        printer_id: specifiedPrinterId,
+        sender_id: user?.id ?? null,
+        recipient_name: recipientName,
+        recipient_id: recipientId ?? null,
+        message_text: messageText ?? null,
+        payload_base64: payload,
+        sender_latitude: lat,
+        sender_longitude: lng,
+      })
+      .select('id')
+      .single()
+
+    if (error) throw error
+    return job.id
+  }
+
+  // 2. Get sender's location for geofence routing (skip if test mode)
+  let lat: number | null = null
+  let lng: number | null = null
+  if (!skipGeofence) {
+    const position = await getCurrentPosition()
+    lat = position?.coords.latitude ?? null
+    lng = position?.coords.longitude ?? null
+  }
 
   // 3. Find nearest printer via the DB function
   let printerId: string | null = null
@@ -72,7 +124,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
     printerId = data ?? null
   }
 
-  // If no printer in range, fall back to any active printer
+  // If no printer in range or geofence skipped, fall back to any active printer
   if (!printerId) {
     const { data: printers } = await supabase
       .from('printers')

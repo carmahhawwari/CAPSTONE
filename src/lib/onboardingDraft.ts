@@ -1,4 +1,4 @@
-import type { Block } from '@/types/canvas'
+import type { Block, CornerSticker, Signature } from '@/types/canvas'
 import type { Json } from '@/types/database'
 import { supabase } from '@/lib/supabase'
 
@@ -8,6 +8,9 @@ export type OnboardingDraft = {
   content: {
     blocks: Block[]
     prompt: string
+    cornerSticker?: CornerSticker
+    signature?: Signature
+    headerVariant?: 'simple' | 'squids-checkers' | 'squids-v1' | 'none'
   } | null
   recipient: {
     name: string
@@ -77,9 +80,13 @@ export async function commitDraftForUser(authorId: string): Promise<CommitResult
     if (error) throw error
 
     if (recipientId !== authorId) {
-      await supabase
-        .from('follows')
-        .upsert({ follower_id: authorId, following_id: recipientId }, { onConflict: 'follower_id,following_id' })
+      try {
+        await supabase
+          .from('friends')
+          .insert({ requester_id: authorId, addressee_id: recipientId, status: 'pending' })
+      } catch {
+        // ignore if already exists
+      }
     }
 
     clearDraft()

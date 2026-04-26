@@ -85,14 +85,18 @@ export default function SignUp({ mode = 'create-account' }: Props = {}) {
       if (supabase) {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+          const username = email.split('@')[0]
           await supabase
             .from('profiles')
-            .update({ display_name: `${firstName} ${lastName}` })
-            .eq('id', user.id)
+            .upsert({
+              id: user.id,
+              username,
+              display_name: `${firstName} ${lastName}`,
+            })
         }
       }
 
-      navigate('/find-friends')
+      navigate('/onboard/verify-email')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed')
       setLoading(false)
@@ -129,7 +133,7 @@ export default function SignUp({ mode = 'create-account' }: Props = {}) {
     }
   }
 
-  // Suppress unused-var warnings when in delivery mode (phone is unused there)
+  // Suppress unused-var when in delivery mode
   void phone
 
   return (
