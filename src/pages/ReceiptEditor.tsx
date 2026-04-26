@@ -86,7 +86,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
   const [showGiphyPicker, setShowGiphyPicker] = useState(false)
   const [stickerActive, setStickerActive] = useState(false)
-  const [signature, setSignature] = useState<Signature>({ text: 'Love, Me', style: 'inter' })
+  const [signature, setSignature] = useState<Signature>(() => {
+    const sunetId = user?.email?.split('@')[0] || ''
+    return { text: sunetId ? `Love, ${sunetId}` : 'Love, ', style: 'inter' }
+  })
   const [signatureActive, setSignatureActive] = useState(false)
   const [headerVariant, setHeaderVariant] = useState<'simple' | 'squids-checkers' | 'squids-v1' | 'none'>('simple')
   const [showFriendPicker, setShowFriendPicker] = useState(false)
