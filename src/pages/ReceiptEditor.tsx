@@ -766,46 +766,48 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             )}
           </div>
 
-          {/* Signature */}
-          <div className="pt-2 border-t border-dashed border-gray-200">
-            <div
-              ref={signatureAreaRef}
-              className="relative h-20"
-              onPointerDown={handleSignaturePointerDown}
-              onPointerMove={handleSignaturePointerMove}
-              onPointerUp={handleSignaturePointerUp}
-              onPointerCancel={handleSignaturePointerUp}
-              style={{ touchAction: signatureActive ? 'none' : 'auto' }}
-            >
+          {/* Signature and Corner sticker - Same row */}
+          <div className="pt-2 mt-6 flex gap-4">
+            {/* Signature - Left side */}
+            <div className="flex-1">
               <div
-                className={`absolute left-0 top-0 ${signatureActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
-                style={{
-                  transform: `translate(${signature.offsetX ?? 0}px, ${signature.offsetY ?? 0}px) rotate(${signature.rotation ?? 0}deg) scale(${signature.scale ?? 1})`,
-                  transformOrigin: '0 0',
-                }}
+                ref={signatureAreaRef}
+                className="relative h-20"
+                onPointerDown={handleSignaturePointerDown}
+                onPointerMove={handleSignaturePointerMove}
+                onPointerUp={handleSignaturePointerUp}
+                onPointerCancel={handleSignaturePointerUp}
+                style={{ touchAction: signatureActive ? 'none' : 'auto' }}
               >
-                <input
-                  type="text"
-                  value={signature.text}
-                  onChange={(e) => updateSignature({ text: e.target.value })}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onPointerMove={(e) => e.stopPropagation()}
-                  onPointerUp={(e) => e.stopPropagation()}
-                  className={`whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-400 px-1 py-0 bg-transparent border-0 ${signatureActive ? 'ring-2 ring-blue-400' : ''}`}
+                <div
+                  className={`absolute left-0 top-0 ${signatureActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
                   style={{
-                    fontFamily: FONT_STYLES[signature.style].fontFamily,
-                    fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
-                    fontWeight: FONT_STYLES[signature.style].fontWeight,
-                    lineHeight: FONT_STYLES[signature.style].lineHeight,
-                    pointerEvents: signatureActive ? 'auto' : 'none',
+                    transform: `translate(${signature.offsetX ?? 0}px, ${signature.offsetY ?? 0}px) rotate(${signature.rotation ?? 0}deg) scale(${signature.scale ?? 1})`,
+                    transformOrigin: '0 0',
                   }}
-                />
+                >
+                  <input
+                    type="text"
+                    value={signature.text}
+                    onChange={(e) => updateSignature({ text: e.target.value })}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onPointerMove={(e) => e.stopPropagation()}
+                    onPointerUp={(e) => e.stopPropagation()}
+                    className={`whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-400 px-1 py-0 bg-transparent border-0 ${signatureActive ? 'ring-2 ring-blue-400' : ''}`}
+                    style={{
+                      fontFamily: FONT_STYLES[signature.style].fontFamily,
+                      fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
+                      fontWeight: FONT_STYLES[signature.style].fontWeight,
+                      lineHeight: FONT_STYLES[signature.style].lineHeight,
+                      pointerEvents: signatureActive ? 'auto' : 'none',
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Corner sticker */}
-          <div ref={cornerStickerAreaRef} className="relative h-56 mt-6 mb-0">
+            {/* Corner sticker - Right side */}
+            <div ref={cornerStickerAreaRef} className="relative h-56 w-56 flex-shrink-0">
             {cornerSticker ? (
               <div
                 className="absolute bottom-0 right-0 group"
@@ -867,6 +869,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 +
               </button>
             )}
+            </div>
           </div>
         </div>
 
