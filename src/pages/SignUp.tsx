@@ -1,7 +1,39 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
+import { clearDraft, loadDraft } from '@/lib/onboardingDraft'
+import type { Block } from '@/types/canvas'
+
+function messageFromBlocks(blocks: Block[]): string {
+  return blocks
+    .filter((b): b is Extract<Block, { type: 'text' }> => b.type === 'text')
+    .map((b) => b.content)
+    .filter(Boolean)
+    .join('\n')
+    .trim()
+}
+
+async function deliverDraftAsEmail(senderName: string): Promise<void> {
+  if (!supabase) return
+  const draft = loadDraft()
+  if (!draft.recipient?.name || !draft.content) return
+
+  const recipientEmail = `${draft.recipient.name}@stanford.edu`
+  const message = messageFromBlocks(draft.content.blocks) || 'a little note'
+
+  try {
+    const { data, error } = await supabase.functions.invoke('send-recipt-email', {
+      body: { recipientEmail, senderName, message },
+    })
+    if (error) throw error
+    if (data?.error) throw new Error(data.error)
+    clearDraft()
+  } catch (err) {
+    // Don't block signup if delivery fails — log for the dev console.
+    console.warn('Receipt email delivery failed:', err)
+  }
+}
 
 export default function SignUp() {
   const { signUp } = useAuth()
@@ -13,6 +45,8 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
+  const isOnboardingDeliver = location.pathname.startsWith('/onboard/deliver')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,6 +70,11 @@ export default function SignUp() {
               display_name: `${firstName} ${lastName}`,
             })
         }
+      }
+
+      // If this signup is part of the onboarding flow, fire the receipt email.
+      if (isOnboardingDeliver) {
+        await deliverDraftAsEmail(`${firstName} ${lastName}`.trim() || 'A friend')
       }
 
       navigate('/onboard/verify-email')
