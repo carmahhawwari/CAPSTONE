@@ -295,6 +295,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   }
 
   const handleContinue = () => {
+    console.log('[ReceiptEditor] handleContinue fired, blocks:', blocks.length)
     if (blocks.length === 0) return
     saveDraft({
       content: {
