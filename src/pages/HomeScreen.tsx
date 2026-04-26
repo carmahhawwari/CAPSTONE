@@ -42,12 +42,13 @@ export default function HomeScreen() {
     navigate(`/compose?email=${encodeURIComponent(email)}`)
   }
 
-  const isValidEmail = (email: string) => {
-    return /^[^\s@]+@stanford\.edu$/.test(email)
+  const isSunetId = (id: string) => {
+    return /^[a-z0-9]+$/.test(id) && id.length > 0 && !friendSearchQuery.includes('@')
   }
 
-  const isEmailInput = friendSearchQuery.includes('@')
-  const queryIsValidEmail = isEmailInput && isValidEmail(friendSearchQuery)
+  const sunetId = friendSearchQuery
+  const isSunetInputValid = isSunetId(sunetId)
+  const sunetEmail = isSunetInputValid ? `${sunetId}@stanford.edu` : null
 
   const filteredFriends = friends.filter(f =>
     (f.profile.display_name || f.profile.username || 'Friend')
@@ -94,14 +95,19 @@ export default function HomeScreen() {
           <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom max-h-[80vh] overflow-y-auto">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Send to</h2>
-              <input
-                type="text"
-                placeholder="Search friends..."
-                value={friendSearchQuery}
-                onChange={(e) => setFriendSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
-                autoFocus
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search friends or enter SUNet ID..."
+                  value={friendSearchQuery}
+                  onChange={(e) => setFriendSearchQuery(e.target.value.toLowerCase())}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4 pr-32"
+                  autoFocus
+                />
+                {friendSearchQuery && !friendSearchQuery.includes(' ') && (
+                  <span className="absolute right-4 top-2 text-gray-400 pointer-events-none text-base">@stanford.edu</span>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -109,23 +115,23 @@ export default function HomeScreen() {
                 <p className="text-sm text-gray-500 text-center py-6">Loading friends...</p>
               ) : (
                 <>
-                  {queryIsValidEmail && (
+                  {isSunetInputValid && sunetEmail && (
                     <button
-                      onClick={() => handleSelectEmail(friendSearchQuery)}
+                      onClick={() => handleSelectEmail(sunetEmail)}
                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors text-left border border-blue-200 bg-blue-50"
                     >
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center">
                         <span className="text-sm font-semibold text-blue-700">@</span>
                       </div>
                       <div className="flex-1">
-                        <span className="text-sm font-medium text-gray-900">{friendSearchQuery}</span>
+                        <span className="text-sm font-medium text-gray-900">{sunetEmail}</span>
                         <p className="text-xs text-gray-500">New recipient</p>
                       </div>
                     </button>
                   )}
-                  {filteredFriends.length === 0 && !queryIsValidEmail ? (
+                  {filteredFriends.length === 0 && !isSunetInputValid ? (
                     <p className="text-sm text-gray-500 text-center py-6">
-                      {friendSearchQuery ? 'No friends found' : 'Search friends or enter a @stanford.edu email'}
+                      {friendSearchQuery ? 'No friends found' : 'Search friends or enter a SUNet ID'}
                     </p>
                   ) : (
                     filteredFriends.map((f) => {
