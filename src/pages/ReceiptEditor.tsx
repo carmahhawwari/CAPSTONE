@@ -642,12 +642,13 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
         )}
 
-        {/* Preview / Editor */}
+        {/* Preview / Editor — receipt-shaped with torn bottom edge */}
         <div
           ref={receiptRef}
-          className="bg-white border border-gray-200 rounded-sm shadow-sm p-5 mb-6 space-y-3 overflow-hidden"
-          style={{ fontFamily: 'Georgia, serif' }}
+          className="bg-white shadow-md mb-6 overflow-hidden"
+          style={{ fontFamily: 'Georgia, serif', borderTop: '1px solid rgba(0,0,0,0.08)', borderLeft: '1px solid rgba(0,0,0,0.08)', borderRight: '1px solid rgba(0,0,0,0.08)' }}
         >
+        <div className="p-5 space-y-3">
           {/* Header */}
           {/* Header with Logo and Arrows */}
           <div className="flex items-center justify-center gap-4 mb-6 mt-6">
@@ -915,6 +916,34 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             )}
             </div>
           </div>
+        </div>
+        {/* Torn zigzag bottom edge */}
+        <div
+          aria-hidden
+          className="h-3 w-full bg-white"
+          style={{
+            maskImage:
+              'linear-gradient(white, white), repeating-linear-gradient(135deg, transparent 0 6px, white 6px 12px)',
+            WebkitMaskImage:
+              'linear-gradient(white, white), repeating-linear-gradient(135deg, transparent 0 6px, white 6px 12px)',
+            maskComposite: 'exclude',
+            WebkitMaskComposite: 'xor',
+          }}
+        />
+        <svg
+          aria-hidden
+          className="block w-full"
+          height="14"
+          viewBox="0 0 100 14"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,0 L100,0 L100,4 L96,10 L92,4 L88,10 L84,4 L80,10 L76,4 L72,10 L68,4 L64,10 L60,4 L56,10 L52,4 L48,10 L44,4 L40,10 L36,4 L32,10 L28,4 L24,10 L20,4 L16,10 L12,4 L8,10 L4,4 L0,10 Z"
+            fill="white"
+            stroke="rgba(0,0,0,0.08)"
+            strokeWidth="0.5"
+          />
+        </svg>
         </div>
 
         {/* Block Toolbar */}
@@ -1202,14 +1231,14 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       </div>
 
       {/* Fixed bottom CTA with white gradient fade-in */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[max(24rem,35vw)]">
-        <div className="h-12 bg-gradient-to-t from-white to-transparent" />
-        <div className="pointer-events-auto bg-white px-6 pb-6 pt-2 flex gap-3">
+      <div className="fixed inset-x-0 bottom-0 z-40 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[max(24rem,35vw)]">
+        <div className="h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+        <div className="bg-white px-6 pb-6 pt-2 flex gap-3">
           {onboarding ? (
             <button
               onClick={handleContinue}
               disabled={blocks.length === 0}
-              className="w-full py-3.5 rounded-xl bg-black text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-gray-800 transition-colors"
+              className="text-callout text-text-inverse bg-fill-primary rounded-md w-full py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
             >
               Continue to Send
             </button>
@@ -1218,14 +1247,14 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               <button
                 onClick={handleSave}
                 disabled={blocks.length === 0}
-                className="flex-1 py-3.5 rounded-xl border border-gray-300 bg-white text-gray-900 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-gray-50 transition-colors"
+                className="text-callout text-text-primary border-fill-tertiary bg-white rounded-md flex-1 border py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:bg-bg-secondary transition-colors"
               >
                 Save
               </button>
               <button
                 onClick={handleSend}
                 disabled={blocks.length === 0}
-                className="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-blue-700 transition-colors"
+                className="text-callout text-text-inverse bg-fill-primary rounded-md flex-1 py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
               >
                 Send to Printer
               </button>

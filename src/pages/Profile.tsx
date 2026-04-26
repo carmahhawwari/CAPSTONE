@@ -128,14 +128,14 @@ export default function Profile() {
           {!isEditing ? (
             <>
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-medium text-gray-700">Name</label>
+                <label className="text-callout text-text-secondary">Name</label>
                 <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
                   {profile.display_name || 'No name set'}
                 </div>
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-medium text-gray-700">Class Year</label>
+                <label className="text-callout text-text-secondary">Class Year</label>
                 <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
                   {profile.class_year || 'Not set'}
                 </div>
@@ -143,7 +143,7 @@ export default function Profile() {
 
               {profile.username && (
                 <div className="flex flex-col gap-3">
-                  <label className="text-sm font-medium text-gray-700">SUNet ID</label>
+                  <label className="text-callout text-text-secondary">SUNet ID</label>
                   <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
                     @{profile.username}
                   </div>
@@ -151,7 +151,7 @@ export default function Profile() {
               )}
 
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-medium text-gray-700">Email</label>
+                <label className="text-callout text-text-secondary">Email</label>
                 <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
                   {profile.email}
                 </div>
@@ -159,7 +159,7 @@ export default function Profile() {
 
               <button
                 onClick={() => setIsEditing(true)}
-                className="bg-black text-white rounded-md py-3 font-medium hover:bg-gray-800 mt-4"
+                className="text-callout text-text-primary border-fill-tertiary rounded-md mt-4 w-full border py-3 hover:bg-bg-secondary"
               >
                 Edit Profile
               </button>
@@ -167,22 +167,22 @@ export default function Profile() {
           ) : (
             <>
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-medium text-gray-700">Name</label>
+                <label className="text-callout text-text-secondary">Name</label>
                 <input
                   type="text"
                   value={formData.display_name}
                   onChange={(e) => setFormData((f) => ({ ...f, display_name: e.target.value }))}
                   placeholder="Your name"
-                  className="border border-gray-300 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3 focus:outline-none focus:border-fill-primary"
                 />
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-medium text-gray-700">Class Year</label>
+                <label className="text-callout text-text-secondary">Class Year</label>
                 <select
                   value={formData.class_year}
                   onChange={(e) => setFormData((f) => ({ ...f, class_year: e.target.value }))}
-                  className="border border-gray-300 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3 focus:outline-none focus:border-fill-primary"
                 >
                   <option value="">Select a year</option>
                   <option value="2025">2025</option>
@@ -198,7 +198,7 @@ export default function Profile() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex-1 bg-black text-white rounded-md py-3 font-medium hover:bg-gray-800 disabled:opacity-50"
+                  className="text-callout text-text-inverse bg-fill-primary rounded-md flex-1 py-3 disabled:opacity-50"
                 >
                   {saving ? 'Saving...' : 'Save'}
                 </button>
@@ -211,7 +211,7 @@ export default function Profile() {
                     })
                     setError('')
                   }}
-                  className="flex-1 text-gray-700 border border-gray-300 rounded-md py-3 font-medium hover:bg-gray-50"
+                  className="text-callout text-text-primary border-fill-tertiary rounded-md flex-1 border py-3 hover:bg-bg-secondary"
                 >
                   Cancel
                 </button>
