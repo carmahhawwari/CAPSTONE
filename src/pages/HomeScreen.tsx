@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import Avatar from '@/components/Avatar'
+import archiveImg from '@/assets/archive.png'
 import printerImg from '@/assets/printer.png'
 import type { FriendProfile } from '@/types/app'
 
@@ -26,7 +27,7 @@ export default function HomeScreen() {
   }, [user])
 
   const handleSendClick = () => {
-    navigate('/share/recipient')
+    setShowFriendPicker(true)
   }
 
   const handleSelectFriend = (friendId: string) => {
@@ -83,7 +84,9 @@ export default function HomeScreen() {
         <Tile label="Printer" onClick={handlePrintClick}>
           <PrinterPlaceholder />
         </Tile>
-        <PrimaryTile label="Share an Inkling" onClick={handleSendClick} />
+        <Tile label="Send" onClick={handleSendClick}>
+          <ArchivePlaceholder />
+        </Tile>
       </div>
 
       {/* Friend Selection Modal */}
@@ -210,18 +213,6 @@ function Tile({
   )
 }
 
-function PrimaryTile({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="text-headline text-text-inverse bg-fill-primary rounded-md flex aspect-[16/9] w-full items-center justify-center active:opacity-80 transition-opacity"
-    >
-      {label}
-    </button>
-  )
-}
-
 function ProfileIcon() {
   return (
     <svg
@@ -266,6 +257,16 @@ function PrinterPlaceholder() {
     <img
       src={printerImg}
       alt="Printer"
+      className="h-full w-full object-contain p-6"
+    />
+  )
+}
+
+function ArchivePlaceholder() {
+  return (
+    <img
+      src={archiveImg}
+      alt="Archive"
       className="h-full w-full object-contain p-6"
     />
   )

@@ -1222,17 +1222,11 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
         )}
 
-        {/* Spacer so the last block isn't hidden under the fixed CTA */}
-        <div className="h-32" aria-hidden />
-
-      </div>
-
-      {/* Fixed bottom CTA with white gradient fade-in */}
-      <div className="fixed inset-x-0 bottom-0 z-40 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[max(24rem,35vw)]">
-        <div className="h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" />
-        <div className="bg-white px-6 pb-6 pt-2 flex gap-3">
+        {/* Inline CTA — placed at end of scroll content so it works reliably on iOS Safari */}
+        <div className="mt-8 mb-6 flex gap-3">
           {onboarding ? (
             <button
+              type="button"
               onClick={handleContinue}
               disabled={blocks.length === 0}
               className="text-callout text-text-inverse bg-fill-primary rounded-md w-full py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
@@ -1242,6 +1236,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           ) : (
             <>
               <button
+                type="button"
                 onClick={handleSave}
                 disabled={blocks.length === 0}
                 className="text-callout text-text-primary border-fill-tertiary bg-white rounded-md flex-1 border py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:bg-bg-secondary transition-colors"
@@ -1249,6 +1244,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 Save
               </button>
               <button
+                type="button"
                 onClick={handleSend}
                 disabled={blocks.length === 0}
                 className="text-callout text-text-inverse bg-fill-primary rounded-md flex-1 py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
@@ -1258,6 +1254,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             </>
           )}
         </div>
+
       </div>
     </div>
   )
