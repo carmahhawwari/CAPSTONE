@@ -18,7 +18,7 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 }
 
 export default function TestPrintScreen() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const navigate = useNavigate()
   const isAdmin = useIsAdmin()
   const imageContainerRef = useRef<HTMLDivElement>(null)
@@ -31,6 +31,10 @@ export default function TestPrintScreen() {
   const [selectedPrinterId, setSelectedPrinterId] = useState<string | null>(null)
 
   useEffect(() => {
+    if (loading) {
+      return
+    }
+
     if (!isAdmin) {
       navigate('/home')
       return
@@ -53,7 +57,7 @@ export default function TestPrintScreen() {
     }
 
     fetchPrinters()
-  }, [isAdmin, navigate])
+  }, [isAdmin, navigate, loading])
 
   async function handleImageSelected(file: File | null) {
     if (!file) {
@@ -133,6 +137,16 @@ export default function TestPrintScreen() {
     sending: 'Sending to printer...',
     done: `Sent${lastSize ? ` (${(lastSize / 1024).toFixed(1)} KB)` : ''}`,
     error: `Error: ${error}`,
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-6">
+        <div className="max-w-2xl mx-auto">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
