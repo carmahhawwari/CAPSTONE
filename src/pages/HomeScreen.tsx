@@ -1,11 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import archiveImg from '@/assets/archive.png'
 import printerImg from '@/assets/printer.png'
-import { useIsAdmin } from '@/lib/admin'
 
 export default function HomeScreen() {
   const navigate = useNavigate()
-  const isAdmin = useIsAdmin()
 
   const handlePrintClick = () => {
     navigate('/prints')
@@ -16,14 +14,6 @@ export default function HomeScreen() {
       <header className="flex items-end justify-between">
         <h1 className="text-regular-semibold text-text-primary">Home</h1>
         <div className="flex flex-col gap-2">
-          {isAdmin && (
-            <IconButton
-              label="Admin"
-              onClick={() => navigate('/admin')}
-            >
-              <AdminIcon />
-            </IconButton>
-          )}
           <IconButton
             label="Profile"
             onClick={() => navigate('/profile')}
@@ -149,23 +139,5 @@ function ArchivePlaceholder() {
       alt="Archive"
       className="h-full w-full object-contain p-6"
     />
-  )
-}
-
-function AdminIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
-        fill="currentColor"
-      />
-    </svg>
   )
 }
