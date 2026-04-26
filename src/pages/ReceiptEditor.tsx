@@ -217,7 +217,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       id: newBlockId(),
       type: 'text',
       content: '',
-      style: 'normal',
+      style: 'inter',
     }
     setBlocks([...blocks, newBlock])
     setActiveBlockId(newBlock.id)
@@ -767,7 +767,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
 
           {/* Signature and Corner sticker - Same row */}
-          <div className="pt-2 mt-6 flex gap-4">
+          <div className="pt-2 mt-6 flex gap-4 items-end">
             {/* Signature - Left side */}
             <div className="flex-1">
               <div
