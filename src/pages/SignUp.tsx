@@ -23,16 +23,18 @@ export default function SignUp() {
       // Sign up with email/password
       await signUp(email, password)
 
-      // If Supabase is configured, update profile with name
+      // If Supabase is configured, create/update profile with name
       if (supabase) {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+          const username = email.split('@')[0]
           await supabase
             .from('profiles')
-            .update({
+            .upsert({
+              id: user.id,
+              username,
               display_name: `${firstName} ${lastName}`,
             })
-            .eq('id', user.id)
         }
       }
 
