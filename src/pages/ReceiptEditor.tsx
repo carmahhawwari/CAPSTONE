@@ -844,7 +844,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCornerSticker(null)}
+                  onClick={() => {
+                    setCornerSticker(null)
+                    setStickerActive(false)
+                  }}
                   className={`absolute -top-4 -left-4 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md ${
                     stickerActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                   }`}
