@@ -51,7 +51,7 @@ export default function ComposeScreen() {
               >
                 <div
                   className={`rounded-full p-0.5 transition-all ${
-                    selectedFriendId === f.id ? 'ring-2 ring-blue-600 ring-offset-2' : ''
+                    selectedFriendId === f.id ? 'ring-2 ring-fill-primary ring-offset-2' : ''
                   }`}
                 >
                   <Avatar avatarId={f.avatarId} size={48} />
@@ -103,7 +103,7 @@ export default function ComposeScreen() {
         <button
           onClick={handleSend}
           disabled={!selectedFriendId || !message.trim() || sending}
-          className="mt-6 w-full py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-blue-700 transition-colors"
+          className="mt-6 w-full py-3.5 rounded-xl bg-fill-primary text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-fill-primary transition-colors"
         >
           {sending ? 'Sending...' : 'Send'}
         </button>

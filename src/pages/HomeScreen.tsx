@@ -98,7 +98,7 @@ export default function HomeScreen() {
                   placeholder="Search friends or enter SUNet ID..."
                   value={friendSearchQuery}
                   onChange={(e) => setFriendSearchQuery(e.target.value.toLowerCase())}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4 pr-32"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-fill-primary mb-4 pr-32"
                   autoFocus
                 />
                 {friendSearchQuery && !friendSearchQuery.includes(' ') && (
@@ -115,10 +115,10 @@ export default function HomeScreen() {
                   {isSunetInputValid && sunetEmail && (
                     <button
                       onClick={() => handleSelectEmail(sunetEmail)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors text-left border border-blue-200 bg-blue-50"
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-secondary transition-colors text-left border border-fill-tertiary bg-bg-secondary"
                     >
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center">
-                        <span className="text-sm font-semibold text-blue-700">@</span>
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-fill-tertiary flex items-center justify-center">
+                        <span className="text-sm font-semibold text-text-primary">@</span>
                       </div>
                       <div className="flex-1">
                         <span className="text-sm font-medium text-gray-900">{sunetEmail}</span>

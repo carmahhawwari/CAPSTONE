@@ -14,7 +14,7 @@ export default function FontSizeSlider({ value, onChange }: FontSizeSliderProps)
         step="0.1"
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+        className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
       />
       <span className="text-xs font-medium text-gray-600 w-10 text-right">
         {Math.round(value * 100)}%

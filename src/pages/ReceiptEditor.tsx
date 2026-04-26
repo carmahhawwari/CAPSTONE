@@ -623,7 +623,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                   >
                     <div
                       className={`rounded-full p-0.5 transition-all ${
-                        selectedFriendId === f.profile.id ? 'ring-2 ring-blue-600 ring-offset-2' : ''
+                        selectedFriendId === f.profile.id ? 'ring-2 ring-fill-primary ring-offset-2' : ''
                       }`}
                     >
                       {f.profile.avatar_url ? (
@@ -816,7 +816,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                             onPointerDown={(e) => e.stopPropagation()}
                             onPointerMove={(e) => e.stopPropagation()}
                             onPointerUp={(e) => e.stopPropagation()}
-                            className={`whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-400 px-1 py-0 bg-transparent border-0 ${signatureActive ? 'ring-2 ring-blue-400' : ''}`}
+                            className={`whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-fill-primary px-1 py-0 bg-transparent border-0 ${signatureActive ? 'ring-2 ring-fill-primary' : ''}`}
                             style={{
                               fontFamily: FONT_STYLES[signature.style].fontFamily,
                               fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
@@ -983,7 +983,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                     onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
                     className={`mt-8 px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
                       activeBlock.isItalic
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-fill-primary text-white'
                         : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
                     }`}
                     style={{ fontStyle: 'italic' }}
@@ -999,7 +999,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                   onClick={() => updateBlock(activeBlock.id, { isBold: !activeBlock.isBold })}
                   className={`px-3 py-2 rounded text-sm font-bold transition-colors ${
                     activeBlock.isBold
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-fill-primary text-white'
                       : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
                   }`}
                 >
@@ -1010,7 +1010,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                     onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
                     className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
                       activeBlock.isItalic
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-fill-primary text-white'
                         : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
                     }`}
                     style={{ fontStyle: 'italic' }}
@@ -1025,7 +1025,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
                 className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
                   activeBlock.isItalic
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-fill-primary text-white'
                     : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
                 }`}
                 style={{ fontStyle: 'italic' }}
@@ -1046,7 +1046,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                   onClick={() => updateSignature({ style: style as TextStyle })}
                   className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
                     signature.style === style
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-fill-primary text-white'
                       : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
                   }`}
                 >
@@ -1083,7 +1083,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 max="180"
                 value={cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}
                 onChange={e => updateCornerSticker({ rotation: parseFloat(e.target.value) })}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
               />
             </div>
 
@@ -1100,7 +1100,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 step="0.1"
                 value={cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE}
                 onChange={e => updateCornerSticker({ scale: parseFloat(e.target.value) })}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
               />
             </div>
 
@@ -1124,7 +1124,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             {/* Close Panel */}
             <button
               onClick={() => setStickerActive(false)}
-              className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              className="w-full px-3 py-2 text-xs font-medium text-white bg-fill-primary rounded-lg hover:opacity-80 transition-colors"
             >
               Done
             </button>
@@ -1158,7 +1158,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                   placeholder="Search friends..."
                   value={friendSearchQuery}
                   onChange={(e) => setFriendSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-fill-primary mb-4"
                   autoFocus
                 />
               </div>

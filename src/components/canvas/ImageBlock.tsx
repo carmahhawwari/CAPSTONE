@@ -71,7 +71,7 @@ export default function ImageBlock({
 
   return (
     <div
-      className={`group relative ${isActive ? 'ring-2 ring-blue-400 ring-offset-1 rounded' : ''}`}
+      className={`group relative ${isActive ? 'ring-2 ring-fill-primary ring-offset-1 rounded' : ''}`}
       onClick={onFocus}
     >
       <img

@@ -30,7 +30,7 @@ export default function StickerBlock({
   return (
     <motion.div
       layout
-      className={`group relative flex flex-col items-center py-2 ${isActive ? 'ring-2 ring-blue-400 ring-offset-1 rounded-md' : ''}`}
+      className={`group relative flex flex-col items-center py-2 ${isActive ? 'ring-2 ring-fill-primary ring-offset-1 rounded-md' : ''}`}
       onClick={onFocus}
     >
       <motion.div

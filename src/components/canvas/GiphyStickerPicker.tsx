@@ -69,7 +69,7 @@ export default function GiphyStickerPicker({ onSelect, onClose }: GiphyStickerPi
           value={query}
           onChange={e => handleQueryChange(e.target.value)}
           placeholder="e.g. 'happy', 'celebration', 'star'..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fill-primary mb-3"
           autoFocus
         />
 
@@ -91,7 +91,7 @@ export default function GiphyStickerPicker({ onSelect, onClose }: GiphyStickerPi
                 className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-50"
               >
                 {ditherLoading === sticker.id ? (
-                  <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-gray-300 border-t-fill-primary rounded-full animate-spin" />
                 ) : (
                   <img
                     src={sticker.previewUrl}
