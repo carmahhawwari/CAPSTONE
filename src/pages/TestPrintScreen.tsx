@@ -1,11 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import Receipt from '@/components/Receipt'
 import { renderToPrintBuffer } from '@/lib/escpos'
 import type { DitherMethod } from '@/lib/escpos'
 import { submitPrintJob } from '@/lib/printJob'
 import { useAuth } from '@/contexts/AuthContext'
-import { RECEIPTS } from '@/data/mock'
-import type { Receipt as ReceiptType } from '@/types/app'
 
 type Status = 'idle' | 'rendering' | 'sending' | 'done' | 'error'
 
@@ -15,155 +12,18 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   return out
 }
 
-function ditherImageData(imageData: ImageData, method: DitherMethod): Uint8Array {
-  const { width, height, data } = imageData
-  const gray = new Float32Array(width * height)
-  for (let i = 0; i < gray.length; i++) {
-    const r = data[i * 4]
-    const g = data[i * 4 + 1]
-    const b = data[i * 4 + 2]
-    gray[i] = 0.299 * r + 0.587 * g + 0.114 * b
-  }
-
-  const result = new Uint8Array(width * height)
-  if (method === 'threshold') {
-    for (let i = 0; i < gray.length; i++) result[i] = gray[i] < 128 ? 1 : 0
-    return result
-  }
-
-  if (method === 'ordered') {
-    const bayer4x4 = [
-      [0, 8, 2, 10],
-      [12, 4, 14, 6],
-      [3, 11, 1, 9],
-      [15, 7, 13, 5],
-    ]
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const idx = y * width + x
-        const threshold = (bayer4x4[y % 4][x % 4] + 0.5) * (255 / 16)
-        result[idx] = gray[idx] < threshold ? 1 : 0
-      }
-    }
-    return result
-  }
-
-  if (method === 'atkinson') {
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const idx = y * width + x
-        const oldPixel = gray[idx]
-        const newPixel = oldPixel < 128 ? 0 : 255
-        result[idx] = newPixel === 0 ? 1 : 0
-        const error = (oldPixel - newPixel) / 8
-
-        if (x + 1 < width) gray[idx + 1] += error
-        if (x + 2 < width) gray[idx + 2] += error
-        if (y + 1 < height) {
-          if (x - 1 >= 0) gray[(y + 1) * width + (x - 1)] += error
-          gray[(y + 1) * width + x] += error
-          if (x + 1 < width) gray[(y + 1) * width + (x + 1)] += error
-        }
-        if (y + 2 < height) gray[(y + 2) * width + x] += error
-      }
-    }
-    return result
-  }
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const idx = y * width + x
-      const oldPixel = gray[idx]
-      const newPixel = oldPixel < 128 ? 0 : 255
-      result[idx] = newPixel === 0 ? 1 : 0
-      const error = oldPixel - newPixel
-
-      if (x + 1 < width) gray[idx + 1] += error * 7 / 16
-      if (y + 1 < height) {
-        if (x - 1 >= 0) gray[(y + 1) * width + (x - 1)] += error * 3 / 16
-        gray[(y + 1) * width + x] += error * 5 / 16
-        if (x + 1 < width) gray[(y + 1) * width + (x + 1)] += error * 1 / 16
-      }
-    }
-  }
-
-  return result
-}
-
-
-async function renderDitheredImageDataUrl(
-  source: string,
-  ditherMethod: DitherMethod,
-  maxWidth: number,
-  maxHeight: number,
-): Promise<string> {
-  const img = new Image()
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve()
-    img.onerror = () => reject(new Error('Could not read image file'))
-    img.src = source
-  })
-
-  const scale = Math.min(1, maxWidth / img.width, maxHeight / img.height)
-  const width = Math.max(1, Math.round(img.width * scale))
-  const height = Math.max(1, Math.round(img.height * scale))
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const ctx = canvas.getContext('2d')
-  if (!ctx) {
-    throw new Error('Could not create image canvas')
-  }
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, width, height)
-  ctx.drawImage(img, 0, 0, width, height)
-
-  const imageData = ctx.getImageData(0, 0, width, height)
-  const mono = ditherImageData(imageData, ditherMethod)
-  const out = ctx.createImageData(width, height)
-
-  for (let i = 0; i < mono.length; i++) {
-    const px = i * 4
-    const val = mono[i] ? 0 : 255
-    out.data[px] = val
-    out.data[px + 1] = val
-    out.data[px + 2] = val
-    out.data[px + 3] = 255
-  }
-
-  ctx.putImageData(out, 0, 0)
-  return canvas.toDataURL('image/png')
-}
-
 export default function TestPrintScreen() {
   const { user } = useAuth()
-  const receiptRef = useRef<HTMLDivElement>(null)
-  const [selectedIdx, setSelectedIdx] = useState(0)
+  const imageContainerRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
   const [lastSize, setLastSize] = useState<number | null>(null)
   const [ditherMethod, setDitherMethod] = useState<DitherMethod>('floyd-steinberg')
-  const [uploadedImageSource, setUploadedImageSource] = useState<string | null>(null)
-
-  // Editable custom receipt
-  const [custom, setCustom] = useState<ReceiptType>({
-    id: 'test',
-    date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-    to: 'Test Friend',
-    from: 'Test User',
-    prompt: 'What made you smile today?',
-    content: 'This is a test receipt for the thermal printer. If you can read this, ESC/POS bitmap printing is working!',
-    friendId: 'test',
-  })
-
-  const useCustom = selectedIdx === -1
-  const receipt = useCustom ? custom : RECEIPTS[selectedIdx]
-
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null)
 
   async function handleImageSelected(file: File | null) {
     if (!file) {
-      setUploadedImageSource(null)
-      setCustom({ ...custom, imageDataUrl: undefined })
+      setImageDataUrl(null)
       return
     }
 
@@ -171,53 +31,31 @@ export default function TestPrintScreen() {
     reader.onload = () => {
       const result = reader.result
       if (typeof result === 'string') {
-        setUploadedImageSource(result)
+        setImageDataUrl(result)
       }
     }
     reader.readAsDataURL(file)
   }
 
-  useEffect(() => {
-    if (!uploadedImageSource) return
-
-    let cancelled = false
-    ;(async () => {
-      try {
-        const dithered = await renderDitheredImageDataUrl(uploadedImageSource, ditherMethod, 576, 320)
-        if (cancelled) return
-        setCustom((prev) => ({ ...prev, imageDataUrl: dithered }))
-      } catch (e) {
-        if (cancelled) return
-        setError(e instanceof Error ? e.message : String(e))
-        setStatus('error')
-      }
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [uploadedImageSource, ditherMethod])
-
-
   async function handlePrint() {
-    if (!receiptRef.current) return
+    if (!imageContainerRef.current) return
 
     setStatus('rendering')
     setError('')
 
     try {
-      await renderToPrintBuffer(receiptRef.current, { ditherMethod })
+      await renderToPrintBuffer(imageContainerRef.current, { ditherMethod })
       setStatus('sending')
 
-      // Send via Supabase to the Pi
       if (!user?.id) {
         throw new Error('Not logged in. Please log in to print.')
       }
 
       await submitPrintJob({
-        receiptElement: receiptRef.current,
-        recipientName: custom.to,
-        messageText: custom.content,
+        receiptElement: imageContainerRef.current,
+        recipientName: 'Test',
+        messageText: 'Test image print',
+        skipGeofence: true,
       })
 
       setStatus('done')
@@ -228,20 +66,20 @@ export default function TestPrintScreen() {
   }
 
   async function handleDownload() {
-    if (!receiptRef.current) return
+    if (!imageContainerRef.current) return
 
     setStatus('rendering')
     setError('')
 
     try {
-      const buffer = await renderToPrintBuffer(receiptRef.current, { ditherMethod })
+      const buffer = await renderToPrintBuffer(imageContainerRef.current, { ditherMethod })
       setLastSize(buffer.length)
 
       const blob = new Blob([toArrayBuffer(buffer)], { type: 'application/octet-stream' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'receipt.bin'
+      a.download = 'image.bin'
       a.click()
       URL.revokeObjectURL(url)
 
@@ -266,9 +104,9 @@ export default function TestPrintScreen() {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-1">Printer Test</h1>
+        <h1 className="text-2xl font-bold mb-1">Image Print Test</h1>
         <p className="text-sm text-gray-500 mb-6">
-          ESC/POS bitmap test — POS80 @ 576 dots wide
+          Print long images to thermal printer — POS80 @ 576 dots wide
         </p>
 
         {!user?.id && (
@@ -277,23 +115,7 @@ export default function TestPrintScreen() {
           </div>
         )}
 
-        {/* Receipt selector */}
-        <div className="mb-4">
-          <label className="text-sm font-medium text-gray-700 block mb-1">Receipt</label>
-          <select
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
-            value={selectedIdx}
-            onChange={(e) => setSelectedIdx(Number(e.target.value))}
-          >
-            <option value={-1}>Custom (editable)</option>
-            {RECEIPTS.map((r, i) => (
-              <option key={r.id} value={i}>
-                {r.date} — {r.from} → {r.to}
-              </option>
-            ))}
-          </select>
-        </div>
-
+        {/* Dithering method */}
         <div className="mb-4">
           <label className="text-sm font-medium text-gray-700 block mb-1">Dithering method</label>
           <select
@@ -308,96 +130,64 @@ export default function TestPrintScreen() {
           </select>
         </div>
 
-        {/* Custom receipt editor */}
-        {useCustom && (
-          <div className="mb-4 space-y-2 bg-white border border-gray-200 rounded p-4">
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-                placeholder="To"
-                value={custom.to}
-                onChange={(e) => setCustom({ ...custom, to: e.target.value })}
-              />
-              <input
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-                placeholder="From"
-                value={custom.from}
-                onChange={(e) => setCustom({ ...custom, from: e.target.value })}
-              />
+        {/* Image upload */}
+        <div className="mb-4 bg-white border border-gray-200 rounded p-4">
+          <label className="text-sm font-medium text-gray-700 block mb-2">Upload image</label>
+          <input
+            type="file"
+            accept="image/*"
+            className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white"
+            onChange={(e) => handleImageSelected(e.target.files?.[0] ?? null)}
+          />
+          {imageDataUrl && (
+            <div className="mt-3 space-y-2">
+              <button
+                type="button"
+                className="px-3 py-1 text-xs font-medium rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                onClick={() => setImageDataUrl(null)}
+              >
+                Remove image
+              </button>
             </div>
-            <input
-              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-              placeholder="Prompt (optional)"
-              value={custom.prompt ?? ''}
-              onChange={(e) => setCustom({ ...custom, prompt: e.target.value || undefined })}
-            />
-            <textarea
-              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-              rows={4}
-              placeholder="Content"
-              value={custom.content}
-              onChange={(e) => setCustom({ ...custom, content: e.target.value })}
-            />
-            <div className="space-y-2 pt-2">
-              <label className="text-xs font-medium text-gray-600 block">Optional image</label>
-              <input
-                type="file"
-                accept="image/*"
-                className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white"
-                onChange={(e) => handleImageSelected(e.target.files?.[0] ?? null)}
+          )}
+        </div>
+
+        {/* Image preview: the actual component that will be rasterized */}
+        {imageDataUrl && (
+          <div className="mb-4">
+            <p className="text-xs text-gray-400 mb-2">Preview (will be sent to printer):</p>
+            <div
+              ref={imageContainerRef}
+              style={{ width: '80mm', maxWidth: '100%', background: 'white' }}
+            >
+              <img
+                src={imageDataUrl}
+                alt="Image to print"
+                style={{ width: '100%', height: 'auto', display: 'block' }}
               />
-              {custom.imageDataUrl && (
-                <div className="space-y-2">
-                  <img
-                    src={custom.imageDataUrl}
-                    alt="Selected attachment"
-                    className="max-h-36 rounded border border-gray-200"
-                  />
-                  <button
-                    type="button"
-                    className="px-3 py-1 text-xs font-medium rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    onClick={() => {
-                      setUploadedImageSource(null)
-                      setCustom({ ...custom, imageDataUrl: undefined })
-                    }}
-                  >
-                    Remove image
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         )}
 
-        {/* Receipt preview: the actual component that will be rasterized */}
-        <div className="mb-4">
-          <p className="text-xs text-gray-400 mb-1">Receipt (will be sent to printer):</p>
-          <div
-            ref={receiptRef}
-            style={{ width: '80mm', maxWidth: '100%', background: 'white' }}
-          >
-            <Receipt receipt={receipt} />
-          </div>
-        </div>
-
-
         {/* Actions */}
-        <div className="flex gap-3 mb-4">
-          <button
-            onClick={handlePrint}
-            disabled={status === 'rendering' || status === 'sending'}
-            className="px-4 py-2 bg-orange-500 text-white rounded font-medium text-sm hover:bg-orange-600 disabled:opacity-50 flex-1"
-          >
-            {status === 'sending' ? 'Sending...' : 'Print'}
-          </button>
-          <button
-            onClick={handleDownload}
-            disabled={status === 'rendering' || status === 'sending'}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded font-medium text-sm hover:bg-gray-300 disabled:opacity-50"
-          >
-            Download .bin
-          </button>
-        </div>
+        {imageDataUrl && (
+          <div className="flex gap-3 mb-4">
+            <button
+              onClick={handlePrint}
+              disabled={status === 'rendering' || status === 'sending'}
+              className="px-4 py-2 bg-orange-500 text-white rounded font-medium text-sm hover:bg-orange-600 disabled:opacity-50 flex-1"
+            >
+              {status === 'sending' ? 'Sending...' : 'Print'}
+            </button>
+            <button
+              onClick={handleDownload}
+              disabled={status === 'rendering' || status === 'sending'}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded font-medium text-sm hover:bg-gray-300 disabled:opacity-50"
+            >
+              Download .bin
+            </button>
+          </div>
+        )}
 
         {/* Status */}
         {status !== 'idle' && (
@@ -408,17 +198,15 @@ export default function TestPrintScreen() {
 
         {/* Instructions */}
         <div className="mt-8 bg-white border border-gray-200 rounded p-4 text-sm text-gray-600 space-y-3">
-          <h2 className="font-semibold text-gray-800">Internet Printing Setup</h2>
+          <h2 className="font-semibold text-gray-800">How to use</h2>
           <p>1. Make sure you're logged in</p>
-          <p>2. Toggle print mode to <strong>Internet (Pi)</strong></p>
-          <p>3. Edit the receipt (to/from/message/image)</p>
+          <p>2. Upload an image (supports long/tall images)</p>
+          <p>3. Choose dithering method (Floyd-Steinberg recommended)</p>
           <p>4. Click <strong>Print</strong> to send to your Raspberry Pi</p>
           <p>5. Your Pi will pick up the job and print within 3 seconds</p>
           <hr className="border-gray-200" />
           <p className="text-xs text-gray-400">
-            The printer connects to Supabase, which your Raspberry Pi polls every 3 seconds. When a job is found, it claims it atomically, sends the ESC/POS data to the USB printer, and updates the status.
-            <br />
-            <strong>Download .bin</strong> saves the raw ESC/POS binary for manual testing.
+            Images are automatically scaled to 576 pixels wide (thermal printer width). Download .bin to save the raw ESC/POS binary.
           </p>
         </div>
       </div>

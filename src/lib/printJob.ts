@@ -7,6 +7,7 @@ interface SubmitPrintJobOptions {
   recipientName: string
   messageText?: string
   recipientId?: string
+  skipGeofence?: boolean
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -58,7 +59,7 @@ export async function checkNearestPrinter(): Promise<string | null> {
  *
  * Returns the job ID on success, or throws on failure.
  */
-export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId }: SubmitPrintJobOptions): Promise<string> {
+export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, skipGeofence }: SubmitPrintJobOptions): Promise<string> {
   // 1. Render receipt to ESC/POS binary
   const buffer = await renderToPrintBuffer(receiptElement)
   const payload = bufferToBase64(buffer)
@@ -79,10 +80,14 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
 
   if (!supabase) throw new Error('Supabase not configured')
 
-  // 2. Get sender's location for geofence routing
-  const position = await getCurrentPosition()
-  const lat = position?.coords.latitude ?? null
-  const lng = position?.coords.longitude ?? null
+  // 2. Get sender's location for geofence routing (skip if test mode)
+  let lat: number | null = null
+  let lng: number | null = null
+  if (!skipGeofence) {
+    const position = await getCurrentPosition()
+    lat = position?.coords.latitude ?? null
+    lng = position?.coords.longitude ?? null
+  }
 
   // 3. Find nearest printer via the DB function
   let printerId: string | null = null
@@ -91,7 +96,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
     printerId = data ?? null
   }
 
-  // If no printer in range, fall back to any active printer
+  // If no printer in range or geofence skipped, fall back to any active printer
   if (!printerId) {
     const { data: printers } = await supabase
       .from('printers')

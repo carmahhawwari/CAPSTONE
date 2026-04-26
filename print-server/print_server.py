@@ -101,7 +101,7 @@ def get_printer():
 def send_to_printer(raw_bytes: bytes) -> None:
     """Send raw ESC/POS bytes to the thermal printer."""
     printer = get_printer()
-    printer['device'].write(printer['out_ep'], raw_bytes, timeout=10_000)
+    printer['device'].write(printer['out_ep'], raw_bytes, timeout=60_000)
 
 
 def close_printer() -> None:
