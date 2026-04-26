@@ -1209,7 +1209,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             <button
               onClick={handleContinue}
               disabled={blocks.length === 0}
-              className="w-full py-3.5 rounded-xl bg-black text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-gray-800 transition-colors"
+              className="text-callout text-text-inverse bg-fill-primary rounded-md w-full py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
             >
               Continue to Send
             </button>
@@ -1218,14 +1218,14 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               <button
                 onClick={handleSave}
                 disabled={blocks.length === 0}
-                className="flex-1 py-3.5 rounded-xl border border-gray-300 bg-white text-gray-900 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-gray-50 transition-colors"
+                className="text-callout text-text-primary border-fill-tertiary bg-white rounded-md flex-1 border py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:bg-bg-secondary transition-colors"
               >
                 Save
               </button>
               <button
                 onClick={handleSend}
                 disabled={blocks.length === 0}
-                className="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-blue-700 transition-colors"
+                className="text-callout text-text-inverse bg-fill-primary rounded-md flex-1 py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
               >
                 Send to Printer
               </button>
