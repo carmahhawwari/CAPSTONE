@@ -21,8 +21,8 @@ export default function HomeScreen() {
             <ProfileIcon />
           </IconButton>
           <IconButton
-            label="Archive"
-            onClick={() => navigate('/archive')}
+            label="Letters"
+            onClick={() => navigate('/letters')}
           >
             <ArchiveIcon />
           </IconButton>
@@ -33,7 +33,7 @@ export default function HomeScreen() {
         <Tile label="Printer" onClick={handlePrintClick}>
           <PrinterPlaceholder />
         </Tile>
-        <Tile label="Send" onClick={() => navigate('/compose')}>
+        <Tile label="Send" onClick={() => navigate('/letters')}>
           <ArchivePlaceholder />
         </Tile>
       </div>

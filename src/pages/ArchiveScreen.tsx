@@ -5,7 +5,7 @@ import { getFriends } from '@/lib/friends'
 import { getReceiptsByFriend } from '@/lib/receipts'
 import type { FriendProfile, Receipt } from '@/types/app'
 
-export default function ArchiveScreen() {
+export default function LettersScreen() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [friends, setFriends] = useState<FriendProfile[]>([])
@@ -58,7 +58,7 @@ export default function ArchiveScreen() {
       <div className="sticky top-0 z-10">
         <header className="bg-white relative flex items-start justify-between gap-4 px-6 pt-8 pb-4">
           <div className="flex min-w-0 flex-1 flex-col gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">Archive</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Letters</h1>
             <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
               {friends.length === 0 ? (
                 <p className="text-sm text-gray-400">No friends yet</p>

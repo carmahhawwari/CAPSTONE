@@ -10,7 +10,7 @@ import HomeScreen from '@/pages/HomeScreen'
 import Profile from '@/pages/Profile'
 import FriendsScreen from '@/pages/FriendsScreen'
 import FriendDetailScreen from '@/pages/FriendDetailScreen'
-import ArchiveScreen from '@/pages/ArchiveScreen'
+import LettersScreen from '@/pages/ArchiveScreen'
 import ReceiptEditor from '@/pages/ReceiptEditor'
 import ReceiptSent from '@/pages/ReceiptSent'
 import PrintingScreen from '@/pages/PrintingScreen'
@@ -49,7 +49,8 @@ function App() {
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/friends" element={<ProtectedRoute><FriendsScreen /></ProtectedRoute>} />
           <Route path="/friends/:id" element={<ProtectedRoute><FriendDetailScreen /></ProtectedRoute>} />
-          <Route path="/archive" element={<ProtectedRoute><ArchiveScreen /></ProtectedRoute>} />
+          <Route path="/archive" element={<ProtectedRoute><LettersScreen /></ProtectedRoute>} />
+          <Route path="/letters" element={<ProtectedRoute><LettersScreen /></ProtectedRoute>} />
           <Route path="/compose" element={<ProtectedRoute><ReceiptEditor /></ProtectedRoute>} />
           <Route path="/receipt-sent" element={<ProtectedRoute><ReceiptSent /></ProtectedRoute>} />
           <Route path="/prints" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
