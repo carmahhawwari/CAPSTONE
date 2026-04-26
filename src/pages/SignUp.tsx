@@ -1,18 +1,8 @@
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { clearDraft, loadDraft } from '@/lib/onboardingDraft'
-import type { Block } from '@/types/canvas'
-
-function messageFromBlocks(blocks: Block[]): string {
-  return blocks
-    .filter((b): b is Extract<Block, { type: 'text' }> => b.type === 'text')
-    .map((b) => b.content)
-    .filter(Boolean)
-    .join('\n')
-    .trim()
-}
 
 async function deliverDraftAsEmail(senderName: string): Promise<void> {
   if (!supabase) return
@@ -20,11 +10,14 @@ async function deliverDraftAsEmail(senderName: string): Promise<void> {
   if (!draft.recipient?.name || !draft.content) return
 
   const recipientEmail = `${draft.recipient.name}@stanford.edu`
-  const message = messageFromBlocks(draft.content.blocks) || 'a little note'
 
   try {
     const { data, error } = await supabase.functions.invoke('send-recipt-email', {
-      body: { recipientEmail, senderName, message },
+      body: {
+        recipientEmail,
+        senderName,
+        content: draft.content,
+      },
     })
     if (error) throw error
     if (data?.error) throw new Error(data.error)
@@ -46,6 +39,8 @@ export default function SignUp() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const nextPath = searchParams.get('next')
   const isOnboardingDeliver = location.pathname.startsWith('/onboard/deliver')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +72,11 @@ export default function SignUp() {
         await deliverDraftAsEmail(`${firstName} ${lastName}`.trim() || 'A friend')
       }
 
-      navigate('/onboard/verify-email')
+      if (nextPath) {
+        navigate(nextPath)
+      } else {
+        navigate('/onboard/verify-email')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed')
       setLoading(false)

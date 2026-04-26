@@ -22,6 +22,7 @@ import OnboardCompose from '@/pages/onboarding/OnboardCompose'
 import VerifyEmail from '@/pages/VerifyEmail'
 import Privacy from '@/pages/Privacy'
 import Terms from '@/pages/Terms'
+import RecipientReceipt from '@/pages/RecipientReceipt'
 
 const SPLASH_SEEN_KEY = 'inklings.splashSeen'
 
@@ -65,6 +66,7 @@ function App() {
           <Route path="/onboard/verify-email" element={<ProtectedRoute><VerifyEmail /></ProtectedRoute>} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/r/:id" element={<RecipientReceipt />} />
             </Routes>
           </AuthProvider>
         </div>
