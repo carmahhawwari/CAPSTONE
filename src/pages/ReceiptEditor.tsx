@@ -216,7 +216,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     const newBlock: Block = {
       id: newBlockId(),
       type: 'text',
-      content: '',
+      content: 'Love, ',
       style: 'inter',
     }
     setBlocks([...blocks, newBlock])
