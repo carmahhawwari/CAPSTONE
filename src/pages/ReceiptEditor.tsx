@@ -688,7 +688,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                   onDragStart={() => handleDragStart(block.id)}
                   onDragOver={handleDragOver}
                   onDrop={() => handleDrop(block.id)}
-                  className={`cursor-move select-none ${draggedBlockId === block.id ? 'opacity-50' : ''}`}
+                  className={`relative group cursor-move select-none ${draggedBlockId === block.id ? 'opacity-50' : ''}`}
                 >
                   {block.type === 'text' && (
                     <TextBlock
@@ -722,6 +722,16 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                       onFocus={() => setActiveBlockId(block.id)}
                       onDelete={() => deleteBlock(block.id)}
                     />
+                  )}
+                  {activeBlockId === block.id && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); deleteBlock(block.id) }}
+                      className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
+                      aria-label="Delete block"
+                    >
+                      ×
+                    </button>
                   )}
                 </div>
               ))
@@ -1039,7 +1049,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           <div className="fixed inset-0 bg-black/50 flex items-end z-50">
             <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom">
               <p className="text-sm text-gray-700">
-                Delete this block? This action cannot be undone.
+                Are you sure you want to delete this section? This action cannot be undone.
               </p>
               <div className="flex gap-3">
                 <button
@@ -1089,19 +1099,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           )}
         </div>
 
-        {/* Mobile Trash Button */}
-        {blocks.length > 0 && (
-          <div className="mt-4 md:hidden">
-            <button
-              onClick={() => activeBlockId && deleteBlock(activeBlockId)}
-              disabled={!activeBlockId}
-              className="w-full py-3 rounded-lg bg-red-50 text-red-600 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-red-100 transition-colors flex items-center justify-center gap-2"
-            >
-              <span>🗑️</span>
-              Delete Block
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )
