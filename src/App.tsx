@@ -23,6 +23,7 @@ import VerifyEmail from '@/pages/VerifyEmail'
 import Privacy from '@/pages/Privacy'
 import Terms from '@/pages/Terms'
 import RecipientReceipt from '@/pages/RecipientReceipt'
+import ShareRecipient from '@/pages/ShareRecipient'
 
 const SPLASH_SEEN_KEY = 'inklings.splashSeen'
 
@@ -67,6 +68,7 @@ function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/r/:id" element={<RecipientReceipt />} />
+          <Route path="/share/recipient" element={<ProtectedRoute><ShareRecipient /></ProtectedRoute>} />
             </Routes>
           </AuthProvider>
         </div>
