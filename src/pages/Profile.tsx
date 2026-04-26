@@ -7,6 +7,7 @@ interface ProfileData {
   display_name: string | null
   username: string | null
   email: string | null
+  class_year: string | null
 }
 
 export default function Profile() {
@@ -14,6 +15,10 @@ export default function Profile() {
   const { user, signOut } = useAuth()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState({ display_name: '', class_year: '' })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!user?.id) {
@@ -29,17 +34,28 @@ export default function Profile() {
           .eq('id', user.id)
           .single()
 
-        setProfile({
+        const newProfile = {
           display_name: data?.display_name ?? null,
           username: data?.username ?? null,
           email: user.email ?? null,
+          class_year: null,
+        }
+        setProfile(newProfile)
+        setFormData({
+          display_name: newProfile.display_name || '',
+          class_year: '',
         })
       } else {
-        // Mock mode
-        setProfile({
+        const newProfile = {
           display_name: user.email?.split('@')[0] ?? null,
           username: null,
           email: user.email ?? null,
+          class_year: null,
+        }
+        setProfile(newProfile)
+        setFormData({
+          display_name: newProfile.display_name || '',
+          class_year: '',
         })
       }
       setLoading(false)
@@ -47,6 +63,38 @@ export default function Profile() {
 
     loadProfile()
   }, [user?.id])
+
+  const handleSave = async () => {
+    if (!user?.id || !supabase) return
+
+    setSaving(true)
+    setError('')
+
+    try {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          display_name: formData.display_name || null,
+        })
+        .eq('id', user.id)
+
+      if (updateError) throw updateError
+
+      setProfile((p) =>
+        p
+          ? {
+              ...p,
+              display_name: formData.display_name || null,
+            }
+          : null
+      )
+      setIsEditing(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save profile')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const handleSignOut = async () => {
     await signOut()
@@ -76,18 +124,100 @@ export default function Profile() {
       </header>
 
       {profile && (
-        <div className="mt-12 flex flex-col gap-3">
-          <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
-            {profile.display_name || 'No name set'}
-          </div>
-          {profile.username && (
-            <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
-              @{profile.username}
-            </div>
+        <div className="mt-12 flex flex-col gap-6 max-w-sm">
+          {!isEditing ? (
+            <>
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-medium text-gray-700">Name</label>
+                <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
+                  {profile.display_name || 'No name set'}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-medium text-gray-700">Class Year</label>
+                <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
+                  {profile.class_year || 'Not set'}
+                </div>
+              </div>
+
+              {profile.username && (
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-medium text-gray-700">SUNet ID</label>
+                  <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
+                    @{profile.username}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-medium text-gray-700">Email</label>
+                <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
+                  {profile.email}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsEditing(true)}
+                className="bg-black text-white rounded-md py-3 font-medium hover:bg-gray-800 mt-4"
+              >
+                Edit Profile
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  value={formData.display_name}
+                  onChange={(e) => setFormData((f) => ({ ...f, display_name: e.target.value }))}
+                  placeholder="Your name"
+                  className="border border-gray-300 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-medium text-gray-700">Class Year</label>
+                <select
+                  value={formData.class_year}
+                  onChange={(e) => setFormData((f) => ({ ...f, class_year: e.target.value }))}
+                  className="border border-gray-300 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  <option value="">Select a year</option>
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                </select>
+              </div>
+
+              {error && <p className="text-red-600 text-sm">{error}</p>}
+
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 bg-black text-white rounded-md py-3 font-medium hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditing(false)
+                    setFormData({
+                      display_name: profile.display_name || '',
+                      class_year: profile.class_year || '',
+                    })
+                    setError('')
+                  }}
+                  className="flex-1 text-gray-700 border border-gray-300 rounded-md py-3 font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
           )}
-          <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
-            {profile.email}
-          </div>
         </div>
       )}
 
