@@ -709,7 +709,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 <div
                   key={block.id}
                   draggable
-                  onClick={() => setActiveBlockId(block.id)}
+                  onClick={() => {
+                    setActiveBlockId(block.id)
+                    setStickerActive(false)
+                  }}
                   onDragStart={() => handleDragStart(block.id)}
                   onDragOver={handleDragOver}
                   onDrop={() => handleDrop(block.id)}
