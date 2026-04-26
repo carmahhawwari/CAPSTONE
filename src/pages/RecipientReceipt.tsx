@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { submitPrintJob } from '@/lib/printJob'
@@ -128,7 +129,6 @@ export default function RecipientReceipt() {
     )
   }
 
-  // Authenticated view: show receipt + print
   const dateStr = new Date(receipt.created_at).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
@@ -136,19 +136,60 @@ export default function RecipientReceipt() {
   })
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg-base px-6 pt-12 pb-8">
-      <h1 className="text-regular-semibold text-text-primary text-center">
-        From {receipt.sender_name}
-      </h1>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="w-full max-w-sm text-center"
+      >
+        <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">📬 you've got mail</p>
+        <h1 className="text-regular-semibold text-text-primary mt-3 leading-tight">
+          {receipt.sender_name} has sent you an inkling.
+        </h1>
+        <p className="text-subheadline text-text-secondary mt-3">
+          Head to onCall to receive your message.
+        </p>
 
-      <div className="flex flex-1 items-center justify-center py-6">
+        {printError && <p className="text-mini text-fill-red mt-4">{printError}</p>}
+
+        <button
+          type="button"
+          onClick={handlePrint}
+          disabled={printing || printed}
+          className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 w-full py-4 disabled:opacity-50"
+        >
+          {printed ? 'Printed' : printing ? 'Printing…' : 'Print on the Inklings printer'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate('/home')}
+          className="text-callout text-text-secondary mt-4 w-full text-center"
+        >
+          Done
+        </button>
+      </motion.div>
+
+      {/* Hidden receipt — kept in DOM so html2canvas can rasterize it for the print job. */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          top: 0,
+          width: 384,
+          opacity: 0,
+          pointerEvents: 'none',
+        }}
+      >
         <div
           ref={receiptRef}
-          className="w-full max-w-sm"
           style={{
             backgroundColor: '#fbf6e6',
             border: '1px solid #969696',
             fontFamily: 'Georgia, serif',
+            color: '#1a1a1a',
           }}
         >
           <div style={{ borderBottom: '2px solid #1a1a1a', padding: '16px', textAlign: 'center', fontSize: 18 }}>
@@ -186,25 +227,6 @@ export default function RecipientReceipt() {
           </div>
         </div>
       </div>
-
-      {printError && <p className="text-mini text-fill-red mt-2 text-center">{printError}</p>}
-
-      <button
-        type="button"
-        onClick={handlePrint}
-        disabled={printing || printed}
-        className="text-headline text-text-inverse bg-fill-primary rounded-md w-full py-4 disabled:opacity-50"
-      >
-        {printed ? 'Printed' : printing ? 'Printing…' : 'Print on the Inklings printer'}
-      </button>
-
-      <button
-        type="button"
-        onClick={() => navigate('/home')}
-        className="text-callout text-text-secondary mt-4 w-full text-center"
-      >
-        Done
-      </button>
     </div>
   )
 }
