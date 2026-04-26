@@ -563,24 +563,30 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     resetStickerGesture()
   }
 
+  const serializeContent = () => {
+    return JSON.stringify(blocks)
+  }
+
   const handleSend = () => {
     if (blocks.length === 0) return
+    const content = serializeContent()
     if (recipientEmail) {
-      navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`)
+      navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { content } })
       return
     }
     if (!selectedFriendId || !selectedFriend) {
       setShowFriendPicker(true)
       return
     }
-    navigate(`/printing?to=${selectedFriendId}`)
+    navigate(`/printing?to=${selectedFriendId}`, { state: { content } })
   }
 
   const handleSelectFriendFromPicker = (friendId: string) => {
     setSelectedFriendId(friendId)
     setShowFriendPicker(false)
     setFriendSearchQuery('')
-    navigate(`/printing?to=${friendId}`)
+    const content = serializeContent()
+    navigate(`/printing?to=${friendId}`, { state: { content } })
   }
 
   const filteredFriends = friends.filter(f =>
