@@ -63,8 +63,7 @@ export default function RecipientReceipt() {
         messageText: messageFromBlocks(receipt.content.blocks),
       })
       if (supabase && !jobId.startsWith('local-')) {
-        await supabase
-          .from('delivered_receipts')
+        await (supabase.from('delivered_receipts' as never) as any)
           .update({ print_job_id: jobId, printed_at: new Date().toISOString() })
           .eq('id', receipt.id)
       }
