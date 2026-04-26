@@ -728,17 +728,18 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             )}
           </div>
 
-          {/* Signature */}
+          {/* Signature and Corner sticker - bottom row */}
           <div className="pt-2 border-t border-dashed border-gray-200">
             <div
               ref={signatureAreaRef}
-              className="relative h-20"
+              className="relative h-20 flex items-end"
               onPointerDown={handleSignaturePointerDown}
               onPointerMove={handleSignaturePointerMove}
               onPointerUp={handleSignaturePointerUp}
               onPointerCancel={handleSignaturePointerUp}
               style={{ touchAction: signatureActive ? 'none' : 'auto' }}
             >
+              {/* Signature on left */}
               <div
                 className={`absolute left-0 bottom-0 ${signatureActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
                 style={{
@@ -763,11 +764,9 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                   }}
                 />
               </div>
-            </div>
-          </div>
 
-          {/* Corner sticker */}
-          <div ref={cornerStickerAreaRef} className="relative h-56 mt-6 mb-0">
+              {/* Corner sticker on right */}
+              <div ref={cornerStickerAreaRef} className="absolute bottom-0 right-0">
             {cornerSticker ? (
               <div
                 className="absolute bottom-0 right-0 group"
@@ -826,6 +825,8 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 +
               </button>
             )}
+              </div>
+            </div>
           </div>
         </div>
 
