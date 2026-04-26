@@ -755,9 +755,13 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                   {block.type === 'sticker' && (
                     <StickerBlock
                       stickerId={block.stickerId}
+                      size={block.size}
+                      outline={block.outline}
                       isActive={activeBlockId === block.id}
                       onFocus={() => setActiveBlockId(block.id)}
                       onDelete={() => deleteBlock(block.id)}
+                      onSizeChange={(size) => updateBlock(block.id, { size })}
+                      onOutlineToggle={(outline) => updateBlock(block.id, { outline })}
                     />
                   )}
                   {activeBlockId === block.id && (
@@ -1192,8 +1196,15 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
         )}
 
-        {/* Buttons */}
-        <div className="mt-6 flex gap-3">
+        {/* Spacer so the last block isn't hidden under the fixed CTA */}
+        <div className="h-32" aria-hidden />
+
+      </div>
+
+      {/* Fixed bottom CTA with white gradient fade-in */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[max(24rem,35vw)]">
+        <div className="h-12 bg-gradient-to-t from-white to-transparent" />
+        <div className="pointer-events-auto bg-white px-6 pb-6 pt-2 flex gap-3">
           {onboarding ? (
             <button
               onClick={handleContinue}
@@ -1221,7 +1232,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             </>
           )}
         </div>
-
       </div>
     </div>
   )
