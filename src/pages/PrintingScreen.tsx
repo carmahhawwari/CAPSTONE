@@ -114,6 +114,7 @@ export default function PrintingScreen() {
               rotation: receiptState.cornerSticker.rotation ?? 0,
               scale: receiptState.cornerSticker.scale ?? 1,
             } : undefined,
+            receiptStateJson: JSON.stringify(receiptState),
           })
         } catch (err) {
           console.error('Failed to submit print job:', err)

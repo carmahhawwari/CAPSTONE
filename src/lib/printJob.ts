@@ -10,6 +10,7 @@ interface SubmitPrintJobOptions {
   skipGeofence?: boolean
   printerId?: string
   cornerSticker?: CornerStickerData
+  receiptStateJson?: string
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -61,7 +62,7 @@ export async function checkNearestPrinter(): Promise<string | null> {
  *
  * Returns the job ID on success, or throws on failure.
  */
-export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, skipGeofence, printerId: specifiedPrinterId, cornerSticker }: SubmitPrintJobOptions): Promise<string> {
+export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, skipGeofence, printerId: specifiedPrinterId, cornerSticker, receiptStateJson }: SubmitPrintJobOptions): Promise<string> {
   // 1. Render receipt to ESC/POS binary
   const buffer = await renderToPrintBuffer(receiptElement, { cornerSticker })
   const payload = bufferToBase64(buffer)
@@ -100,6 +101,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
         recipient_id: recipientId ?? null,
         message_text: messageText ?? null,
         payload_base64: payload,
+        receipt_state_json: receiptStateJson ?? null,
         sender_latitude: lat,
         sender_longitude: lng,
       })
@@ -161,6 +163,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
       recipient_id: recipientId ?? null,
       message_text: messageText ?? null,
       payload_base64: payload,
+      receipt_state_json: receiptStateJson ?? null,
       sender_latitude: lat,
       sender_longitude: lng,
     })

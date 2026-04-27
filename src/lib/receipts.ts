@@ -43,6 +43,7 @@ export async function getReceiptsByFriend(
       from: 'You',
       content: job.message_text ?? '(printed message)',
       friendId: friendProfileId,
+      receiptStateJson: job.receipt_state_json,
     }))
   } catch (error) {
     console.error('getReceiptsByFriend exception:', error)
@@ -107,6 +108,7 @@ export async function getReceiptsByCurrentUser(userId: string): Promise<Receipt[
       from: 'You',
       content: job.message_text ?? '(printed message)',
       friendId: job.recipient_id ?? '',
+      receiptStateJson: job.receipt_state_json,
     }))
   } catch (error) {
     console.error('getReceiptsByCurrentUser exception:', error)
@@ -147,6 +149,7 @@ export async function getReceivedReceiptsByFriend(
       from: job.recipient_name ?? 'Unknown',
       content: job.message_text ?? '(printed message)',
       friendId: friendProfileId,
+      receiptStateJson: job.receipt_state_json,
     }))
   } catch (error) {
     console.error('getReceivedReceiptsByFriend exception:', error)

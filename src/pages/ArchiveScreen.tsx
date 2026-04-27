@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import { getReceiptsByFriend, getReceivedReceiptsByFriend } from '@/lib/receipts'
 import type { FriendProfile, Receipt } from '@/types/app'
+import type { Block, TextStyle } from '@/types/canvas'
+import { FONT_STYLES } from '@/types/canvas'
+import recipientBarImg from '@/assets/icons/recipient-bar-new.png'
 
 type TabType = 'sent' | 'received'
 
@@ -136,23 +139,112 @@ export default function LettersScreen() {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col gap-5 px-6 pb-8">
+      <div className="mt-6 flex flex-col gap-8 px-6 pb-8">
         {(activeTab === 'sent' ? sentReceipts : receivedReceipts).length === 0 ? (
           <p className="text-callout text-text-tertiary">No letters yet.</p>
         ) : (
           (activeTab === 'sent' ? sentReceipts : receivedReceipts).map((r) => (
-            <div
-              key={r.id}
-              className="border-fill-tertiary bg-bg-secondary rounded-md border p-4 flex flex-col justify-between overflow-hidden"
-            >
-              <p className="text-callout text-text-primary line-clamp-4">
-                {r.content || '(no text)'}
-              </p>
-              <p className="text-mini text-text-tertiary mt-3">
-                {r.date}
-              </p>
-            </div>
+            <ReceiptDisplay key={r.id} receipt={r} />
           ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
+  let receiptState
+  try {
+    receiptState = receipt.receiptStateJson ? JSON.parse(receipt.receiptStateJson) : null
+  } catch {
+    receiptState = null
+  }
+
+  if (!receiptState) {
+    return (
+      <div className="border-fill-tertiary bg-bg-secondary rounded-md border p-4 flex flex-col justify-between overflow-hidden">
+        <p className="text-callout text-text-primary line-clamp-4">
+          {receipt.content || '(no text)'}
+        </p>
+        <p className="text-mini text-text-tertiary mt-3">
+          {receipt.date}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
+      <div style={{ fontFamily: 'Georgia, serif', padding: '16px', backgroundColor: '#ffffff', color: '#222121' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+          {receiptState.headerVariant === 'simple' ? (
+            <img src="/src/assets/icons/header-logo.svg" alt="Inklings" style={{ height: '48px', width: 'auto' }} />
+          ) : receiptState.headerVariant === 'squids-checkers' ? (
+            <img src="/src/assets/icons/header-squids-checkers.svg" alt="Inklings squids checkers" style={{ height: '60px', width: 'auto' }} />
+          ) : receiptState.headerVariant === 'squids-v1' ? (
+            <img src="/src/assets/icons/header-squids-v1.svg" alt="Inklings squids v1" style={{ height: '60px', width: 'auto' }} />
+          ) : null}
+        </div>
+
+        {/* Recipient Bar */}
+        <img src={recipientBarImg} alt="" style={{ width: '100%', height: 'auto', marginBottom: '6px', display: 'block' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '20px', color: '#222121' }}>
+          <span>To: {receipt.to}</span>
+          <span>{receipt.date}</span>
+        </div>
+
+        {/* Current Prompt */}
+        {receiptState.currentPrompt && receiptState.currentPrompt !== 'No prompt' && (
+          <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic', marginBottom: '12px', lineHeight: 1.5 }}>
+            {receiptState.currentPrompt}
+          </div>
+        )}
+
+        {/* Render blocks */}
+        <div style={{ marginBottom: '12px' }}>
+          {receiptState.blocks?.map((block: Block) => (
+            <div key={block.id} style={{ marginBottom: '6px' }}>
+              {block.type === 'text' && (
+                <div
+                  style={{
+                    ...FONT_STYLES[block.style as TextStyle],
+                    fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1)}px`,
+                    fontWeight: block.fontWeight ?? FONT_STYLES[block.style as TextStyle].fontWeight,
+                    fontStyle: block.isItalic ? 'italic' : 'normal',
+                    textDecoration: block.isBold ? 'underline' : 'none',
+                    color: '#1f2937',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {block.content}
+                </div>
+              )}
+              {block.type === 'image' && (
+                <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '6px' }} />
+              )}
+              {block.type === 'sticker' && (
+                <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>[sticker]</div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Signature */}
+        {receiptState.signature && receiptState.signature.text && (
+          <div
+            style={{
+              fontFamily: "'Inter Variable', sans-serif",
+              fontSize: `${11 * (receiptState.signature.scale ?? 1)}px`,
+              color: '#4b5563',
+              fontStyle: 'italic',
+              marginLeft: `${receiptState.signature.offsetX ?? 0}px`,
+              marginTop: `${receiptState.signature.offsetY ?? 0}px`,
+              lineHeight: 1.4,
+            }}
+          >
+            {receiptState.signature.text}
+          </div>
         )}
       </div>
     </div>
