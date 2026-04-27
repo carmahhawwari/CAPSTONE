@@ -69,10 +69,15 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  * Render a DOM element to a 1-bit bitmap ESC/POS buffer ready for the printer.
  * Returns a Uint8Array containing full ESC/POS commands (init, bitmap, cut).
  */
+export interface RenderToPrintResult {
+  buffer: Uint8Array
+  imageBase64: string
+}
+
 export async function renderToPrintBuffer(
   element: HTMLElement,
   options: RenderToPrintOptions = {},
-): Promise<Uint8Array> {
+): Promise<RenderToPrintResult> {
   const previousCaptureAttr = element.getAttribute(CAPTURE_ATTR)
   const captureStyle = applyCaptureStyle(document)
   const captureId = Math.random().toString(36).slice(2)
@@ -163,7 +168,12 @@ export async function renderToPrintBuffer(
     }
 
     // 4. Build ESC/POS command buffer
-    return buildEscPosBuffer(mono, canvas.width, canvas.height)
+    const buffer = buildEscPosBuffer(mono, canvas.width, canvas.height)
+
+    // 5. Convert canvas to PNG base64 for archive display
+    const imageBase64 = canvas.toDataURL('image/png')
+
+    return { buffer, imageBase64 }
   } finally {
     captureStyle.remove()
     if (previousCaptureAttr === null) {

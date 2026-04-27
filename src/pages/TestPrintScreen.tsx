@@ -112,7 +112,7 @@ export default function TestPrintScreen() {
     setError('')
 
     try {
-      const buffer = await renderToPrintBuffer(imageContainerRef.current, { ditherMethod })
+      const { buffer } = await renderToPrintBuffer(imageContainerRef.current, { ditherMethod })
       setLastSize(buffer.length)
 
       const blob = new Blob([toArrayBuffer(buffer)], { type: 'application/octet-stream' })

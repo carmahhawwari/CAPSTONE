@@ -176,6 +176,24 @@ export default function LettersScreen() {
 }
 
 function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
+  // If we have the receipt image, display it
+  if (receipt.receiptImage) {
+    return (
+      <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
+        <img
+          src={receipt.receiptImage}
+          alt={`Receipt to ${receipt.to}`}
+          className="w-full h-auto"
+        />
+        <div className="p-3">
+          <p className="text-mini text-text-tertiary">
+            {receipt.date}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   let receiptState
   try {
     // Try new format first (receipt_state_json), fall back to legacy format (content as JSON)

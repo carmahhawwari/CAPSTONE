@@ -27,5 +27,6 @@ export interface Receipt {
   imageDataUrl?: string
   friendId: string
   receiptStateJson?: string | null
+  receiptImage?: string | null
   printedAt?: string | null
 }

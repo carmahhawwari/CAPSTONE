@@ -44,6 +44,7 @@ export async function getReceiptsByFriend(
       content: job.message_text ?? '(printed message)',
       friendId: friendProfileId,
       receiptStateJson: job.receipt_state_json,
+      receiptImage: job.receipt_image,
       printedAt: job.printed_at,
     }))
   } catch (error) {
@@ -152,6 +153,7 @@ export async function getReceivedReceiptsByFriend(
       content: job.message_text ?? '(printed message)',
       friendId: friendProfileId,
       receiptStateJson: job.receipt_state_json,
+      receiptImage: job.receipt_image,
       printedAt: job.printed_at,
     }))
   } catch (error) {

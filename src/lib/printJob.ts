@@ -64,7 +64,7 @@ export async function checkNearestPrinter(): Promise<string | null> {
  */
 export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, skipGeofence, printerId: specifiedPrinterId, cornerSticker, receiptStateJson }: SubmitPrintJobOptions): Promise<string> {
   // 1. Render receipt to ESC/POS binary
-  const buffer = await renderToPrintBuffer(receiptElement, { cornerSticker })
+  const { buffer, imageBase64 } = await renderToPrintBuffer(receiptElement, { cornerSticker })
   const payload = bufferToBase64(buffer)
 
   if (USE_LOCAL_PRINT_SERVER || !supabase) {
@@ -107,6 +107,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
         message_text: messageText ?? null,
         payload_base64: payload,
         receipt_state_json: receiptStateJson ?? null,
+        receipt_image: imageBase64,
         sender_latitude: lat,
         sender_longitude: lng,
         printed_at: new Date().toISOString(),
