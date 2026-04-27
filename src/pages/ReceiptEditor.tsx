@@ -1379,16 +1379,14 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             }}
           >
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '24px', marginTop: '24px' }}>
-              <div style={{ width: '64px', height: 'auto' }}>
-                {headerVariant === 'simple' ? (
-                  <img src={headerLogoSvg} alt="Inklings" style={{ width: '100%', height: 'auto' }} />
-                ) : headerVariant === 'squids-checkers' ? (
-                  <img src={headerSquidsCheckersSvg} alt="Inklings squids checkers" style={{ width: '100%', height: 'auto' }} />
-                ) : headerVariant === 'squids-v1' ? (
-                  <img src={headerSquidsV1Svg} alt="Inklings squids v1" style={{ width: '100%', height: 'auto' }} />
-                ) : null}
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', marginTop: '20px' }}>
+              {headerVariant === 'simple' ? (
+                <img src="/src/assets/icons/header-logo.svg" alt="Inklings" style={{ height: '64px', width: 'auto' }} />
+              ) : headerVariant === 'squids-checkers' ? (
+                <img src="/src/assets/icons/header-squids-checkers.svg" alt="Inklings squids checkers" style={{ height: '80px', width: 'auto' }} />
+              ) : headerVariant === 'squids-v1' ? (
+                <img src="/src/assets/icons/header-squids-v1.svg" alt="Inklings squids v1" style={{ height: '80px', width: 'auto' }} />
+              ) : null}
             </div>
 
             {/* Recipient Bar */}
