@@ -21,7 +21,7 @@ export async function getReceiptsByFriend(
 
   try {
     const { data, error } = await supabase
-      .from('print_jobs')
+      .from('delivered_receipts')
       .select('*')
       .eq('sender_id', currentUserId)
       .eq('recipient_id', friendProfileId)
@@ -86,7 +86,7 @@ export async function getReceiptsByCurrentUser(userId: string): Promise<Receipt[
 
   try {
     const { data, error } = await supabase
-      .from('print_jobs')
+      .from('delivered_receipts')
       .select('*')
       .eq('sender_id', userId)
       .order('created_at', { ascending: false })
@@ -125,7 +125,7 @@ export async function getReceivedReceiptsByFriend(
 
   try {
     const { data, error } = await supabase
-      .from('print_jobs')
+      .from('delivered_receipts')
       .select('*')
       .eq('sender_id', friendProfileId)
       .eq('recipient_id', currentUserId)
