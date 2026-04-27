@@ -17,6 +17,7 @@ import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
 import { getFriends } from '@/lib/friends'
 import { renderToPrintBuffer } from '@/lib/escpos'
 import { submitPrintJob } from '@/lib/printJob'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Block, TextStyle, CornerSticker, Signature } from '@/types/canvas'
 import type { FriendProfile } from '@/types/app'
@@ -82,6 +83,8 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
   const [error, setError] = useState<string | null>(null)
   const [testPrintStatus, setTestPrintStatus] = useState<'idle' | 'rendering' | 'sending' | 'done' | 'error'>('idle')
   const [testPrintError, setTestPrintError] = useState<string | null>(null)
+  const [printers, setPrinters] = useState<Array<{ id: string; name: string }>>([])
+  const [selectedPrinterId, setSelectedPrinterId] = useState<string | null>(null)
   const [friends, setFriends] = useState<FriendProfile[]>([])
   const [selectedFriendId, setSelectedFriendId] = useState('')
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
@@ -192,6 +195,29 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
       }).catch((e) => setError(e.message ?? 'Failed to load friends'))
     }
   }, [user, onboarding, searchParams])
+
+  // Load printers for test mode
+  useEffect(() => {
+    if (testMode && !supabase) return
+
+    const fetchPrinters = async () => {
+      if (!supabase) return
+      const { data } = await supabase
+        .from('printers')
+        .select('*')
+        .eq('is_active', true)
+      if (data) {
+        setPrinters(data.map(p => ({ id: p.id, name: p.name })))
+        if (data.length > 0) {
+          setSelectedPrinterId(data[0].id)
+        }
+      }
+    }
+
+    if (testMode) {
+      fetchPrinters().catch((e) => console.error('Failed to load printers:', e))
+    }
+  }, [testMode])
 
   // Handle deselecting signature with Escape key or outside click
   useEffect(() => {
@@ -626,6 +652,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
         recipientName: 'Test',
         messageText: 'Test receipt print',
         skipGeofence: true,
+        printerId: selectedPrinterId ?? undefined,
       })
       console.log('✓ Print submitted successfully')
 
@@ -1277,7 +1304,23 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               Continue to Send
             </button>
           ) : testMode ? (
-            <>
+            <div className="w-full space-y-3">
+              {printers.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Printer</label>
+                  <select
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+                    value={selectedPrinterId || ''}
+                    onChange={(e) => setSelectedPrinterId(e.target.value)}
+                  >
+                    {printers.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={handleTestPrint}
@@ -1293,7 +1336,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               {testPrintError && (
                 <p className="text-xs text-red-600 mt-2">{testPrintError}</p>
               )}
-            </>
+            </div>
           ) : (
             <>
               <button
