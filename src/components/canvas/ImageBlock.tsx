@@ -100,11 +100,13 @@ export default function ImageBlock({
       className={`group relative ${isActive ? 'ring-2 ring-fill-primary ring-offset-1 rounded' : ''}`}
       onClick={onFocus}
     >
-      <img
-        src={displayUrl}
-        alt=""
-        className="w-full h-auto max-h-[400px] object-cover rounded"
-      />
+      {displayUrl && (
+        <img
+          src={displayUrl}
+          alt=""
+          className="w-full h-auto max-h-[400px] object-cover rounded"
+        />
+      )}
       {isActive && (
         <button
           onClick={e => { e.stopPropagation(); onDelete() }}
