@@ -624,14 +624,21 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
       tempDiv.style.position = 'fixed'
       tempDiv.style.left = '-9999px'
       tempDiv.style.top = '-9999px'
+      tempDiv.style.backgroundColor = '#ffffff'
       tempDiv.appendChild(receiptClone)
       document.body.appendChild(tempDiv)
 
-      // Remove all class attributes to prevent oklch color issues
+      // Remove all class attributes and styles to prevent oklch color issues
       receiptClone.removeAttribute('class')
       receiptClone.querySelectorAll('[class]').forEach(el => {
         el.removeAttribute('class')
       })
+
+      // Set safe explicit styles
+      receiptClone.style.backgroundColor = '#ffffff'
+      receiptClone.style.color = '#222121'
+      receiptClone.style.fontFamily = 'Georgia, serif'
+      receiptClone.style.width = '576px'
 
       try {
         // Capture the canvas to display the rasterized result
@@ -642,6 +649,10 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
           logging: false,
           allowTaint: true,
           useCORS: true,
+          ignoreElements: (element) => {
+            // Ignore any elements that might have problematic styles
+            return element.tagName === 'STYLE' || element.tagName === 'LINK'
+          },
         })
         const imageUrl = canvas.toDataURL('image/png')
         setRasterizedImage(imageUrl)
