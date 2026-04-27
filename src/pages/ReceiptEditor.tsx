@@ -747,7 +747,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
           </div>
 
           {/* Recipient Bar */}
-          <img src={recipientBarSvg} alt="" className="w-full h-auto mb-2" />
+          <img src="/src/assets/icons/recipient-bar-new.png" alt="" className="w-full h-auto mb-2" />
           <div className="flex justify-between mb-6 text-sm" style={{ fontFamily: "var(--font-printvetica)" }}>
             <span>To: {recipientName || recipientEmail || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}</span>
             <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
@@ -1385,7 +1385,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             </div>
 
             {/* Recipient Bar */}
-            <img src="/src/assets/icons/recipient-bar.svg" alt="" style={{ width: '100%', height: 'auto', marginBottom: '8px', display: 'block' }} />
+            <img src="/src/assets/icons/recipient-bar-new.png" alt="" style={{ width: '100%', height: 'auto', marginBottom: '8px', display: 'block' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '14px', color: '#222121' }}>
               <span>To: Test</span>
               <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
