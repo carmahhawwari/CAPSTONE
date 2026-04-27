@@ -126,29 +126,18 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
     console.log('[PrintJob] Geofence skipped (test mode)')
   }
 
-  // 3. Find nearest printer via the DB function
-  let printerId: string | null = null
-  if (lat !== null && lng !== null) {
-    const { data } = await supabase.rpc('nearest_printer', { lat, lng })
-    printerId = data ?? null
-    console.log('[PrintJob] Nearest printer from geofence:', printerId)
+  // 3. Find nearest printer via geofence - fail if not in range
+  if (lat === null || lng === null) {
+    throw new Error('Location required for geofence check')
   }
 
-  // If no printer in range or geofence skipped, fall back to any active printer
+  const { data: printerId } = await supabase.rpc('nearest_printer', { lat, lng })
+
   if (!printerId) {
-    console.log('[PrintJob] No printer found via geofence, querying active printers...')
-    const { data: printers } = await supabase
-      .from('printers')
-      .select('*')
-      .eq('is_active', true)
-      .limit(1)
-    printerId = printers?.[0]?.id ?? null
-    if (printers?.[0]) {
-      console.log('[PrintJob] Using fallback active printer:', { id: printers[0].id, name: printers[0].name })
-    }
+    throw new Error('No printer in range')
   }
 
-  if (!printerId) throw new Error('No active printers available')
+  console.log('[PrintJob] Nearest printer from geofence:', printerId)
 
   // 4. Get current user
   const { data: { user } } = await supabase.auth.getUser()
