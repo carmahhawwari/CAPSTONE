@@ -1,7 +1,7 @@
 import { STICKERS } from '@/data/stickers'
 
 interface StickerPickerProps {
-  onSelect: (stickerId: string, svg: React.ReactNode) => void
+  onSelect: (stickerId: string) => void
   onClose: () => void
 }
 
@@ -19,7 +19,7 @@ export default function StickerPicker({ onSelect, onClose }: StickerPickerProps)
           {STICKERS.map(s => (
             <button
               key={s.id}
-              onClick={() => { onSelect(s.id, s.svg); onClose() }}
+              onClick={() => { onSelect(s.id); onClose() }}
               className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
             >
               <div className="w-10 h-10 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">
