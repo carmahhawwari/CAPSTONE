@@ -60,13 +60,14 @@ function supportsItalic(style: TextStyle): boolean {
 
 interface ReceiptEditorProps {
   onboarding?: boolean
+  testMode?: boolean
 }
 
 function friendLabel(f: FriendProfile): string {
   return f.profile.display_name || f.profile.username || 'Friend'
 }
 
-export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps = {}) {
+export default function ReceiptEditor({ onboarding = false, testMode = false }: ReceiptEditorProps = {}) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
@@ -571,6 +572,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const handleSend = () => {
     if (blocks.length === 0) return
     const receiptState = getReceiptState()
+    if (testMode) {
+      navigate(`/printing`, { state: { receiptState } })
+      return
+    }
     if (recipientEmail) {
       navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { receiptState } })
       return
@@ -607,8 +612,8 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       <div className="px-6 pt-8 flex-1 overflow-y-auto">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Share an Inkling</h1>
 
-        {/* Friend picker - only for authenticated users */}
-        {!onboarding && friends.length > 0 && (
+        {/* Friend picker - only for authenticated users, not in test mode */}
+        {!onboarding && !testMode && friends.length > 0 && (
           <div className="mb-6">
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">To</label>
             <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
