@@ -1361,7 +1361,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
 
       {/* Hidden receipt for printing (test mode only) */}
       {testMode && (
-        <div style={{ position: 'absolute', left: '-9999px', top: 0, pointerEvents: 'none' }}>
+        <div style={{ position: 'relative', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}>
           <div
             ref={printReceiptRef}
             style={{
@@ -1424,28 +1424,6 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               ))}
             </div>
 
-            {/* Corner Sticker */}
-            {cornerSticker && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: `${cornerSticker.offsetY ?? 0}px`,
-                  left: `${cornerSticker.offsetX ?? 0}px`,
-                }}
-              >
-                <img
-                  src={cornerSticker.ditheredDataUrl || cornerSticker.fullUrl}
-                  alt="corner sticker"
-                  style={{
-                    maxWidth: '100%',
-                    display: 'block',
-                    transform: `rotate(${cornerSticker.rotation ?? 0}deg) scale(${cornerSticker.scale ?? 1})`,
-                    transformOrigin: '0 0',
-                  }}
-                />
-              </div>
-            )}
-
             {/* Signature */}
             {signature && signature.text && (
               <div
@@ -1463,6 +1441,29 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               </div>
             )}
           </div>
+
+          {/* Corner Sticker Overlay - outside main receipt so it doesn't affect layout */}
+          {cornerSticker && (
+            <div
+              style={{
+                position: 'absolute',
+                top: `${cornerSticker.offsetY ?? 0}px`,
+                left: `${cornerSticker.offsetX ?? 0}px`,
+                pointerEvents: 'none',
+              }}
+            >
+              <img
+                src={cornerSticker.ditheredDataUrl || cornerSticker.fullUrl}
+                alt="corner sticker"
+                style={{
+                  maxWidth: '100%',
+                  display: 'block',
+                  transform: `rotate(${cornerSticker.rotation ?? 0}deg) scale(${cornerSticker.scale ?? 1})`,
+                  transformOrigin: '0 0',
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
