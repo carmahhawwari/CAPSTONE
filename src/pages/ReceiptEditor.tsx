@@ -616,20 +616,39 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
     setTestPrintError(null)
 
     try {
-      await renderToPrintBuffer(receiptRef.current)
-      setTestPrintStatus('sending')
+      // Clone the receipt element and strip Tailwind classes to avoid oklch color parsing issues
+      const receiptClone = receiptRef.current.cloneNode(true) as HTMLElement
+      const tempDiv = document.createElement('div')
+      tempDiv.style.position = 'fixed'
+      tempDiv.style.left = '-9999px'
+      tempDiv.style.top = '-9999px'
+      tempDiv.appendChild(receiptClone)
+      document.body.appendChild(tempDiv)
 
-      await submitPrintJob({
-        receiptElement: receiptRef.current,
-        recipientName: 'Test',
-        messageText: 'Test receipt print',
-        skipGeofence: true,
+      // Remove all class attributes to prevent oklch color issues
+      receiptClone.querySelectorAll('[class]').forEach(el => {
+        el.removeAttribute('class')
       })
 
-      setTestPrintStatus('done')
-      setTimeout(() => setTestPrintStatus('idle'), 2000)
+      try {
+        await renderToPrintBuffer(receiptClone)
+        setTestPrintStatus('sending')
+
+        await submitPrintJob({
+          receiptElement: receiptClone,
+          recipientName: 'Test',
+          messageText: 'Test receipt print',
+          skipGeofence: true,
+        })
+
+        setTestPrintStatus('done')
+        setTimeout(() => setTestPrintStatus('idle'), 2000)
+      } finally {
+        document.body.removeChild(tempDiv)
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
+      console.error('Test print error:', msg)
       setTestPrintError(msg)
       setTestPrintStatus('error')
     }
