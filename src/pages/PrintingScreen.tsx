@@ -263,7 +263,7 @@ export default function PrintingScreen() {
           <div
             ref={receiptRef}
             className="bg-white overflow-hidden"
-            style={{ fontFamily: 'Georgia, serif', width: '576px', padding: '20px' }}
+            style={{ fontFamily: 'Georgia, serif', width: '576px', padding: '20px', backgroundColor: '#ffffff', color: '#222121' }}
           >
             {/* Prompt */}
             {receiptState.currentPrompt && receiptState.currentPrompt !== 'No prompt' && (

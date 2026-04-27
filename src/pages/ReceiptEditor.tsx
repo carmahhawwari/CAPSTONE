@@ -682,7 +682,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
         <div
           ref={receiptRef}
           className="bg-white shadow-md mb-6 overflow-hidden"
-          style={{ fontFamily: 'Georgia, serif', borderTop: '1px solid rgba(0,0,0,0.08)', borderLeft: '1px solid rgba(0,0,0,0.08)', borderRight: '1px solid rgba(0,0,0,0.08)' }}
+          style={{ fontFamily: 'Georgia, serif', borderTop: '1px solid rgba(0,0,0,0.08)', borderLeft: '1px solid rgba(0,0,0,0.08)', borderRight: '1px solid rgba(0,0,0,0.08)', backgroundColor: '#ffffff', color: '#222121' }}
         >
         <div className="p-5 space-y-3">
           {/* Header */}
