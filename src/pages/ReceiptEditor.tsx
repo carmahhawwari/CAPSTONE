@@ -104,6 +104,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
   const [showFriendPicker, setShowFriendPicker] = useState(false)
   const [friendSearchQuery, setFriendSearchQuery] = useState('')
   const receiptRef = useRef<HTMLDivElement>(null)
+  const printReceiptRef = useRef<HTMLDivElement>(null)
   const cornerStickerAreaRef = useRef<HTMLDivElement>(null)
   const signatureAreaRef = useRef<HTMLDivElement>(null)
   const activeStickerPointersRef = useRef(new Map<number, { x: number; y: number }>())
@@ -610,65 +611,26 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
   }
 
   const handleTestPrint = async () => {
-    if (blocks.length === 0 || !receiptRef.current || !user?.id) return
+    if (blocks.length === 0 || !printReceiptRef.current || !user?.id) return
 
     setTestPrintStatus('rendering')
     setTestPrintError(null)
 
     try {
-      // Clone the receipt element and strip Tailwind classes to avoid oklch color parsing issues
-      const receiptClone = receiptRef.current.cloneNode(true) as HTMLElement
-      const tempDiv = document.createElement('div')
-      tempDiv.style.position = 'fixed'
-      tempDiv.style.left = '-9999px'
-      tempDiv.style.top = '-9999px'
-      tempDiv.style.backgroundColor = '#ffffff'
-      tempDiv.appendChild(receiptClone)
-      document.body.appendChild(tempDiv)
+      const buffer = await renderToPrintBuffer(printReceiptRef.current)
+      console.log('✓ Rasterization successful! Buffer size:', buffer.length, 'bytes')
+      setTestPrintStatus('sending')
 
-      // Remove all class attributes and styles to prevent oklch color issues
-      receiptClone.removeAttribute('class')
-      receiptClone.querySelectorAll('[class]').forEach(el => {
-        el.removeAttribute('class')
+      await submitPrintJob({
+        receiptElement: printReceiptRef.current,
+        recipientName: 'Test',
+        messageText: 'Test receipt print',
+        skipGeofence: true,
       })
+      console.log('✓ Print submitted successfully')
 
-      // Set safe explicit styles
-      receiptClone.style.backgroundColor = '#ffffff'
-      receiptClone.style.color = '#222121'
-      receiptClone.style.fontFamily = 'Georgia, serif'
-      receiptClone.style.width = '576px'
-
-      try {
-        const buffer = await renderToPrintBuffer(receiptClone)
-        console.log('✓ Rasterization successful! Buffer size:', buffer.length, 'bytes')
-        setTestPrintStatus('sending')
-
-        try {
-          await submitPrintJob({
-            receiptElement: receiptClone,
-            recipientName: 'Test',
-            messageText: 'Test receipt print',
-            skipGeofence: true,
-          })
-          console.log('✓ Print submitted successfully')
-        } catch (submitErr) {
-          const errMsg = submitErr instanceof Error ? submitErr.message : String(submitErr)
-          console.error('Print submission failed:', errMsg)
-
-          if (errMsg.includes('fetch') || errMsg.includes('Failed to')) {
-            console.error('Could not connect to printer. Make sure:')
-            console.error('  1. Local print server is running at http://127.0.0.1:9100, OR')
-            console.error('  2. You are logged in with Supabase and have active printers configured')
-          }
-
-          throw submitErr
-        }
-
-        setTestPrintStatus('done')
-        setTimeout(() => setTestPrintStatus('idle'), 2000)
-      } finally {
-        document.body.removeChild(tempDiv)
-      }
+      setTestPrintStatus('done')
+      setTimeout(() => setTestPrintStatus('idle'), 2000)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error('Test print error:', err)
@@ -1355,6 +1317,78 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
         </div>
 
       </div>
+
+      {/* Hidden receipt for printing (test mode only) */}
+      {testMode && (
+        <div className="absolute -left-[9999px]">
+          <div
+            ref={printReceiptRef}
+            style={{
+              fontFamily: 'Georgia, serif',
+              width: '576px',
+              padding: '20px',
+              backgroundColor: '#ffffff',
+              color: '#222121',
+            }}
+          >
+            {/* Current Prompt */}
+            {currentPrompt && currentPrompt !== 'No prompt' && (
+              <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
+                {currentPrompt}
+              </div>
+            )}
+
+            {/* Blocks */}
+            <div style={{ marginBottom: '16px' }}>
+              {blocks.map((block) => (
+                <div key={block.id} style={{ marginBottom: '8px' }}>
+                  {block.type === 'text' && (
+                    <div
+                      style={{
+                        ...FONT_STYLES[block.style as TextStyle],
+                        fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1)}px`,
+                        fontWeight: block.fontWeight ?? FONT_STYLES[block.style as TextStyle].fontWeight,
+                        fontStyle: block.isItalic ? 'italic' : 'normal',
+                        textDecoration: block.isBold ? 'underline' : 'none',
+                        color: '#1f2937',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {block.content}
+                    </div>
+                  )}
+                  {block.type === 'image' && (
+                    <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '8px' }} />
+                  )}
+                  {block.type === 'sticker' && (
+                    <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px' }}>[sticker]</div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Signature */}
+            {signature && (
+              <div
+                style={{
+                  ...FONT_STYLES[signature.style as TextStyle],
+                  fontSize: `${FONT_STYLES[signature.style as TextStyle].fontSize * (signature.scale ?? 1)}px`,
+                  fontWeight: FONT_STYLES[signature.style as TextStyle].fontWeight,
+                  color: '#4b5563',
+                  fontStyle: 'italic',
+                  transform: `rotate(${signature.rotation ?? 0}deg)`,
+                  transformOrigin: '0 0',
+                  marginLeft: `${signature.offsetX ?? 0}px`,
+                  marginTop: `${signature.offsetY ?? 0}px`,
+                  lineHeight: 1.4,
+                }}
+              >
+                {signature.text}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
