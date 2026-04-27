@@ -151,14 +151,25 @@ export default function LettersScreen() {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col gap-8 px-6 pb-8">
-        {(activeTab === 'sent' ? sentReceipts : receivedReceipts).length === 0 ? (
-          <p className="text-callout text-text-tertiary">No letters yet.</p>
-        ) : (
-          (activeTab === 'sent' ? sentReceipts : receivedReceipts).map((r) => (
-            <ReceiptDisplay key={r.id} receipt={r} />
-          ))
-        )}
+      <div className="mt-6 flex flex-col gap-4 px-6 pb-8">
+        <div className="text-xs text-text-tertiary bg-bg-secondary p-2 rounded">
+          <div>Sent: {sentReceipts.length} | Received: {receivedReceipts.length}</div>
+          {(activeTab === 'sent' ? sentReceipts : receivedReceipts).map((r) => (
+            <div key={r.id} className="text-xs text-text-secondary mt-1">
+              {r.to} - {r.date} - {r.content?.substring(0, 30)}...
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-8">
+          {(activeTab === 'sent' ? sentReceipts : receivedReceipts).length === 0 ? (
+            <p className="text-callout text-text-tertiary">No letters yet.</p>
+          ) : (
+            (activeTab === 'sent' ? sentReceipts : receivedReceipts).map((r) => (
+              <ReceiptDisplay key={r.id} receipt={r} />
+            ))
+          )}
+        </div>
       </div>
     </div>
   )
