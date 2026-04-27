@@ -1393,11 +1393,11 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
 
             {/* Recipient Bar */}
             <div style={{ position: 'relative', marginBottom: '12px' }}>
-              <img src={recipientBarSvg} alt="" style={{ width: '100%', height: 'auto' }} />
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingLeft: '12px', color: 'white', fontFamily: "var(--font-printvetica), 'Inter Variable', sans-serif", fontSize: '15.4px' }}>
+              <img src={recipientBarSvg} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingLeft: '12px', color: 'white', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', fontWeight: 400 }}>
                 To: Test
               </div>
-              <div style={{ position: 'absolute', top: '50%', right: '12px', transform: 'translateY(-50%)', color: 'white', fontSize: '12px', fontFamily: "var(--font-printvetica), 'Inter Variable', sans-serif" }}>
+              <div style={{ position: 'absolute', top: '50%', right: '12px', transform: 'translateY(-50%)', color: 'white', fontSize: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontWeight: 400 }}>
                 {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </div>
             </div>
