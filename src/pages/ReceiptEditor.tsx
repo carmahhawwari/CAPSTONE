@@ -25,7 +25,6 @@ import { newBlockId, FONT_STYLES, STYLE_LABELS } from '@/types/canvas'
 import headerLogoSvg from '@/assets/icons/header-logo.svg'
 import headerSquidsCheckersSvg from '@/assets/icons/header-squids-checkers.svg'
 import headerSquidsV1Svg from '@/assets/icons/header-squids-v1.svg'
-import recipientBarSvg from '@/assets/icons/recipient-bar.svg'
 
 const PROMPTS = [
   'The best part of my day yesterday was...',
@@ -1426,18 +1425,25 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
 
             {/* Corner Sticker */}
             {cornerSticker && (
-              <img
-                src={cornerSticker.ditheredDataUrl || cornerSticker.fullUrl}
-                alt="corner sticker"
+              <div
                 style={{
-                  maxWidth: '100%',
-                  marginBottom: '8px',
-                  transform: `rotate(${cornerSticker.rotation ?? 0}deg) scale(${cornerSticker.scale ?? 1})`,
-                  transformOrigin: '0 0',
+                  marginBottom: '16px',
                   marginLeft: `${cornerSticker.offsetX ?? 0}px`,
                   marginTop: `${cornerSticker.offsetY ?? 0}px`,
+                  display: 'inline-block',
                 }}
-              />
+              >
+                <img
+                  src={cornerSticker.ditheredDataUrl || cornerSticker.fullUrl}
+                  alt="corner sticker"
+                  style={{
+                    maxWidth: '100%',
+                    display: 'block',
+                    transform: `rotate(${cornerSticker.rotation ?? 0}deg) scale(${cornerSticker.scale ?? 1})`,
+                    transformOrigin: '0 0',
+                  }}
+                />
+              </div>
             )}
 
             {/* Signature */}
