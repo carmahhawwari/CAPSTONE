@@ -15,6 +15,7 @@ export default function LettersScreen() {
   const navigate = useNavigate()
   const [friends, setFriends] = useState<FriendProfile[]>([])
   const [activeFriendId, setActiveFriendId] = useState<string | null>(null)
+  const [activeFriendEmail, setActiveFriendEmail] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabType>('sent')
   const [sentReceipts, setSentReceipts] = useState<Receipt[]>([])
   const [receivedReceipts, setReceivedReceipts] = useState<Receipt[]>([])
@@ -44,9 +45,9 @@ export default function LettersScreen() {
     }
 
     const loadReceipts = async () => {
-      if (activeFriendId) {
-        const sent = await getReceiptsByFriend(user.email!, activeFriendId)
-        const received = await getReceivedReceiptsByFriend(user.email!, activeFriendId)
+      if (activeFriendEmail) {
+        const sent = await getReceiptsByFriend(user.email!, activeFriendEmail)
+        const received = await getReceivedReceiptsByFriend(user.email!, activeFriendEmail)
         setSentReceipts(sent)
         setReceivedReceipts(received)
       } else {
@@ -58,7 +59,7 @@ export default function LettersScreen() {
     }
 
     loadReceipts()
-  }, [user?.id, activeFriendId])
+  }, [user?.id, activeFriendEmail])
 
   if (loading) {
     return (
@@ -77,7 +78,10 @@ export default function LettersScreen() {
             <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
               <button
                 type="button"
-                onClick={() => setActiveFriendId(null)}
+                onClick={() => {
+                  setActiveFriendId(null)
+                  setActiveFriendEmail(null)
+                }}
                 className={
                   activeFriendId === null
                     ? 'text-callout text-text-inverse bg-fill-primary rounded-md whitespace-nowrap px-4 py-2'
@@ -93,7 +97,11 @@ export default function LettersScreen() {
                   <button
                     key={f.friendRowId}
                     type="button"
-                    onClick={() => setActiveFriendId(f.profile.id)}
+                    onClick={() => {
+                      setActiveFriendId(f.profile.id)
+                      const friendEmail = f.profile.username ? `${f.profile.username}@stanford.edu` : null
+                      setActiveFriendEmail(friendEmail)
+                    }}
                     className={
                       isActive
                         ? 'text-callout text-text-inverse bg-fill-primary rounded-md whitespace-nowrap px-4 py-2'

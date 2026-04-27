@@ -15,7 +15,7 @@ export interface PrintJobInput {
  */
 export async function getReceiptsByFriend(
   currentUserEmail: string,
-  friendProfileId: string
+  friendEmail: string
 ): Promise<Receipt[]> {
   if (!supabase) return []
 
@@ -24,7 +24,7 @@ export async function getReceiptsByFriend(
       .from('delivered_receipts')
       .select('*')
       .eq('sender_email', currentUserEmail)
-      .eq('recipient_id', friendProfileId)
+      .eq('recipient_email', friendEmail)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -42,7 +42,7 @@ export async function getReceiptsByFriend(
       to: job.recipient_name ?? 'Unknown',
       from: 'You',
       content: job.message_text ?? '(printed message)',
-      friendId: friendProfileId,
+      friendId: friendEmail,
       receiptStateJson: job.receipt_state_json,
       receiptImage: job.receipt_image,
       printedAt: job.printed_at,
@@ -123,8 +123,8 @@ export async function getReceiptsByCurrentUser(userEmail: string): Promise<Recei
  * Get all receipts received by the current user from a specific friend.
  */
 export async function getReceivedReceiptsByFriend(
-  currentUserId: string,
-  friendProfileId: string
+  currentUserEmail: string,
+  friendEmail: string
 ): Promise<Receipt[]> {
   if (!supabase) return []
 
@@ -132,8 +132,8 @@ export async function getReceivedReceiptsByFriend(
     const { data, error } = await supabase
       .from('delivered_receipts')
       .select('*')
-      .eq('sender_id', friendProfileId)
-      .eq('recipient_id', currentUserId)
+      .eq('sender_email', friendEmail)
+      .eq('recipient_email', currentUserEmail)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -151,7 +151,7 @@ export async function getReceivedReceiptsByFriend(
       to: 'You',
       from: job.recipient_name ?? 'Unknown',
       content: job.message_text ?? '(printed message)',
-      friendId: friendProfileId,
+      friendId: friendEmail,
       receiptStateJson: job.receipt_state_json,
       receiptImage: job.receipt_image,
       printedAt: job.printed_at,
@@ -165,14 +165,14 @@ export async function getReceivedReceiptsByFriend(
 /**
  * Get all receipts received by the current user.
  */
-export async function getReceivedReceiptsByCurrentUser(userId: string): Promise<Receipt[]> {
+export async function getReceivedReceiptsByCurrentUser(userEmail: string): Promise<Receipt[]> {
   if (!supabase) return []
 
   try {
     const { data, error } = await supabase
       .from('delivered_receipts')
       .select('*')
-      .eq('recipient_id', userId)
+      .eq('recipient_email', userEmail)
       .order('created_at', { ascending: false })
 
     if (error) {
