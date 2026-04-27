@@ -165,6 +165,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
       message_text: messageText ?? null,
       payload_base64: payload,
       receipt_state_json: receiptStateJson ?? null,
+      receipt_image: imageBase64,
       sender_latitude: lat,
       sender_longitude: lng,
       printed_at: new Date().toISOString(),
