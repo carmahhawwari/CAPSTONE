@@ -857,8 +857,8 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
 
           {/* Signature and Corner sticker - Same row */}
           <div className="pt-2 mt-6 flex gap-4 items-end">
-            {/* Signature - Left side (hidden for now) */}
-            {false && <div className="flex-1">
+            {/* Signature - Left side */}
+            <div className="flex-1">
               <div
                 ref={signatureAreaRef}
                 className="relative h-20"
@@ -924,71 +924,71 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
                   })()}
                 </div>
               </div>
-            </div>}
+            </div>
 
-            {/* Corner sticker - Right side */}
-            <div ref={cornerStickerAreaRef} className="relative h-56 w-56 flex-shrink-0">
+            {/* Corner sticker - Right side (hidden for now) */}
+            <div ref={cornerStickerAreaRef} className="relative h-56 w-56 flex-shrink-0 hidden">
             {cornerSticker ? (
-              <div
-                className="absolute bottom-0 right-0 group"
-                style={{
-                  transform: `translate(${cornerSticker.offsetX ?? 0}px, ${cornerSticker.offsetY ?? 0}px)`,
-                }}
-              >
-                <button
-                  type="button"
-                  onPointerDown={handleCornerStickerPointerDown}
-                  onPointerMove={handleCornerStickerPointerMove}
-                  onPointerUp={handleCornerStickerPointerUp}
-                  onPointerCancel={handleCornerStickerPointerUp}
-                  className={`focus:outline-none transform transition-all ${
-                    stickerActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer hover:scale-110 active:scale-90'
-                  }`}
-                  style={{
-                    transform: `rotate(${cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}deg) scale(${cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE})`,
-                    touchAction: stickerActive ? 'none' : 'auto',
-                  }}
-                  aria-pressed={stickerActive}
-                >
-                  {cornerSticker.ditheredDataUrl ? (
-                    <img
-                      src={cornerSticker.ditheredDataUrl}
-                      alt="Corner sticker"
-                      className="object-contain"
-                      style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE }}
-                    />
-                  ) : (
-                    <img
-                      src={cornerSticker.fullUrl}
-                      crossOrigin="anonymous"
-                      alt="Corner sticker"
-                      className="object-contain"
-                      style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE, filter: 'grayscale(100%)' }}
-                    />
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCornerSticker(null)
-                    setStickerActive(false)
-                  }}
-                  className={`absolute -top-4 -left-4 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md ${
-                    stickerActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                  }`}
-                  aria-label="Remove corner sticker"
-                >
-                  ×
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowGiphyPicker(true)}
-                className="absolute bottom-0 right-0 w-28 h-28 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-300 text-5xl hover:text-gray-400 hover:border-gray-300 transition-all focus:outline-none"
-              >
-                +
-              </button>
-            )}
+                  <div
+                    className="absolute bottom-0 right-0 group"
+                    style={{
+                      transform: `translate(${cornerSticker.offsetX ?? 0}px, ${cornerSticker.offsetY ?? 0}px)`,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onPointerDown={handleCornerStickerPointerDown}
+                      onPointerMove={handleCornerStickerPointerMove}
+                      onPointerUp={handleCornerStickerPointerUp}
+                      onPointerCancel={handleCornerStickerPointerUp}
+                      className={`focus:outline-none transform transition-all ${
+                        stickerActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer hover:scale-110 active:scale-90'
+                      }`}
+                      style={{
+                        transform: `rotate(${cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}deg) scale(${cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE})`,
+                        touchAction: stickerActive ? 'none' : 'auto',
+                      }}
+                      aria-pressed={stickerActive}
+                    >
+                      {cornerSticker.ditheredDataUrl ? (
+                        <img
+                          src={cornerSticker.ditheredDataUrl}
+                          alt="Corner sticker"
+                          className="object-contain"
+                          style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE }}
+                        />
+                      ) : (
+                        <img
+                          src={cornerSticker.fullUrl}
+                          crossOrigin="anonymous"
+                          alt="Corner sticker"
+                          className="object-contain"
+                          style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE, filter: 'grayscale(100%)' }}
+                        />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCornerSticker(null)
+                        setStickerActive(false)
+                      }}
+                      className={`absolute -top-4 -left-4 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md ${
+                        stickerActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}
+                      aria-label="Remove corner sticker"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowGiphyPicker(true)}
+                    className="absolute bottom-0 right-0 w-28 h-28 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-300 text-5xl hover:text-gray-400 hover:border-gray-300 transition-all focus:outline-none"
+                  >
+                    +
+                  </button>
+                )}
             </div>
           </div>
         </div>
