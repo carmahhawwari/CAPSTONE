@@ -637,9 +637,9 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
   }
 
   const handleTestPrint = async () => {
-    console.log('[TestPrint] Button clicked', { blocks: blocks.length, ref: !!printReceiptRef.current, userId: !!user?.id })
-    if (blocks.length === 0 || !printReceiptRef.current || !user?.id) {
-      console.log('[TestPrint] Early return: blocks=', blocks.length, 'ref=', !!printReceiptRef.current, 'userId=', !!user?.id)
+    console.log('[TestPrint] Button clicked', { blocks: blocks.length, ref: !!printReceiptRef.current })
+    if (blocks.length === 0 || !printReceiptRef.current) {
+      console.log('[TestPrint] Early return: blocks=', blocks.length, 'ref=', !!printReceiptRef.current)
       return
     }
 
