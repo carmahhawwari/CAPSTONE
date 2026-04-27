@@ -60,7 +60,6 @@ function App() {
           <Route path="/prints" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminScreen /></ProtectedRoute>} />
           <Route path="/test-print" element={<TestPrintScreen />} />
-          <Route path="/test-rasterization" element={<ReceiptEditor testMode={true} />} />
           <Route path="/onboard" element={<OnboardIntro />} />
           <Route path="*" element={<OnboardIntro />} />
           <Route path="/onboard/recipient" element={<OnboardRecipient />} />
