@@ -707,8 +707,8 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
         {/* Preview / Editor — receipt-shaped with torn bottom edge */}
         <div
           ref={receiptRef}
-          className="bg-white shadow-md mb-6 overflow-hidden"
-          style={{ fontFamily: 'Georgia, serif', borderTop: '1px solid rgba(0,0,0,0.08)', borderLeft: '1px solid rgba(0,0,0,0.08)', borderRight: '1px solid rgba(0,0,0,0.08)', backgroundColor: '#ffffff', color: '#222121' }}
+          className="bg-white shadow-md mb-6 overflow-hidden mx-auto"
+          style={{ fontFamily: 'Georgia, serif', borderTop: '1px solid rgba(0,0,0,0.08)', borderLeft: '1px solid rgba(0,0,0,0.08)', borderRight: '1px solid rgba(0,0,0,0.08)', backgroundColor: '#ffffff', color: '#222121', width: '576px', maxWidth: '100%' }}
         >
         <div className="p-5 space-y-3">
           {/* Header */}
