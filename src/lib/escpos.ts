@@ -106,7 +106,9 @@ export async function renderToPrintBuffer(
     // 2. Composite corner sticker on top if provided
     if (options.cornerSticker) {
       try {
+        console.log('[escpos] Loading corner sticker:', options.cornerSticker.imageUrl.substring(0, 50))
         const stickerImg = await loadImage(options.cornerSticker.imageUrl)
+        console.log('[escpos] Sticker loaded:', stickerImg.width, 'x', stickerImg.height)
         const ctx = canvas.getContext('2d')!
 
         // Calculate sticker position and size
@@ -115,14 +117,17 @@ export async function renderToPrintBuffer(
         const stickerWidth = Math.round(stickerImg.width * options.cornerSticker.scale)
         const stickerHeight = Math.round(stickerImg.height * options.cornerSticker.scale)
 
+        console.log('[escpos] Drawing sticker at:', { stickerX, stickerY, stickerWidth, stickerHeight, rotation: options.cornerSticker.rotation })
+
         // Apply rotation and draw sticker
         ctx.save()
         ctx.translate(stickerX, stickerY)
         ctx.rotate((options.cornerSticker.rotation * Math.PI) / 180)
         ctx.drawImage(stickerImg, 0, 0, stickerWidth, stickerHeight)
         ctx.restore()
+        console.log('[escpos] Sticker composited successfully')
       } catch (err) {
-        console.warn('Failed to composite corner sticker:', err)
+        console.error('[escpos] Failed to composite corner sticker:', err)
       }
     }
 

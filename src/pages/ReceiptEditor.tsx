@@ -646,14 +646,16 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
     setTestPrintError(null)
 
     try {
+      const cornerStickerData = cornerSticker ? {
+        imageUrl: cornerSticker.ditheredDataUrl || cornerSticker.fullUrl,
+        offsetX: cornerSticker.offsetX ?? 0,
+        offsetY: cornerSticker.offsetY ?? 0,
+        rotation: cornerSticker.rotation ?? 0,
+        scale: cornerSticker.scale ?? 1,
+      } : undefined
+      console.log('[TestPrint] Rendering with corner sticker:', cornerStickerData ? 'yes' : 'no', cornerStickerData)
       const buffer = await renderToPrintBuffer(printReceiptRef.current, {
-        cornerSticker: cornerSticker ? {
-          imageUrl: cornerSticker.ditheredDataUrl || cornerSticker.fullUrl,
-          offsetX: cornerSticker.offsetX ?? 0,
-          offsetY: cornerSticker.offsetY ?? 0,
-          rotation: cornerSticker.rotation ?? 0,
-          scale: cornerSticker.scale ?? 1,
-        } : undefined,
+        cornerSticker: cornerStickerData,
       })
       console.log('✓ Rasterization successful! Buffer size:', buffer.length, 'bytes')
       setTestPrintStatus('sending')
@@ -1449,29 +1451,6 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               </div>
             )}
           </div>
-
-          {/* Corner Sticker Overlay - outside main receipt so it doesn't affect layout */}
-          {cornerSticker && (
-            <div
-              style={{
-                position: 'absolute',
-                top: `${cornerSticker.offsetY ?? 0}px`,
-                left: `${cornerSticker.offsetX ?? 0}px`,
-                pointerEvents: 'none',
-              }}
-            >
-              <img
-                src={cornerSticker.ditheredDataUrl || cornerSticker.fullUrl}
-                alt="corner sticker"
-                style={{
-                  maxWidth: '100%',
-                  display: 'block',
-                  transform: `rotate(${cornerSticker.rotation ?? 0}deg) scale(${cornerSticker.scale ?? 1})`,
-                  transformOrigin: '0 0',
-                }}
-              />
-            </div>
-          )}
         </div>
       )}
     </div>
