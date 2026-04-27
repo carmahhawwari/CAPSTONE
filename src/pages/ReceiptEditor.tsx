@@ -14,6 +14,7 @@ import RedactionLevelSlider from '@/components/canvas/RedactionLevelSlider'
 import ImageAdjustmentPanel from '@/components/canvas/ImageAdjustmentPanel'
 import { DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
 import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
+import { supabase } from '@/lib/supabase'
 import { getFriends } from '@/lib/friends'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Block, TextStyle, CornerSticker, Signature } from '@/types/canvas'
@@ -561,13 +562,42 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     return JSON.stringify(blocks)
   }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (blocks.length === 0) return
     const content = serializeContent()
+
     if (recipientEmail) {
-      navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { content } })
+      if (!supabase) {
+        navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { content } })
+        return
+      }
+      const senderName =
+        (user?.user_metadata?.display_name as string | undefined) ||
+        user?.email?.split('@')[0] ||
+        'A friend'
+      try {
+        const { data, error } = await supabase.functions.invoke('send-recipt-email', {
+          body: {
+            recipientEmail,
+            senderName,
+            content: {
+              blocks,
+              prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
+              cornerSticker: cornerSticker ?? undefined,
+              signature,
+              headerVariant,
+            },
+          },
+        })
+        if (error) throw error
+        if (data?.error) throw new Error(data.error)
+        navigate('/onboard/sent')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to send')
+      }
       return
     }
+
     if (!selectedFriendId || !selectedFriend) {
       setShowFriendPicker(true)
       return
@@ -671,12 +701,13 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           {/* Recipient Bar */}
           <div className="relative mb-3">
             <img src={recipientBarSvg} alt="" className="w-full h-auto" />
-            <div className="absolute inset-0 flex items-center px-3 text-white z-10" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
-              To: {recipientName || recipientEmail || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
-            </div>
-            {/* Date */}
-            <div className="absolute top-1/2 right-3 text-xs text-white z-20" style={{ fontFamily: "var(--font-printvetica)", transform: 'translateY(-50%)' }}>
-              {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            <div className="absolute inset-0 flex items-center px-3 text-white z-10 gap-2" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
+              <span className="truncate">
+                To: {recipientName || (recipientEmail ? recipientEmail.split('@')[0] : (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___'))}
+              </span>
+              <span className="ml-auto shrink-0 text-xs">
+                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
             </div>
           </div>
 
@@ -1191,7 +1222,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 disabled={blocks.length === 0}
                 className="text-callout text-text-inverse bg-fill-primary rounded-md flex-1 py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
               >
-                Send to Printer
+                Send Inkling
               </button>
             </>
           )}
