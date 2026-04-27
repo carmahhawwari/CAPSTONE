@@ -1421,7 +1421,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
                     <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '8px' }} />
                   )}
                   {block.type === 'sticker' && (
-                    <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px' }}>[sticker]</div>
+                    <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px', border: '1px dashed #d1d5db', padding: '8px', textAlign: 'center' }}>🎨 Sticker ({block.stickerId})</div>
                   )}
                 </div>
               ))}
