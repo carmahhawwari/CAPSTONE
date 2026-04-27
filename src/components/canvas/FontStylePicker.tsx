@@ -1,8 +1,7 @@
 import type { TextStyle } from '@/types/canvas'
 import { FONT_STYLES, STYLE_LABELS } from '@/types/canvas'
 
-const STANDARD_STYLES: TextStyle[] = ['inter', 'normal', 'heading', 'handwriting']
-const DISPLAY_STYLES: TextStyle[] = ['liquida', 'dottonoji', 'tsuchinoko', 'redaction', 'pixel', 'shout', 'artsy', 'decorative', 'comic', 'bold']
+const STYLES: TextStyle[] = ['inter', 'normal', 'handwriting', 'liquida', 'redaction', 'tsuchinoko', 'dottonoji']
 
 interface FontStylePickerProps {
   current: TextStyle
@@ -14,7 +13,7 @@ function FontButton({ style, current, onChange }: { style: TextStyle; current: T
   return (
     <button
       onClick={() => onChange(style)}
-      className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors ${
+      className={`shrink-0 px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors ${
         current === style
           ? 'bg-black text-white border-black'
           : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'
@@ -31,26 +30,13 @@ function FontButton({ style, current, onChange }: { style: TextStyle; current: T
 
 export default function FontStylePicker({ current, onChange }: FontStylePickerProps) {
   return (
-    <div className="space-y-3">
-      {/* Standard Type */}
-      <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">Standard</p>
-        <div className="flex flex-wrap gap-2">
-          {STANDARD_STYLES.map(s => (
-            <FontButton key={s} style={s} current={current} onChange={onChange} />
-          ))}
-        </div>
+    <div className="relative">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pr-10 -mx-1 px-1">
+        {STYLES.map(s => (
+          <FontButton key={s} style={s} current={current} onChange={onChange} />
+        ))}
       </div>
-
-      {/* Display Type */}
-      <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">Display</p>
-        <div className="flex flex-wrap gap-2">
-          {DISPLAY_STYLES.map(s => (
-            <FontButton key={s} style={s} current={current} onChange={onChange} />
-          ))}
-        </div>
-      </div>
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent" />
     </div>
   )
 }

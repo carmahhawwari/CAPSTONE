@@ -51,7 +51,7 @@ export default function FriendsScreen() {
       <div className="px-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-2 mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mr-2">Friends</h1>
+          <h1 className="text-2xl font-bold text-black mr-2">Friends</h1>
           <div className="flex -space-x-2">
             {friends.slice(0, 3).map(f => (
               <div key={f.friendRowId} className="rounded-full border-2 border-white overflow-hidden">
@@ -82,7 +82,7 @@ export default function FriendsScreen() {
                   <div className="w-13 h-13 rounded-full bg-gray-300" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{friend.profile.display_name || friend.profile.username}</p>
+                  <p className="font-semibold text-black text-sm truncate">{friend.profile.display_name || friend.profile.username}</p>
                   <p className="text-xs text-gray-500 truncate mt-0.5">@{friend.profile.username}</p>
                 </div>
                 <button

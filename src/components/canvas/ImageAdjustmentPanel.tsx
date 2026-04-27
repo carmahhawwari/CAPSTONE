@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { applyImageAdjustments, type ImageAdjustments, DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
+import { type ImageAdjustments, DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
 
 interface ImageAdjustmentPanelProps {
   dataUrl: string
@@ -8,26 +7,9 @@ interface ImageAdjustmentPanelProps {
 }
 
 export default function ImageAdjustmentPanel({
-  dataUrl,
   adjustments,
   onAdjustmentsChange,
 }: ImageAdjustmentPanelProps) {
-  const [isProcessing, setIsProcessing] = useState(false)
-
-  useEffect(() => {
-    const applyChanges = async () => {
-      setIsProcessing(true)
-      try {
-        // Apply adjustments to preview
-        await applyImageAdjustments(dataUrl, adjustments)
-      } finally {
-        setIsProcessing(false)
-      }
-    }
-
-    applyChanges()
-  }, [adjustments, dataUrl])
-
   const handleChange = (key: keyof ImageAdjustments, value: any) => {
     onAdjustmentsChange({ ...adjustments, [key]: value })
   }
@@ -37,7 +19,7 @@ export default function ImageAdjustmentPanel({
   }
 
   return (
-    <div className="mt-4 space-y-3 bg-gray-50 p-4 rounded-lg">
+    <div className="mt-4 space-y-3 border border-fill-tertiary p-4 rounded-md">
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-sm font-semibold text-gray-700">Image Tools</h3>
         <button
@@ -50,9 +32,9 @@ export default function ImageAdjustmentPanel({
 
       {/* Brightness */}
       <div>
-        <label className="text-xs font-medium text-gray-600 flex justify-between">
-          Brightness
-          <span>{adjustments.brightness > 0 ? '+' : ''}{adjustments.brightness}</span>
+        <label className="text-xs font-medium text-gray-600 flex justify-between items-center gap-3">
+          <span>Brightness</span>
+          <span className="w-10 shrink-0 text-right tabular-nums">{adjustments.brightness > 0 ? '+' : ''}{adjustments.brightness}</span>
         </label>
         <input
           type="range"
@@ -67,9 +49,9 @@ export default function ImageAdjustmentPanel({
 
       {/* Contrast */}
       <div>
-        <label className="text-xs font-medium text-gray-600 flex justify-between">
-          Contrast
-          <span>{adjustments.contrast > 0 ? '+' : ''}{adjustments.contrast}</span>
+        <label className="text-xs font-medium text-gray-600 flex justify-between items-center gap-3">
+          <span>Contrast</span>
+          <span className="w-10 shrink-0 text-right tabular-nums">{adjustments.contrast > 0 ? '+' : ''}{adjustments.contrast}</span>
         </label>
         <input
           type="range"
@@ -104,9 +86,9 @@ export default function ImageAdjustmentPanel({
         {/* Dithering Parameters */}
         {adjustments.dithering === 'threshold' && (
           <div>
-            <label className="text-xs font-medium text-gray-600 flex justify-between">
-              Threshold
-              <span>{adjustments.thresholdValue}</span>
+            <label className="text-xs font-medium text-gray-600 flex justify-between items-center gap-3">
+              <span>Threshold</span>
+              <span className="w-10 shrink-0 text-right tabular-nums">{adjustments.thresholdValue}</span>
             </label>
             <input
               type="range"
@@ -123,9 +105,9 @@ export default function ImageAdjustmentPanel({
 
         {adjustments.dithering === 'ordered' && (
           <div>
-            <label className="text-xs font-medium text-gray-600 flex justify-between">
-              Pattern Intensity
-              <span>{adjustments.orderedScale.toFixed(1)}x</span>
+            <label className="text-xs font-medium text-gray-600 flex justify-between items-center gap-3">
+              <span>Pattern Intensity</span>
+              <span className="w-10 shrink-0 text-right tabular-nums">{adjustments.orderedScale.toFixed(1)}x</span>
             </label>
             <input
               type="range"
@@ -140,29 +122,7 @@ export default function ImageAdjustmentPanel({
           </div>
         )}
 
-        {adjustments.dithering === 'floyd-steinberg' && (
-          <div>
-            <label className="text-xs font-medium text-gray-600 flex justify-between">
-              Error Diffusion
-              <span>{adjustments.fsStrength.toFixed(1)}x</span>
-            </label>
-            <input
-              type="range"
-              min="0.5"
-              max="1.5"
-              step="0.1"
-              value={adjustments.fsStrength}
-              onChange={(e) => handleChange('fsStrength', parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
-            />
-            <p className="text-xs text-gray-500 mt-1">Weaker (0.5) = less diffusion | Stronger (1.5) = more tonal range</p>
-          </div>
-        )}
       </div>
-
-      {isProcessing && (
-        <p className="text-xs text-gray-500 italic">Processing...</p>
-      )}
     </div>
   )
 }

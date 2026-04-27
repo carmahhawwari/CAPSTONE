@@ -25,25 +25,24 @@ export default function StickerBlock({
   onOutlineToggle,
 }: StickerBlockProps) {
   const sticker = STICKERS.find(s => s.id === stickerId)
+
   if (!sticker) return null
 
   return (
-    <motion.div
-      layout
-      className={`group relative flex flex-col items-center py-2 ${isActive ? 'ring-2 ring-fill-primary ring-offset-1 rounded-md' : ''}`}
+    <div
+      className={`group relative flex flex-col items-center py-2 ${isActive ? 'ring-1 ring-fill-tertiary ring-offset-1 rounded-md' : ''}`}
       onClick={onFocus}
     >
-      <motion.div
-        layout
+      <div
         style={{ width: size, height: size }}
         className={`flex items-center justify-center [&>svg]:w-full [&>svg]:h-full ${outline ? 'rounded-md p-1.5' : ''}`}
       >
         <div
-          className={outline ? 'border border-gray-900 rounded-md p-1 w-full h-full flex items-center justify-center' : 'w-full h-full flex items-center justify-center'}
+          className={outline ? 'border border-black rounded-md p-1 w-full h-full flex items-center justify-center' : 'w-full h-full flex items-center justify-center'}
         >
           {sticker.svg}
         </div>
-      </motion.div>
+      </div>
 
       <AnimatePresence>
         {isActive && (
@@ -62,7 +61,7 @@ export default function StickerBlock({
               step={4}
               value={size}
               onChange={(e) => onSizeChange?.(Number(e.target.value))}
-              className="w-28 accent-gray-900"
+              className="w-28 accent-black"
               aria-label="Sticker size"
             />
             <button
@@ -70,7 +69,7 @@ export default function StickerBlock({
               onClick={() => onOutlineToggle?.(!outline)}
               aria-pressed={outline}
               className={`text-xs font-medium px-2 py-1 rounded-md border transition-colors ${
-                outline ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-900 border-gray-300'
+                outline ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300'
               }`}
             >
               Outline
@@ -88,6 +87,6 @@ export default function StickerBlock({
           &times;
         </button>
       )}
-    </motion.div>
+    </div>
   )
 }

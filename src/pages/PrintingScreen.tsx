@@ -19,7 +19,6 @@ export default function PrintingScreen() {
   const [state, setState] = useState<PrintState>('confirm')
   const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null)
   const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
-  const [messageCount] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const receiptState = (location.state as any)?.receiptState
   const receiptRef = useRef<HTMLDivElement>(null)
@@ -139,10 +138,7 @@ export default function PrintingScreen() {
       {state === 'confirm' && !isLoading && (
         <div className="flex flex-col items-center justify-center gap-8 w-full max-w-sm">
           <div className="text-center">
-            <p className="text-sm text-gray-600 mb-1">
-              {messageCount === 1 ? '1 message' : `${messageCount} messages`} waiting
-            </p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-2xl font-bold text-black">
               {recipientName}
             </p>
           </div>
@@ -156,7 +152,7 @@ export default function PrintingScreen() {
 
           <button
             onClick={handleBack}
-            className="w-full px-6 py-2 text-gray-700 text-center font-medium hover:text-gray-900"
+            className="w-full px-6 py-2 text-gray-700 text-center font-medium hover:text-black"
           >
             Cancel
           </button>
@@ -205,7 +201,7 @@ export default function PrintingScreen() {
       {state === 'no-printer' && (
         <div className="flex flex-col items-center justify-center gap-6">
           <div className="text-center">
-            <p className="text-xl font-semibold text-gray-900 mb-2">
+            <p className="text-xl font-semibold text-black mb-2">
               Hmm... you're not near one of our printers.
             </p>
             <p className="text-sm text-gray-600">
@@ -221,7 +217,7 @@ export default function PrintingScreen() {
 
           <button
             onClick={handleBack}
-            className="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800"
+            className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800"
           >
             Back to Home
           </button>
@@ -232,7 +228,7 @@ export default function PrintingScreen() {
       {state === 'no-location' && (
         <div className="flex flex-col items-center justify-center gap-6">
           <div className="text-center">
-            <p className="text-xl font-semibold text-gray-900 mb-2">
+            <p className="text-xl font-semibold text-black mb-2">
               Location access needed
             </p>
             <p className="text-sm text-gray-600 max-w-xs">
@@ -248,7 +244,7 @@ export default function PrintingScreen() {
 
           <button
             onClick={handleBack}
-            className="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800"
+            className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800"
           >
             Back to Home
           </button>
@@ -259,7 +255,7 @@ export default function PrintingScreen() {
       {state === 'done' && (
         <div className="flex flex-col items-center justify-center gap-6">
           <div className="text-center">
-            <p className="text-xl font-semibold text-gray-900">Print sent!</p>
+            <p className="text-xl font-semibold text-black">Print sent!</p>
           </div>
         </div>
       )}

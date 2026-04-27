@@ -76,7 +76,7 @@ export default function VerifyEmail() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-gray-900">One last step!</h1>
+          <h1 className="text-2xl font-bold text-black">One last step!</h1>
           <p className="text-gray-600">
             We've sent a verification link to <strong>{user?.email}</strong>
           </p>
@@ -112,7 +112,7 @@ export default function VerifyEmail() {
           <button
             onClick={handleResendEmail}
             disabled={loading || resendCooldown > 0}
-            className="w-full py-3 rounded-lg border border-gray-300 bg-white text-gray-900 font-semibold text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-3 rounded-lg border border-gray-300 bg-white text-black font-semibold text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {resendCooldown > 0
               ? `Resend in ${resendCooldown}s`

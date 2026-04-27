@@ -96,7 +96,7 @@ export default function TextBlock({
   }, [content])
 
   return (
-    <div className={`group relative ${isActive ? 'ring-2 ring-fill-primary ring-offset-1 rounded' : ''}`}>
+    <div className={`group relative ${isActive ? 'ring-1 ring-fill-tertiary ring-offset-1 rounded' : ''}`}>
       <div
         ref={ref}
         contentEditable
@@ -106,7 +106,7 @@ export default function TextBlock({
         onBlur={syncContent}
         data-placeholder="Type something..."
         data-font-weight={fontConfig.fontWeight}
-        className="w-full outline-none min-h-[1.5em] empty:before:content-[attr(data-placeholder)] empty:before:text-gray-300"
+        className="w-full outline-none min-h-[1.5em] empty:before:content-[attr(data-placeholder)] empty:before:text-gray-300 empty:before:[font-family:inherit]"
         style={{
           fontFamily: fontConfig.fontFamily,
           fontSize: adjustedFontSize,

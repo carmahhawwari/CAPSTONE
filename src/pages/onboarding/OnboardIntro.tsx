@@ -15,7 +15,7 @@ export default function OnboardIntro() {
   return (
     <div className="flex min-h-screen flex-col bg-white px-6">
       <div className="flex flex-1 flex-col justify-center">
-        <h1 className="text-4xl font-bold text-gray-900">Inklings</h1>
+        <h1 className="text-4xl font-bold text-black">Inklings</h1>
         <p className="text-lg text-gray-700 mt-2">
           Send a little paper note to someone. We'll walk you through it.
         </p>

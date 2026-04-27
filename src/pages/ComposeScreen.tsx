@@ -35,7 +35,7 @@ export default function ComposeScreen() {
   return (
     <div className="min-h-screen bg-white flex flex-col pb-16">
       <div className="px-6 pt-8 flex-1">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Compose</h1>
+        <h1 className="text-2xl font-bold text-black mb-6">Compose</h1>
 
         {/* To picker */}
         <div className="mb-5">

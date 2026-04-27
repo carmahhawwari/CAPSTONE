@@ -14,10 +14,8 @@ import RedactionLevelSlider from '@/components/canvas/RedactionLevelSlider'
 import ImageAdjustmentPanel from '@/components/canvas/ImageAdjustmentPanel'
 import { DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
 import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
-import { getFriends } from '@/lib/friends'
-import { renderToPrintBuffer } from '@/lib/escpos'
-import { submitPrintJob } from '@/lib/printJob'
 import { supabase } from '@/lib/supabase'
+import { getFriends } from '@/lib/friends'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Block, TextStyle, CornerSticker, Signature } from '@/types/canvas'
 import type { FriendProfile } from '@/types/app'
@@ -25,6 +23,7 @@ import { newBlockId, FONT_STYLES, STYLE_LABELS } from '@/types/canvas'
 import headerLogoSvg from '@/assets/icons/header-logo.svg'
 import headerSquidsCheckersSvg from '@/assets/icons/header-squids-checkers.svg'
 import headerSquidsV1Svg from '@/assets/icons/header-squids-v1.svg'
+import recipientBarSvg from '@/assets/icons/recipient-bar.svg'
 
 const PROMPTS = [
   'The best part of my day yesterday was...',
@@ -34,7 +33,6 @@ const PROMPTS = [
   'Something I want to remember from this week is...',
 ]
 
-const FONTS_WITH_ITALIC = ['inter', 'normal', 'heading', 'handwriting', 'liquida', 'dottonoji', 'tsuchinoko', 'redaction'] as const
 const DEFAULT_CORNER_STICKER_ROTATION = 0
 const DEFAULT_CORNER_STICKER_SCALE = 1.1
 const MIN_CORNER_STICKER_SCALE = 0.5
@@ -56,39 +54,37 @@ function normalizeCornerSticker(sticker: CornerSticker): CornerSticker {
   }
 }
 
-function supportsItalic(style: TextStyle): boolean {
-  return FONTS_WITH_ITALIC.includes(style as any)
-}
-
 interface ReceiptEditorProps {
   onboarding?: boolean
-  testMode?: boolean
 }
 
 function friendLabel(f: FriendProfile): string {
   return f.profile.display_name || f.profile.username || 'Friend'
 }
 
-export default function ReceiptEditor({ onboarding = false, testMode = false }: ReceiptEditorProps = {}) {
+export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps = {}) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const draft = loadDraft()
 
   // State
-  const [blocks, setBlocks] = useState<Block[]>([])
+  const [blocks, setBlocks] = useState<Block[]>(() => {
+    const existing: Block[] = (onboarding ? loadDraft().content?.blocks : null) ?? []
+    const hasImage = existing.some((b) => b.type === 'image')
+    const hasText = existing.some((b) => b.type === 'text')
+    const merged: Block[] = []
+    if (!hasImage) merged.push({ id: newBlockId(), type: 'image', dataUrl: '' })
+    if (!hasText) merged.push({ id: newBlockId(), type: 'text', content: '', style: 'inter' })
+    return [...merged, ...existing]
+  })
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null)
   const [showStickerPicker, setShowStickerPicker] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [testPrintStatus, setTestPrintStatus] = useState<'idle' | 'rendering' | 'sending' | 'done' | 'error'>('idle')
-  const [testPrintError, setTestPrintError] = useState<string | null>(null)
-  const [printers, setPrinters] = useState<Array<{ id: string; name: string }>>([])
-  const [selectedPrinterId, setSelectedPrinterId] = useState<string | null>(null)
   const [friends, setFriends] = useState<FriendProfile[]>([])
   const [selectedFriendId, setSelectedFriendId] = useState('')
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null)
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [cornerSticker, setCornerSticker] = useState<CornerSticker | null>(null)
   const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
   const [showGiphyPicker, setShowGiphyPicker] = useState(false)
@@ -106,7 +102,6 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
   const [showFriendPicker, setShowFriendPicker] = useState(false)
   const [friendSearchQuery, setFriendSearchQuery] = useState('')
   const receiptRef = useRef<HTMLDivElement>(null)
-  const printReceiptRef = useRef<HTMLDivElement>(null)
   const cornerStickerAreaRef = useRef<HTMLDivElement>(null)
   const signatureAreaRef = useRef<HTMLDivElement>(null)
   const activeStickerPointersRef = useRef(new Map<number, { x: number; y: number }>())
@@ -195,29 +190,6 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
     }
   }, [user, onboarding, searchParams])
 
-  // Load printers for test mode
-  useEffect(() => {
-    if (testMode && !supabase) return
-
-    const fetchPrinters = async () => {
-      if (!supabase) return
-      const { data } = await supabase
-        .from('printers')
-        .select('*')
-        .eq('is_active', true)
-      if (data) {
-        setPrinters(data.map(p => ({ id: p.id, name: p.name })))
-        if (data.length > 0) {
-          setSelectedPrinterId(data[0].id)
-        }
-      }
-    }
-
-    if (testMode) {
-      fetchPrinters().catch((e) => console.error('Failed to load printers:', e))
-    }
-  }, [testMode])
-
   // Handle deselecting signature with Escape key or outside click
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -269,6 +241,12 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
   }
 
   const handleAddSticker = (stickerId: string) => {
+    const active = blocks.find((b) => b.id === activeBlockId)
+    if (active && active.type === 'sticker' && !active.stickerId) {
+      // Fill the existing empty sticker slot instead of appending a new one.
+      setBlocks(blocks.map((b) => (b.id === active.id ? { ...b, stickerId } : b)))
+      return
+    }
     const newBlock: Block = {
       id: newBlockId(),
       type: 'sticker',
@@ -283,19 +261,8 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
   }
 
   const deleteBlock = (id: string) => {
-    setDeleteConfirmId(id)
-  }
-
-  const confirmDelete = () => {
-    if (deleteConfirmId) {
-      setBlocks(blocks.filter(block => block.id !== deleteConfirmId))
-      setActiveBlockId(null)
-      setDeleteConfirmId(null)
-    }
-  }
-
-  const cancelDelete = () => {
-    setDeleteConfirmId(null)
+    setBlocks(blocks.filter(block => block.id !== id))
+    setActiveBlockId(null)
   }
 
   const handleDragStart = (blockId: string) => {
@@ -591,38 +558,59 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
     resetStickerGesture()
   }
 
-  const getReceiptState = () => ({
-    blocks,
-    currentPrompt,
-    headerVariant,
-    signature,
-    cornerSticker,
-  })
+  const serializeContent = () => {
+    return JSON.stringify(blocks)
+  }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (blocks.length === 0) return
-    const receiptState = getReceiptState()
-    if (testMode) {
-      navigate(`/printing`, { state: { receiptState } })
-      return
-    }
+    const content = serializeContent()
+
     if (recipientEmail) {
-      navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { receiptState } })
+      if (!supabase) {
+        navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { content } })
+        return
+      }
+      const senderName =
+        (user?.user_metadata?.display_name as string | undefined) ||
+        user?.email?.split('@')[0] ||
+        'A friend'
+      try {
+        const { data, error } = await supabase.functions.invoke('send-recipt-email', {
+          body: {
+            recipientEmail,
+            senderName,
+            content: {
+              blocks,
+              prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
+              cornerSticker: cornerSticker ?? undefined,
+              signature,
+              headerVariant,
+            },
+          },
+        })
+        if (error) throw error
+        if (data?.error) throw new Error(data.error)
+        navigate('/onboard/sent')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to send')
+      }
       return
     }
+
     if (!selectedFriendId || !selectedFriend) {
       setShowFriendPicker(true)
       return
     }
-    navigate(`/printing?to=${selectedFriendId}`, { state: { receiptState } })
+    navigate(`/printing?to=${selectedFriendId}`, { state: { content } })
   }
 
   const handleSelectFriendFromPicker = (friendId: string) => {
     setSelectedFriendId(friendId)
     setShowFriendPicker(false)
     setFriendSearchQuery('')
-    const receiptState = getReceiptState()
-    navigate(`/printing?to=${friendId}`, { state: { receiptState } })
+    const content = serializeContent()
+    navigate(`/printing?to=${friendId}`, { state: { content } })
   }
 
   const filteredFriends = friends.filter(f =>
@@ -635,59 +623,14 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
     navigate('/archive')
   }
 
-  const handleTestPrint = async () => {
-    console.log('[TestPrint] Button clicked', { blocks: blocks.length, ref: !!printReceiptRef.current })
-    if (blocks.length === 0 || !printReceiptRef.current) {
-      console.log('[TestPrint] Early return: blocks=', blocks.length, 'ref=', !!printReceiptRef.current)
-      return
-    }
-
-    setTestPrintStatus('rendering')
-    setTestPrintError(null)
-
-    try {
-      const cornerStickerData = cornerSticker ? {
-        imageUrl: cornerSticker.ditheredDataUrl || cornerSticker.fullUrl,
-        offsetX: cornerSticker.offsetX ?? 0,
-        offsetY: cornerSticker.offsetY ?? 0,
-        rotation: cornerSticker.rotation ?? 0,
-        scale: cornerSticker.scale ?? 1,
-      } : undefined
-      console.log('[TestPrint] Rendering with corner sticker:', cornerStickerData ? 'yes' : 'no', cornerStickerData)
-      const buffer = await renderToPrintBuffer(printReceiptRef.current, {
-        cornerSticker: cornerStickerData,
-      })
-      console.log('✓ Rasterization successful! Buffer size:', buffer.length, 'bytes')
-      setTestPrintStatus('sending')
-
-      await submitPrintJob({
-        receiptElement: printReceiptRef.current,
-        recipientName: 'Test',
-        messageText: 'Test receipt print',
-        skipGeofence: true,
-        printerId: selectedPrinterId ?? undefined,
-      })
-      console.log('✓ Print submitted successfully')
-
-      setTestPrintStatus('done')
-      setTimeout(() => setTestPrintStatus('idle'), 2000)
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error('Test print error:', err)
-      setTestPrintError(msg)
-      setTestPrintStatus('error')
-    }
-  }
-
   const activeBlock = blocks.find(b => b.id === activeBlockId)
 
   return (
     <div className="min-h-screen bg-white flex flex-col pb-16">
       <div className="px-6 pt-8 flex-1 overflow-y-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Share an Inkling</h1>
 
-        {/* Friend picker - only for authenticated users, not in test mode */}
-        {!onboarding && !testMode && friends.length > 0 && (
+        {/* Friend picker - only for authenticated users */}
+        {!onboarding && friends.length > 0 && (
           <div className="mb-6">
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">To</label>
             <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
@@ -725,8 +668,8 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
         {/* Preview / Editor — receipt-shaped with torn bottom edge */}
         <div
           ref={receiptRef}
-          className="bg-white shadow-md mb-6 overflow-hidden mx-auto"
-          style={{ fontFamily: 'Georgia, serif', borderTop: '1px solid rgba(0,0,0,0.08)', borderLeft: '1px solid rgba(0,0,0,0.08)', borderRight: '1px solid rgba(0,0,0,0.08)', backgroundColor: '#ffffff', color: '#222121', width: '576px', maxWidth: '100%' }}
+          className="bg-white shadow-md mb-6 overflow-hidden"
+          style={{ fontFamily: 'Georgia, serif', borderTop: '1px solid rgba(0,0,0,0.08)', borderLeft: '1px solid rgba(0,0,0,0.08)', borderRight: '1px solid rgba(0,0,0,0.08)' }}
         >
         <div className="p-5 space-y-3">
           {/* Header */}
@@ -756,10 +699,16 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
           </div>
 
           {/* Recipient Bar */}
-          <img src="/src/assets/icons/recipient-bar-new.png" alt="" className="w-full h-auto mb-2" />
-          <div className="flex justify-between mb-6 text-sm" style={{ fontFamily: "var(--font-printvetica)" }}>
-            <span>To: {recipientName || recipientEmail || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}</span>
-            <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+          <div className="relative mb-3">
+            <img src={recipientBarSvg} alt="" className="w-full h-auto" />
+            <div className="absolute inset-0 flex items-center px-3 text-white z-10 gap-2" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
+              <span className="truncate">
+                To: {recipientName || (recipientEmail ? recipientEmail.split('@')[0] : (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___'))}
+              </span>
+              <span className="ml-auto shrink-0 text-xs">
+                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
           </div>
 
           {/* Prompt Picker */}
@@ -926,69 +875,71 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               </div>
             </div>
 
-            {/* Corner sticker - Right side (hidden for now) */}
-            <div ref={cornerStickerAreaRef} className="relative h-56 w-56 flex-shrink-0 hidden">
+            {/* Corner sticker - Right side */}
+            <div ref={cornerStickerAreaRef} className="relative h-56 w-56 flex-shrink-0">
             {cornerSticker ? (
-                  <div
-                    className="absolute bottom-0 right-0 group"
-                    style={{
-                      transform: `translate(${cornerSticker.offsetX ?? 0}px, ${cornerSticker.offsetY ?? 0}px)`,
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onPointerDown={handleCornerStickerPointerDown}
-                      onPointerMove={handleCornerStickerPointerMove}
-                      onPointerUp={handleCornerStickerPointerUp}
-                      onPointerCancel={handleCornerStickerPointerUp}
-                      className={`focus:outline-none transform transition-all ${
-                        stickerActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer hover:scale-110 active:scale-90'
-                      }`}
-                      style={{
-                        transform: `rotate(${cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}deg) scale(${cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE})`,
-                        touchAction: stickerActive ? 'none' : 'auto',
-                      }}
-                      aria-pressed={stickerActive}
-                    >
-                      {cornerSticker.ditheredDataUrl ? (
-                        <img
-                          src={cornerSticker.ditheredDataUrl}
-                          alt="Corner sticker"
-                          className="object-contain"
-                          style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE }}
-                        />
-                      ) : (
-                        <img
-                          src={cornerSticker.fullUrl}
-                          crossOrigin="anonymous"
-                          alt="Corner sticker"
-                          className="object-contain"
-                          style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE, filter: 'grayscale(100%)' }}
-                        />
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCornerSticker(null)
-                        setStickerActive(false)
-                      }}
-                      className={`absolute -top-4 -left-4 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md ${
-                        stickerActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                      }`}
-                      aria-label="Remove corner sticker"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowGiphyPicker(true)}
-                    className="absolute bottom-0 right-0 w-28 h-28 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-300 text-5xl hover:text-gray-400 hover:border-gray-300 transition-all focus:outline-none"
-                  >
-                    +
-                  </button>
-                )}
+              <div
+                className="absolute bottom-0 right-0 group"
+                style={{
+                  transform: `translate(${cornerSticker.offsetX ?? 0}px, ${cornerSticker.offsetY ?? 0}px)`,
+                }}
+              >
+                <button
+                  type="button"
+                  onPointerDown={handleCornerStickerPointerDown}
+                  onPointerMove={handleCornerStickerPointerMove}
+                  onPointerUp={handleCornerStickerPointerUp}
+                  onPointerCancel={handleCornerStickerPointerUp}
+                  className={`focus:outline-none transform transition-all ${
+                    stickerActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer hover:scale-110 active:scale-90'
+                  }`}
+                  style={{
+                    transform: `rotate(${cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}deg) scale(${cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE})`,
+                    touchAction: stickerActive ? 'none' : 'auto',
+                  }}
+                  aria-pressed={stickerActive}
+                >
+                  {cornerSticker.ditheredDataUrl ? (
+                    <img
+                      src={cornerSticker.ditheredDataUrl}
+                      alt="Corner sticker"
+                      className="object-contain"
+                      style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE }}
+                    />
+                  ) : (
+                    <img
+                      src={cornerSticker.fullUrl}
+                      crossOrigin="anonymous"
+                      alt="Corner sticker"
+                      className="object-contain"
+                      style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE, filter: 'grayscale(100%)' }}
+                    />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCornerSticker(null)
+                    setStickerActive(false)
+                  }}
+                  className={`absolute -top-4 -left-4 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md ${
+                    stickerActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  }`}
+                  aria-label="Remove corner sticker"
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowGiphyPicker(true)}
+                className="absolute bottom-0 right-0 w-28 h-28 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-300 hover:text-gray-400 hover:border-gray-300 transition-all focus:outline-none"
+                style={{ fontFamily: 'var(--font-printvetica), Inter, sans-serif' }}
+              >
+                <span className="text-3xl leading-none">+</span>
+                <span className="text-xs">Add a sticker</span>
+              </button>
+            )}
             </div>
           </div>
         </div>
@@ -1028,9 +979,14 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
           onAddSticker={addStickerBlock}
         />
 
-        {/* Font Style Picker - shown when text block is active */}
+        {/* Font Style Picker - collapsed by default; click 'Customize text' to open */}
         {activeBlock?.type === 'text' && (
-          <div className="mt-4 space-y-2">
+          <details className="mt-4 group">
+            <summary className="text-xs font-medium text-gray-500 cursor-pointer select-none list-none flex items-center gap-1 hover:text-gray-700">
+              <span className="inline-block transition-transform group-open:rotate-90">›</span>
+              Customize text
+            </summary>
+            <div className="mt-3 space-y-5">
             <FontStylePicker
               current={activeBlock.style}
               onChange={style => updateBlock(activeBlock.id, { style: style as TextStyle })}
@@ -1046,27 +1002,10 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               />
             )}
             {activeBlock.style === 'inter' && (
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <FontWeightSlider
-                    value={activeBlock.fontWeight ?? 400}
-                    onChange={fontWeight => updateBlock(activeBlock.id, { fontWeight })}
-                  />
-                </div>
-                {supportsItalic(activeBlock.style) && (
-                  <button
-                    onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
-                    className={`mt-8 px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
-                      activeBlock.isItalic
-                        ? 'bg-fill-primary text-white'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
-                    }`}
-                    style={{ fontStyle: 'italic' }}
-                  >
-                    I
-                  </button>
-                )}
-              </div>
+              <FontWeightSlider
+                value={activeBlock.fontWeight ?? 400}
+                onChange={fontWeight => updateBlock(activeBlock.id, { fontWeight })}
+              />
             )}
             {activeBlock.style === 'tsuchinoko' && (
               <div className="flex gap-2">
@@ -1080,35 +1019,10 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
                 >
                   Bold
                 </button>
-                {supportsItalic(activeBlock.style) && (
-                  <button
-                    onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
-                    className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
-                      activeBlock.isItalic
-                        ? 'bg-fill-primary text-white'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
-                    }`}
-                    style={{ fontStyle: 'italic' }}
-                  >
-                    I
-                  </button>
-                )}
               </div>
             )}
-            {supportsItalic(activeBlock.style) && activeBlock.style !== 'inter' && activeBlock.style !== 'tsuchinoko' && (
-              <button
-                onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
-                className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
-                  activeBlock.isItalic
-                    ? 'bg-fill-primary text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
-                }`}
-                style={{ fontStyle: 'italic' }}
-              >
-                I
-              </button>
-            )}
-          </div>
+            </div>
+          </details>
         )}
 
         {/* Signature Font Picker - shown when signature is active */}
@@ -1132,13 +1046,19 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
           </div>
         )}
 
-        {/* Image Adjustment Panel - shown when image block is active */}
+        {/* Image Adjustment Panel - collapsed by default */}
         {activeBlock?.type === 'image' && (
-          <ImageAdjustmentPanel
-            dataUrl={activeBlock.dataUrl}
-            adjustments={activeBlock.adjustments ?? DEFAULT_ADJUSTMENTS}
-            onAdjustmentsChange={adjustments => updateBlock(activeBlock.id, { adjustments })}
-          />
+          <details className="mt-4 group">
+            <summary className="text-xs font-medium text-gray-500 cursor-pointer select-none list-none flex items-center gap-1 hover:text-gray-700">
+              <span className="inline-block transition-transform group-open:rotate-90">›</span>
+              Customize image
+            </summary>
+            <ImageAdjustmentPanel
+              dataUrl={activeBlock.dataUrl}
+              adjustments={activeBlock.adjustments ?? DEFAULT_ADJUSTMENTS}
+              onAdjustmentsChange={adjustments => updateBlock(activeBlock.id, { adjustments })}
+            />
+          </details>
         )}
 
         {/* Corner Sticker Control Panel */}
@@ -1227,7 +1147,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
           <div className="fixed inset-0 bg-black/50 flex items-end z-50">
             <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom max-h-[80vh] overflow-y-auto">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Send to</h2>
+                <h2 className="text-lg font-semibold text-black mb-4">Send to</h2>
                 <input
                   type="text"
                   placeholder="Search friends..."
@@ -1255,7 +1175,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
                           <Avatar avatarId={1} size={40} />
                         </div>
                       )}
-                      <span className="text-sm font-medium text-gray-900">{friendLabel(f)}</span>
+                      <span className="text-sm font-medium text-black">{friendLabel(f)}</span>
                     </button>
                   ))
                 )}
@@ -1263,7 +1183,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
 
               <button
                 onClick={() => setShowFriendPicker(false)}
-                className="w-full py-3 rounded-lg border border-gray-300 bg-white text-gray-900 font-semibold text-sm active:bg-gray-50 transition-colors"
+                className="w-full py-3 rounded-lg border border-gray-300 bg-white text-black font-semibold text-sm active:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
@@ -1275,33 +1195,8 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
           <p className="mt-4 text-xs text-red-600">{error}</p>
         )}
 
-        {/* Delete Confirmation Modal */}
-        {deleteConfirmId && (
-          <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-            <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom">
-              <p className="text-sm text-gray-700">
-                Are you sure you want to delete this section? This action cannot be undone.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={cancelDelete}
-                  className="flex-1 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 font-semibold text-sm active:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="flex-1 py-3 rounded-lg bg-red-600 text-white font-semibold text-sm active:bg-red-700 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Inline CTA — placed at end of scroll content so it works reliably on iOS Safari */}
-        <div className="mt-8 mb-6 flex gap-3">
+        {/* CTA — sits at the bottom of the scroll content (not fixed, so iOS taps land) */}
+        <div className="mt-10 mb-8 flex gap-3">
           {onboarding ? (
             <button
               type="button"
@@ -1311,40 +1206,6 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             >
               Continue to Send
             </button>
-          ) : testMode ? (
-            <div className="w-full space-y-3">
-              {printers.length > 0 && (
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Printer</label>
-                  <select
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
-                    value={selectedPrinterId || ''}
-                    onChange={(e) => setSelectedPrinterId(e.target.value)}
-                  >
-                    {printers.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={handleTestPrint}
-                disabled={blocks.length === 0 || testPrintStatus !== 'idle'}
-                className="text-callout text-text-inverse bg-fill-primary rounded-md w-full py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
-              >
-                {testPrintStatus === 'idle' && 'Test Print'}
-                {testPrintStatus === 'rendering' && 'Rendering...'}
-                {testPrintStatus === 'sending' && 'Sending...'}
-                {testPrintStatus === 'done' && 'Sent!'}
-                {testPrintStatus === 'error' && 'Error'}
-              </button>
-              {testPrintError && (
-                <p className="text-xs text-red-600 mt-2">{testPrintError}</p>
-              )}
-            </div>
           ) : (
             <>
               <button
@@ -1361,98 +1222,13 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
                 disabled={blocks.length === 0}
                 className="text-callout text-text-inverse bg-fill-primary rounded-md flex-1 py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
               >
-                Send to Printer
+                Send Inkling
               </button>
             </>
           )}
         </div>
 
       </div>
-
-      {/* Hidden receipt for printing (test mode only) */}
-      {testMode && (
-        <div style={{ position: 'relative', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-          <div
-            ref={printReceiptRef}
-            style={{
-              fontFamily: 'Georgia, serif',
-              width: '576px',
-              padding: '20px',
-              backgroundColor: '#ffffff',
-              color: '#222121',
-              position: 'relative',
-            }}
-          >
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', marginTop: '20px' }}>
-              {headerVariant === 'simple' ? (
-                <img src="/src/assets/icons/header-logo.svg" alt="Inklings" style={{ height: '64px', width: 'auto' }} />
-              ) : headerVariant === 'squids-checkers' ? (
-                <img src="/src/assets/icons/header-squids-checkers.svg" alt="Inklings squids checkers" style={{ height: '80px', width: 'auto' }} />
-              ) : headerVariant === 'squids-v1' ? (
-                <img src="/src/assets/icons/header-squids-v1.svg" alt="Inklings squids v1" style={{ height: '80px', width: 'auto' }} />
-              ) : null}
-            </div>
-
-            {/* Recipient Bar */}
-            <img src="/src/assets/icons/recipient-bar-new.png" alt="" style={{ width: '100%', height: 'auto', marginBottom: '8px', display: 'block' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121' }}>
-              <span>To: Test</span>
-              <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-            </div>
-
-            {/* Current Prompt */}
-            {currentPrompt && currentPrompt !== 'No prompt' && (
-              <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
-                {currentPrompt}
-              </div>
-            )}
-
-            {/* Blocks */}
-            <div style={{ marginBottom: '16px' }}>
-              {blocks.map((block) => (
-                <div key={block.id} style={{ marginBottom: '8px' }}>
-                  {block.type === 'text' && (
-                    <div
-                      style={{
-                        ...FONT_STYLES[block.style as TextStyle],
-                        fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1)}px`,
-                        fontWeight: block.fontWeight ?? FONT_STYLES[block.style as TextStyle].fontWeight,
-                        fontStyle: block.isItalic ? 'italic' : 'normal',
-                        textDecoration: block.isBold ? 'underline' : 'none',
-                        color: '#1f2937',
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {block.content}
-                    </div>
-                  )}
-                  {block.type === 'image' && (
-                    <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '8px' }} />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Signature */}
-            {signature && signature.text && (
-              <div
-                style={{
-                  fontFamily: "'Inter Variable', sans-serif",
-                  fontSize: `${14 * (signature.scale ?? 1)}px`,
-                  color: '#4b5563',
-                  fontStyle: 'italic',
-                  marginLeft: `${signature.offsetX ?? 0}px`,
-                  marginTop: `${signature.offsetY ?? 0}px`,
-                  lineHeight: 1.4,
-                }}
-              >
-                {signature.text}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

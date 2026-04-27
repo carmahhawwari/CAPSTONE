@@ -85,7 +85,7 @@ export default function SignUp() {
     }
   }
 
-  const inputClass = 'w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fill-primary'
+  const inputClass = 'w-full px-4 py-4 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fill-primary'
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
@@ -148,7 +148,7 @@ export default function SignUp() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Phone number (optional)"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fill-primary"
+            className="w-full px-4 py-4 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fill-primary"
             disabled={loading}
           />
           <button

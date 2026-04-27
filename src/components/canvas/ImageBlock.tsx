@@ -83,7 +83,7 @@ export default function ImageBlock({
           <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
           <path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
         </svg>
-        <span className="text-sm">Add Photo</span>
+        <span className="text-sm" style={{ fontFamily: 'var(--font-printvetica), Inter, sans-serif' }}>Add Photo</span>
         <input
           ref={inputRef}
           type="file"
@@ -97,7 +97,7 @@ export default function ImageBlock({
 
   return (
     <div
-      className={`group relative ${isActive ? 'ring-2 ring-fill-primary ring-offset-1 rounded' : ''}`}
+      className={`group relative ${isActive ? 'ring-1 ring-fill-tertiary ring-offset-1 rounded' : ''}`}
       onClick={onFocus}
     >
       {displayUrl && (

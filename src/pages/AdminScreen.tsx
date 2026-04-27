@@ -213,7 +213,7 @@ export default function AdminScreen() {
             <tbody className="divide-y divide-gray-200">
               {printers.map((p) => (
                 <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900 font-medium">{p.name}</td>
+                  <td className="px-4 py-3 text-black font-medium">{p.name}</td>
                   <td className="px-4 py-3 text-gray-600 text-xs font-mono">
                     {p.latitude.toFixed(4)}, {p.longitude.toFixed(4)}
                   </td>
