@@ -628,6 +628,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
       document.body.appendChild(tempDiv)
 
       // Remove all class attributes to prevent oklch color issues
+      receiptClone.removeAttribute('class')
       receiptClone.querySelectorAll('[class]').forEach(el => {
         el.removeAttribute('class')
       })
@@ -639,6 +640,8 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
           scale: 2,
           backgroundColor: '#ffffff',
           logging: false,
+          allowTaint: true,
+          useCORS: true,
         })
         const imageUrl = canvas.toDataURL('image/png')
         setRasterizedImage(imageUrl)
