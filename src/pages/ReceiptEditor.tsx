@@ -1390,10 +1390,14 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             </div>
 
             {/* Recipient Bar */}
-            <img src="/src/assets/icons/recipient-bar.svg" alt="" style={{ width: '100%', height: 'auto', marginBottom: '6px', display: 'block', maxHeight: '30px' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '14px', color: '#222121' }}>
-              <span>To: Test</span>
-              <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+            <div style={{ position: 'relative', marginBottom: '12px' }}>
+              <img src="/src/assets/icons/recipient-bar.svg" alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
+              <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingLeft: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', color: '#ffffff' }}>
+                To: Test
+              </div>
+              <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingRight: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '12px', color: '#ffffff' }}>
+                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </div>
             </div>
 
             {/* Current Prompt */}
