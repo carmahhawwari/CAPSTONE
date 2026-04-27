@@ -25,6 +25,7 @@ export async function getReceiptsByFriend(
       .select('*')
       .eq('sender_id', currentUserId)
       .eq('recipient_id', friendProfileId)
+      .not('printed_at', 'is', null)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -110,6 +111,7 @@ export async function getReceiptsByCurrentUser(userId: string): Promise<Receipt[
       content: job.message_text ?? '(printed message)',
       friendId: job.recipient_id ?? '',
       receiptStateJson: job.receipt_state_json,
+      printedAt: job.printed_at,
     }))
   } catch (error) {
     console.error('getReceiptsByCurrentUser exception:', error)
@@ -189,6 +191,7 @@ export async function getReceivedReceiptsByCurrentUser(userId: string): Promise<
       content: job.message_text ?? '(printed message)',
       friendId: job.sender_id ?? '',
       receiptStateJson: job.receipt_state_json,
+      printedAt: job.printed_at,
     }))
   } catch (error) {
     console.error('getReceivedReceiptsByCurrentUser exception:', error)
