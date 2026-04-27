@@ -1378,6 +1378,30 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               color: '#222121',
             }}
           >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '24px', marginTop: '24px' }}>
+              <div style={{ width: '64px', height: 'auto' }}>
+                {headerVariant === 'simple' ? (
+                  <img src={headerLogoSvg} alt="Inklings" style={{ width: '100%', height: 'auto' }} />
+                ) : headerVariant === 'squids-checkers' ? (
+                  <img src={headerSquidsCheckersSvg} alt="Inklings squids checkers" style={{ width: '100%', height: 'auto' }} />
+                ) : headerVariant === 'squids-v1' ? (
+                  <img src={headerSquidsV1Svg} alt="Inklings squids v1" style={{ width: '100%', height: 'auto' }} />
+                ) : null}
+              </div>
+            </div>
+
+            {/* Recipient Bar */}
+            <div style={{ position: 'relative', marginBottom: '12px' }}>
+              <img src={recipientBarSvg} alt="" style={{ width: '100%', height: 'auto' }} />
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingLeft: '12px', color: 'white', fontFamily: "var(--font-printvetica), 'Inter Variable', sans-serif", fontSize: '15.4px' }}>
+                To: Test
+              </div>
+              <div style={{ position: 'absolute', top: '50%', right: '12px', transform: 'translateY(-50%)', color: 'white', fontSize: '12px', fontFamily: "var(--font-printvetica), 'Inter Variable', sans-serif" }}>
+                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </div>
+            </div>
+
             {/* Current Prompt */}
             {currentPrompt && currentPrompt !== 'No prompt' && (
               <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
