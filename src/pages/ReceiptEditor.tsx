@@ -1390,16 +1390,14 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             </div>
 
             {/* Recipient Bar */}
-            <table style={{ width: '100%', backgroundColor: '#000000', borderCollapse: 'collapse', marginBottom: '12px' }}>
-              <tbody>
-                <tr>
-                  <td style={{ padding: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', fontWeight: '400', color: '#ffffff' }}>To: Test</td>
-                  <td style={{ padding: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '12px', fontWeight: '400', color: '#ffffff', textAlign: 'right' }}>
-                    {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div style={{ backgroundColor: '#000000', padding: '12px', marginBottom: '12px', border: '2px solid #ff0000' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', color: '#ffffff' }}>
+                <span>To: Test</span>
+                <span style={{ fontSize: '12px' }}>
+                  {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </span>
+              </div>
+            </div>
 
             {/* Current Prompt */}
             {currentPrompt && currentPrompt !== 'No prompt' && (
