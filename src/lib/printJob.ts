@@ -92,11 +92,16 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
 
     const { data: { user } } = await supabase.auth.getUser()
 
+    if (!user?.email) {
+      throw new Error('User email not available')
+    }
+
     const { data: job, error } = await supabase
       .from('print_jobs')
       .insert({
         printer_id: specifiedPrinterId,
         sender_id: user?.id ?? null,
+        sender_email: user.email,
         recipient_name: recipientName,
         recipient_id: recipientId ?? null,
         message_text: messageText ?? null,
@@ -142,6 +147,10 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
   // 4. Get current user
   const { data: { user } } = await supabase.auth.getUser()
 
+  if (!user?.email) {
+    throw new Error('User email not available')
+  }
+
   // 5. Insert print job
   console.log('[PrintJob] Submitting job to printer:', printerId)
   const { data: job, error } = await supabase
@@ -149,6 +158,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
     .insert({
       printer_id: printerId,
       sender_id: user?.id ?? null,
+      sender_email: user.email,
       recipient_name: recipientName,
       recipient_id: recipientId ?? null,
       message_text: messageText ?? null,

@@ -45,13 +45,13 @@ export default function LettersScreen() {
 
     const loadReceipts = async () => {
       if (activeFriendId) {
-        const sent = await getReceiptsByFriend(user.id, activeFriendId)
-        const received = await getReceivedReceiptsByFriend(user.id, activeFriendId)
+        const sent = await getReceiptsByFriend(user.email!, activeFriendId)
+        const received = await getReceivedReceiptsByFriend(user.email!, activeFriendId)
         setSentReceipts(sent)
         setReceivedReceipts(received)
       } else {
-        const sent = await getReceiptsByCurrentUser(user.id)
-        const received = await getReceivedReceiptsByCurrentUser(user.id)
+        const sent = await getReceiptsByCurrentUser(user.email!)
+        const received = await getReceivedReceiptsByCurrentUser(user.email!)
         setSentReceipts(sent)
         setReceivedReceipts(received)
       }

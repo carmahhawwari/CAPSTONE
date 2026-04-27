@@ -14,7 +14,7 @@ export interface PrintJobInput {
  * Uses recipient_id to match jobs sent to that profile.
  */
 export async function getReceiptsByFriend(
-  currentUserId: string,
+  currentUserEmail: string,
   friendProfileId: string
 ): Promise<Receipt[]> {
   if (!supabase) return []
@@ -23,7 +23,7 @@ export async function getReceiptsByFriend(
     const { data, error } = await supabase
       .from('delivered_receipts')
       .select('*')
-      .eq('sender_id', currentUserId)
+      .eq('sender_email', currentUserEmail)
       .eq('recipient_id', friendProfileId)
       .order('created_at', { ascending: false })
 
@@ -83,14 +83,14 @@ export async function savePrintJob(job: PrintJobInput): Promise<{ success: boole
  * Get all receipts (print jobs) sent by the current user.
  * Used for the full archive view.
  */
-export async function getReceiptsByCurrentUser(userId: string): Promise<Receipt[]> {
+export async function getReceiptsByCurrentUser(userEmail: string): Promise<Receipt[]> {
   if (!supabase) return []
 
   try {
     const { data, error } = await supabase
       .from('delivered_receipts')
       .select('*')
-      .eq('sender_id', userId)
+      .eq('sender_email', userEmail)
       .order('created_at', { ascending: false })
 
     if (error) {
