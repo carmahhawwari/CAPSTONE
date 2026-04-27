@@ -1370,6 +1370,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               padding: '20px',
               backgroundColor: '#ffffff',
               color: '#222121',
+              position: 'relative',
             }}
           >
             {/* Header */}
@@ -1427,10 +1428,9 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             {cornerSticker && (
               <div
                 style={{
-                  marginBottom: '16px',
-                  marginLeft: `${cornerSticker.offsetX ?? 0}px`,
-                  marginTop: `${cornerSticker.offsetY ?? 0}px`,
-                  display: 'inline-block',
+                  position: 'absolute',
+                  top: `${cornerSticker.offsetY ?? 0}px`,
+                  left: `${cornerSticker.offsetX ?? 0}px`,
                 }}
               >
                 <img
