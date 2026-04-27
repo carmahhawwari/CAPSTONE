@@ -106,6 +106,7 @@ export default function PrintingScreen() {
             receiptElement: receiptRef.current!,
             recipientName,
             recipientId: selectedFriend?.profile.id,
+            skipGeofence: isTestMode,
           })
         } catch (err) {
           console.error('Failed to submit print job:', err)
@@ -113,7 +114,7 @@ export default function PrintingScreen() {
       }
       submitPrint()
     }
-  }, [state, user?.id, receiptState, selectedFriend, recipientEmail])
+  }, [state, user?.id, receiptState, selectedFriend, recipientEmail, isTestMode])
 
   const handleBack = () => navigate('/home')
 
