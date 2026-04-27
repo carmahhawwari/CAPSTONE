@@ -634,12 +634,17 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
         await renderToPrintBuffer(receiptClone)
         setTestPrintStatus('sending')
 
-        await submitPrintJob({
-          receiptElement: receiptClone,
-          recipientName: 'Test',
-          messageText: 'Test receipt print',
-          skipGeofence: true,
-        })
+        try {
+          await submitPrintJob({
+            receiptElement: receiptClone,
+            recipientName: 'Test',
+            messageText: 'Test receipt print',
+            skipGeofence: true,
+          })
+        } catch (submitErr) {
+          console.error('submitPrintJob error:', submitErr)
+          throw submitErr
+        }
 
         setTestPrintStatus('done')
         setTimeout(() => setTestPrintStatus('idle'), 2000)
@@ -648,7 +653,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      console.error('Test print error:', msg)
+      console.error('Test print error:', err)
       setTestPrintError(msg)
       setTestPrintStatus('error')
     }
