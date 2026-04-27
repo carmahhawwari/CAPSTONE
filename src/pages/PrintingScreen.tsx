@@ -23,6 +23,7 @@ export default function PrintingScreen() {
   const [isLoading, setIsLoading] = useState(true)
   const receiptState = (location.state as any)?.receiptState
   const receiptRef = useRef<HTMLDivElement>(null)
+  const isTestMode = !searchParams.get('to') && !searchParams.get('email')
 
   useEffect(() => {
     const loadRecipientInfo = async () => {
@@ -53,6 +54,16 @@ export default function PrintingScreen() {
     if (state !== 'confirm') {
       const checkPrinter = async () => {
         try {
+          // In test mode, skip printer check and go straight to printing
+          if (isTestMode) {
+            setState('printing')
+            const timer = setTimeout(() => {
+              setState('done')
+              setTimeout(() => navigate('/home'), 1000)
+            }, 3000)
+            return () => clearTimeout(timer)
+          }
+
           const printerId = await checkNearestPrinter()
 
           if (printerId === null) {
@@ -81,7 +92,7 @@ export default function PrintingScreen() {
 
       checkPrinter()
     }
-  }, [state, navigate])
+  }, [state, navigate, isTestMode])
 
   useEffect(() => {
     if (state === 'done' && user?.id && receiptState && receiptRef.current) {
