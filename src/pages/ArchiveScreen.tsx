@@ -167,7 +167,12 @@ export default function LettersScreen() {
 function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
   let receiptState
   try {
-    receiptState = receipt.receiptStateJson ? JSON.parse(receipt.receiptStateJson) : null
+    // Try new format first (receipt_state_json), fall back to legacy format (content as JSON)
+    if (receipt.receiptStateJson) {
+      receiptState = JSON.parse(receipt.receiptStateJson)
+    } else {
+      receiptState = JSON.parse(receipt.content)
+    }
   } catch {
     receiptState = null
   }
