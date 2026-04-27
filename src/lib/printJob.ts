@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { renderToPrintBuffer, bufferToBase64 } from './escpos'
+import { renderToPrintBuffer, bufferToBase64, type CornerStickerData } from './escpos'
 import { PRINT_SERVER_URL, USE_LOCAL_PRINT_SERVER } from './printBackend'
 
 interface SubmitPrintJobOptions {
@@ -9,6 +9,7 @@ interface SubmitPrintJobOptions {
   recipientId?: string
   skipGeofence?: boolean
   printerId?: string
+  cornerSticker?: CornerStickerData
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -60,9 +61,9 @@ export async function checkNearestPrinter(): Promise<string | null> {
  *
  * Returns the job ID on success, or throws on failure.
  */
-export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, skipGeofence, printerId: specifiedPrinterId }: SubmitPrintJobOptions): Promise<string> {
+export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, skipGeofence, printerId: specifiedPrinterId, cornerSticker }: SubmitPrintJobOptions): Promise<string> {
   // 1. Render receipt to ESC/POS binary
-  const buffer = await renderToPrintBuffer(receiptElement)
+  const buffer = await renderToPrintBuffer(receiptElement, { cornerSticker })
   const payload = bufferToBase64(buffer)
 
   if (USE_LOCAL_PRINT_SERVER || !supabase) {

@@ -107,6 +107,13 @@ export default function PrintingScreen() {
             recipientName,
             recipientId: selectedFriend?.profile.id,
             skipGeofence: isTestMode,
+            cornerSticker: receiptState.cornerSticker ? {
+              imageUrl: receiptState.cornerSticker.ditheredDataUrl || receiptState.cornerSticker.fullUrl,
+              offsetX: receiptState.cornerSticker.offsetX ?? 0,
+              offsetY: receiptState.cornerSticker.offsetY ?? 0,
+              rotation: receiptState.cornerSticker.rotation ?? 0,
+              scale: receiptState.cornerSticker.scale ?? 1,
+            } : undefined,
           })
         } catch (err) {
           console.error('Failed to submit print job:', err)
@@ -259,13 +266,31 @@ export default function PrintingScreen() {
 
       {/* Hidden receipt for rasterization */}
       {receiptState && (
-        <div className="absolute -left-[9999px]">
+        <div className="absolute -left-[9999px]" style={{ width: 0, height: 0, overflow: 'hidden' }}>
           <div
             ref={receiptRef}
             className="bg-white overflow-hidden"
-            style={{ fontFamily: 'Georgia, serif', width: '576px', padding: '20px', backgroundColor: '#ffffff', color: '#222121' }}
+            style={{ fontFamily: 'Georgia, serif', width: '576px', padding: '20px', backgroundColor: '#ffffff', color: '#222121', position: 'relative' }}
           >
-            {/* Prompt */}
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', marginTop: '20px' }}>
+              {receiptState.headerVariant === 'simple' ? (
+                <img src="/src/assets/icons/header-logo.svg" alt="Inklings" style={{ height: '64px', width: 'auto' }} />
+              ) : receiptState.headerVariant === 'squids-checkers' ? (
+                <img src="/src/assets/icons/header-squids-checkers.svg" alt="Inklings squids checkers" style={{ height: '80px', width: 'auto' }} />
+              ) : receiptState.headerVariant === 'squids-v1' ? (
+                <img src="/src/assets/icons/header-squids-v1.svg" alt="Inklings squids v1" style={{ height: '80px', width: 'auto' }} />
+              ) : null}
+            </div>
+
+            {/* Recipient Bar */}
+            <img src="/src/assets/icons/recipient-bar-new.png" alt="" style={{ width: '100%', height: 'auto', marginBottom: '8px', display: 'block' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121' }}>
+              <span>To: {recipientName}</span>
+              <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+            </div>
+
+            {/* Current Prompt */}
             {receiptState.currentPrompt && receiptState.currentPrompt !== 'No prompt' && (
               <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
                 {receiptState.currentPrompt}
@@ -302,16 +327,13 @@ export default function PrintingScreen() {
             </div>
 
             {/* Signature */}
-            {receiptState.signature && (
+            {receiptState.signature && receiptState.signature.text && (
               <div
                 style={{
-                  ...FONT_STYLES[receiptState.signature.style as TextStyle],
-                  fontSize: `${FONT_STYLES[receiptState.signature.style as TextStyle].fontSize * (receiptState.signature.scale ?? 1)}px`,
-                  fontWeight: FONT_STYLES[receiptState.signature.style as TextStyle].fontWeight,
+                  fontFamily: "'Inter Variable', sans-serif",
+                  fontSize: `${14 * (receiptState.signature.scale ?? 1)}px`,
                   color: '#4b5563',
                   fontStyle: 'italic',
-                  transform: `rotate(${receiptState.signature.rotation ?? 0}deg)`,
-                  transformOrigin: '0 0',
                   marginLeft: `${receiptState.signature.offsetX ?? 0}px`,
                   marginTop: `${receiptState.signature.offsetY ?? 0}px`,
                   lineHeight: 1.4,
