@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
-import { getReceiptsByFriend, getReceivedReceiptsByFriend } from '@/lib/receipts'
+import { getReceiptsByFriend, getReceivedReceiptsByFriend, getReceiptsByCurrentUser, getReceivedReceiptsByCurrentUser } from '@/lib/receipts'
 import type { FriendProfile, Receipt } from '@/types/app'
 import type { Block, TextStyle } from '@/types/canvas'
 import { FONT_STYLES } from '@/types/canvas'
@@ -29,9 +29,7 @@ export default function LettersScreen() {
     const loadFriends = async () => {
       const friendsList = await getFriends(user.id)
       setFriends(friendsList)
-      if (friendsList.length > 0) {
-        setActiveFriendId(friendsList[0].profile.id)
-      }
+      setActiveFriendId(null)
       setLoading(false)
     }
 
@@ -39,17 +37,24 @@ export default function LettersScreen() {
   }, [user?.id])
 
   useEffect(() => {
-    if (!user?.id || !activeFriendId) {
+    if (!user?.id) {
       setSentReceipts([])
       setReceivedReceipts([])
       return
     }
 
     const loadReceipts = async () => {
-      const sent = await getReceiptsByFriend(user.id, activeFriendId)
-      const received = await getReceivedReceiptsByFriend(user.id, activeFriendId)
-      setSentReceipts(sent)
-      setReceivedReceipts(received)
+      if (activeFriendId) {
+        const sent = await getReceiptsByFriend(user.id, activeFriendId)
+        const received = await getReceivedReceiptsByFriend(user.id, activeFriendId)
+        setSentReceipts(sent)
+        setReceivedReceipts(received)
+      } else {
+        const sent = await getReceiptsByCurrentUser(user.id)
+        const received = await getReceivedReceiptsByCurrentUser(user.id)
+        setSentReceipts(sent)
+        setReceivedReceipts(received)
+      }
     }
 
     loadReceipts()
@@ -70,28 +75,35 @@ export default function LettersScreen() {
           <div className="flex min-w-0 flex-1 flex-col gap-4">
             <h1 className="text-regular-semibold text-text-primary">Letters</h1>
             <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
-              {friends.length === 0 ? (
-                <p className="text-callout text-text-tertiary">No friends yet</p>
-              ) : (
-                friends.map((f) => {
-                  const label = (f.profile.display_name || f.profile.username || 'Friend').split(' ')[0]
-                  const isActive = activeFriendId === f.profile.id
-                  return (
-                    <button
-                      key={f.friendRowId}
-                      type="button"
-                      onClick={() => setActiveFriendId(f.profile.id)}
-                      className={
-                        isActive
-                          ? 'text-callout text-text-inverse bg-fill-primary rounded-md whitespace-nowrap px-4 py-2'
-                          : 'text-callout text-text-secondary whitespace-nowrap px-3 py-2'
-                      }
-                    >
-                      {label}
-                    </button>
-                  )
-                })
-              )}
+              <button
+                type="button"
+                onClick={() => setActiveFriendId(null)}
+                className={
+                  activeFriendId === null
+                    ? 'text-callout text-text-inverse bg-fill-primary rounded-md whitespace-nowrap px-4 py-2'
+                    : 'text-callout text-text-secondary whitespace-nowrap px-3 py-2'
+                }
+              >
+                All
+              </button>
+              {friends.map((f) => {
+                const label = (f.profile.display_name || f.profile.username || 'Friend').split(' ')[0]
+                const isActive = activeFriendId === f.profile.id
+                return (
+                  <button
+                    key={f.friendRowId}
+                    type="button"
+                    onClick={() => setActiveFriendId(f.profile.id)}
+                    className={
+                      isActive
+                        ? 'text-callout text-text-inverse bg-fill-primary rounded-md whitespace-nowrap px-4 py-2'
+                        : 'text-callout text-text-secondary whitespace-nowrap px-3 py-2'
+                    }
+                  >
+                    {label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
