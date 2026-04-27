@@ -563,30 +563,34 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     resetStickerGesture()
   }
 
-  const serializeContent = () => {
-    return JSON.stringify(blocks)
-  }
+  const getReceiptState = () => ({
+    blocks,
+    currentPrompt,
+    headerVariant,
+    signature,
+    cornerSticker,
+  })
 
   const handleSend = () => {
     if (blocks.length === 0) return
-    const content = serializeContent()
+    const receiptState = getReceiptState()
     if (recipientEmail) {
-      navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { content } })
+      navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { receiptState } })
       return
     }
     if (!selectedFriendId || !selectedFriend) {
       setShowFriendPicker(true)
       return
     }
-    navigate(`/printing?to=${selectedFriendId}`, { state: { content } })
+    navigate(`/printing?to=${selectedFriendId}`, { state: { receiptState } })
   }
 
   const handleSelectFriendFromPicker = (friendId: string) => {
     setSelectedFriendId(friendId)
     setShowFriendPicker(false)
     setFriendSearchQuery('')
-    const content = serializeContent()
-    navigate(`/printing?to=${friendId}`, { state: { content } })
+    const receiptState = getReceiptState()
+    navigate(`/printing?to=${friendId}`, { state: { receiptState } })
   }
 
   const filteredFriends = friends.filter(f =>

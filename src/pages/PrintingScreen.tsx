@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
-import { savePrintJob } from '@/lib/receipts'
 import printerImg from '@/assets/printer.png'
 import wifiSymbol from '@/assets/wifi-symbol.svg'
-import { checkNearestPrinter } from '@/lib/printJob'
+import { submitPrintJob, checkNearestPrinter } from '@/lib/printJob'
 import type { FriendProfile } from '@/types/app'
+import type { Block, TextStyle } from '@/types/canvas'
+import { FONT_STYLES } from '@/types/canvas'
 
 type PrintState = 'confirm' | 'locating' | 'no-location' | 'no-printer' | 'printing' | 'done' | 'failed'
 
@@ -20,7 +21,8 @@ export default function PrintingScreen() {
   const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
   const [messageCount] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
-  const content = (location.state as any)?.content || ''
+  const receiptState = (location.state as any)?.receiptState
+  const receiptRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const loadRecipientInfo = async () => {
@@ -82,21 +84,25 @@ export default function PrintingScreen() {
   }, [state, navigate])
 
   useEffect(() => {
-    if (state === 'done' && user?.id && content) {
-      const savePrint = async () => {
-        const payload = btoa(content)
-        await savePrintJob({
-          sender_id: user.id,
-          recipient_id: selectedFriend?.profile.id,
-          recipient_name:
-            selectedFriend?.profile.display_name || selectedFriend?.profile.username || recipientEmail || 'Unknown',
-          message_text: content,
-          payload_base64: payload,
-        })
+    if (state === 'done' && user?.id && receiptState && receiptRef.current) {
+      const submitPrint = async () => {
+        try {
+          const recipientName = selectedFriend
+            ? selectedFriend.profile.display_name || selectedFriend.profile.username || 'Friend'
+            : recipientEmail?.split('@')[0] || 'Unknown'
+
+          await submitPrintJob({
+            receiptElement: receiptRef.current!,
+            recipientName,
+            recipientId: selectedFriend?.profile.id,
+          })
+        } catch (err) {
+          console.error('Failed to submit print job:', err)
+        }
       }
-      savePrint()
+      submitPrint()
     }
-  }, [state, user?.id, content, selectedFriend, recipientEmail])
+  }, [state, user?.id, receiptState, selectedFriend, recipientEmail])
 
   const handleBack = () => navigate('/home')
 
@@ -235,6 +241,73 @@ export default function PrintingScreen() {
         <div className="flex flex-col items-center justify-center gap-6">
           <div className="text-center">
             <p className="text-xl font-semibold text-gray-900">Print sent!</p>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden receipt for rasterization */}
+      {receiptState && (
+        <div className="absolute -left-[9999px]">
+          <div
+            ref={receiptRef}
+            className="bg-white overflow-hidden"
+            style={{ fontFamily: 'Georgia, serif', width: '576px', padding: '20px' }}
+          >
+            {/* Prompt */}
+            {receiptState.currentPrompt && receiptState.currentPrompt !== 'No prompt' && (
+              <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
+                {receiptState.currentPrompt}
+              </div>
+            )}
+
+            {/* Render blocks */}
+            <div style={{ marginBottom: '16px' }}>
+              {receiptState.blocks?.map((block: Block) => (
+                <div key={block.id} style={{ marginBottom: '8px' }}>
+                  {block.type === 'text' && (
+                    <div
+                      style={{
+                        ...FONT_STYLES[block.style as TextStyle],
+                        fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1)}px`,
+                        fontWeight: block.fontWeight ?? FONT_STYLES[block.style as TextStyle].fontWeight,
+                        fontStyle: block.isItalic ? 'italic' : 'normal',
+                        textDecoration: block.isBold ? 'underline' : 'none',
+                        color: '#1f2937',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {block.content}
+                    </div>
+                  )}
+                  {block.type === 'image' && (
+                    <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '8px' }} />
+                  )}
+                  {block.type === 'sticker' && (
+                    <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px' }}>[sticker]</div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Signature */}
+            {receiptState.signature && (
+              <div
+                style={{
+                  ...FONT_STYLES[receiptState.signature.style as TextStyle],
+                  fontSize: `${FONT_STYLES[receiptState.signature.style as TextStyle].fontSize * (receiptState.signature.scale ?? 1)}px`,
+                  fontWeight: FONT_STYLES[receiptState.signature.style as TextStyle].fontWeight,
+                  color: '#4b5563',
+                  fontStyle: 'italic',
+                  transform: `rotate(${receiptState.signature.rotation ?? 0}deg)`,
+                  transformOrigin: '0 0',
+                  marginLeft: `${receiptState.signature.offsetX ?? 0}px`,
+                  marginTop: `${receiptState.signature.offsetY ?? 0}px`,
+                  lineHeight: 1.4,
+                }}
+              >
+                {receiptState.signature.text}
+              </div>
+            )}
           </div>
         </div>
       )}
