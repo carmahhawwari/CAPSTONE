@@ -25,7 +25,6 @@ export async function getReceiptsByFriend(
       .select('*')
       .eq('sender_id', currentUserId)
       .eq('recipient_id', friendProfileId)
-      .not('printed_at', 'is', null)
       .order('created_at', { ascending: false })
 
     if (error) {
