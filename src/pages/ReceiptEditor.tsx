@@ -1390,15 +1390,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             </div>
 
             {/* Recipient Bar */}
-            <div style={{ position: 'relative', marginBottom: '12px', width: '536px', height: '60px' }}>
-              <img src="/src/assets/icons/recipient-bar.png" alt="" style={{ width: '100%', height: '100%', display: 'block' }} />
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: '12px', paddingRight: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', color: '#ffffff' }}>
-                <span>To: Test</span>
-                <span style={{ fontSize: '12px' }}>
-                  {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                </span>
-              </div>
-            </div>
+            <img src="/src/assets/icons/recipient-bar.png" alt="" style={{ width: '100%', height: 'auto', marginBottom: '12px', display: 'block' }} />
 
             {/* Current Prompt */}
             {currentPrompt && currentPrompt !== 'No prompt' && (
