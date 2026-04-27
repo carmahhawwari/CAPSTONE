@@ -1367,7 +1367,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
 
       {/* Hidden receipt for printing (test mode only) */}
       {testMode && (
-        <div className="absolute -left-[9999px]">
+        <div style={{ position: 'fixed', left: '-9999px', top: '-9999px', visibility: 'hidden' }}>
           <div
             ref={printReceiptRef}
             style={{
