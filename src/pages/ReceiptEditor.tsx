@@ -747,15 +747,10 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
           </div>
 
           {/* Recipient Bar */}
-          <div className="relative mb-3">
-            <img src={recipientBarSvg} alt="" className="w-full h-auto" />
-            <div className="absolute inset-0 flex items-center px-3 text-white z-10" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
-              To: {recipientName || recipientEmail || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
-            </div>
-            {/* Date */}
-            <div className="absolute top-1/2 right-3 text-xs text-white z-20" style={{ fontFamily: "var(--font-printvetica)", transform: 'translateY(-50%)' }}>
-              {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-            </div>
+          <img src={recipientBarSvg} alt="" className="w-full h-auto mb-2" />
+          <div className="flex justify-between mb-6 text-sm" style={{ fontFamily: "var(--font-printvetica)" }}>
+            <span>To: {recipientName || recipientEmail || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}</span>
+            <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
           </div>
 
           {/* Prompt Picker */}
@@ -1390,14 +1385,10 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             </div>
 
             {/* Recipient Bar */}
-            <div style={{ position: 'relative', marginBottom: '12px' }}>
-              <img src="/src/assets/icons/recipient-bar.svg" alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
-              <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingLeft: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', color: '#ffffff' }}>
-                To: Test
-              </div>
-              <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingRight: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '12px', color: '#ffffff' }}>
-                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </div>
+            <img src="/src/assets/icons/recipient-bar.svg" alt="" style={{ width: '100%', height: 'auto', marginBottom: '8px', display: 'block' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '14px', color: '#222121' }}>
+              <span>To: Test</span>
+              <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
             </div>
 
             {/* Current Prompt */}
