@@ -857,8 +857,8 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
 
           {/* Signature and Corner sticker - Same row */}
           <div className="pt-2 mt-6 flex gap-4 items-end">
-            {/* Signature - Left side */}
-            <div className="flex-1">
+            {/* Signature - Left side (hidden for now) */}
+            {false && <div className="flex-1">
               <div
                 ref={signatureAreaRef}
                 className="relative h-20"
@@ -924,7 +924,7 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
                   })()}
                 </div>
               </div>
-            </div>
+            </div>}
 
             {/* Corner sticker - Right side */}
             <div ref={cornerStickerAreaRef} className="relative h-56 w-56 flex-shrink-0">
