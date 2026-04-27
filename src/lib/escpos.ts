@@ -119,11 +119,11 @@ export async function renderToPrintBuffer(
 
         console.log('[escpos] Drawing sticker at:', { stickerX, stickerY, stickerWidth, stickerHeight, rotation: options.cornerSticker.rotation })
 
-        // Apply rotation and draw sticker
+        // Apply rotation and draw sticker (rotate around center)
         ctx.save()
-        ctx.translate(stickerX, stickerY)
+        ctx.translate(stickerX + stickerWidth / 2, stickerY + stickerHeight / 2)
         ctx.rotate((options.cornerSticker.rotation * Math.PI) / 180)
-        ctx.drawImage(stickerImg, 0, 0, stickerWidth, stickerHeight)
+        ctx.drawImage(stickerImg, -stickerWidth / 2, -stickerHeight / 2, stickerWidth, stickerHeight)
         ctx.restore()
         console.log('[escpos] Sticker composited successfully')
       } catch (err) {
