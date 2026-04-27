@@ -2,15 +2,19 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
-import { getReceiptsByFriend } from '@/lib/receipts'
+import { getReceiptsByFriend, getReceivedReceiptsByFriend } from '@/lib/receipts'
 import type { FriendProfile, Receipt } from '@/types/app'
+
+type TabType = 'sent' | 'received'
 
 export default function LettersScreen() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [friends, setFriends] = useState<FriendProfile[]>([])
   const [activeFriendId, setActiveFriendId] = useState<string | null>(null)
-  const [receipts, setReceipts] = useState<Receipt[]>([])
+  const [activeTab, setActiveTab] = useState<TabType>('sent')
+  const [sentReceipts, setSentReceipts] = useState<Receipt[]>([])
+  const [receivedReceipts, setReceivedReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -33,13 +37,16 @@ export default function LettersScreen() {
 
   useEffect(() => {
     if (!user?.id || !activeFriendId) {
-      setReceipts([])
+      setSentReceipts([])
+      setReceivedReceipts([])
       return
     }
 
     const loadReceipts = async () => {
-      const recs = await getReceiptsByFriend(user.id, activeFriendId)
-      setReceipts(recs)
+      const sent = await getReceiptsByFriend(user.id, activeFriendId)
+      const received = await getReceivedReceiptsByFriend(user.id, activeFriendId)
+      setSentReceipts(sent)
+      setReceivedReceipts(received)
     }
 
     loadReceipts()
@@ -104,11 +111,36 @@ export default function LettersScreen() {
         </header>
       </div>
 
+      <div className="flex flex-col gap-4 px-6">
+        <div className="flex gap-2 border-b border-fill-tertiary">
+          <button
+            onClick={() => setActiveTab('sent')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'sent'
+                ? 'text-text-primary border-b-2 border-fill-primary -mb-px'
+                : 'text-text-secondary'
+            }`}
+          >
+            Sent
+          </button>
+          <button
+            onClick={() => setActiveTab('received')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'received'
+                ? 'text-text-primary border-b-2 border-fill-primary -mb-px'
+                : 'text-text-secondary'
+            }`}
+          >
+            Received
+          </button>
+        </div>
+      </div>
+
       <div className="mt-6 flex flex-col gap-5 px-6 pb-8">
-        {receipts.length === 0 ? (
+        {(activeTab === 'sent' ? sentReceipts : receivedReceipts).length === 0 ? (
           <p className="text-callout text-text-tertiary">No letters yet.</p>
         ) : (
-          receipts.map((r) => (
+          (activeTab === 'sent' ? sentReceipts : receivedReceipts).map((r) => (
             <div
               key={r.id}
               className="border-fill-tertiary bg-bg-secondary rounded-md border p-4 flex flex-col justify-between overflow-hidden"

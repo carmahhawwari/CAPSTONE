@@ -113,3 +113,43 @@ export async function getReceiptsByCurrentUser(userId: string): Promise<Receipt[
     return []
   }
 }
+
+/**
+ * Get all receipts received by the current user from a specific friend.
+ */
+export async function getReceivedReceiptsByFriend(
+  currentUserId: string,
+  friendProfileId: string
+): Promise<Receipt[]> {
+  if (!supabase) return []
+
+  try {
+    const { data, error } = await supabase
+      .from('print_jobs')
+      .select('*')
+      .eq('sender_id', friendProfileId)
+      .eq('recipient_id', currentUserId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('getReceivedReceiptsByFriend error:', error)
+      return []
+    }
+
+    return (data || []).map((job: any) => ({
+      id: job.id,
+      date: new Date(job.created_at).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      to: 'You',
+      from: job.recipient_name ?? 'Unknown',
+      content: job.message_text ?? '(printed message)',
+      friendId: friendProfileId,
+    }))
+  } catch (error) {
+    console.error('getReceivedReceiptsByFriend exception:', error)
+    return []
+  }
+}
