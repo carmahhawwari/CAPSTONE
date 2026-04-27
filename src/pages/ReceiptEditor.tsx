@@ -671,12 +671,13 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           {/* Recipient Bar */}
           <div className="relative mb-3">
             <img src={recipientBarSvg} alt="" className="w-full h-auto" />
-            <div className="absolute inset-0 flex items-center px-3 text-white z-10" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
-              To: {recipientName || recipientEmail || (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___')}
-            </div>
-            {/* Date */}
-            <div className="absolute top-1/2 right-3 text-xs text-white z-20" style={{ fontFamily: "var(--font-printvetica)", transform: 'translateY(-50%)' }}>
-              {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            <div className="absolute inset-0 flex items-center px-3 text-white z-10 gap-2" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
+              <span className="truncate">
+                To: {recipientName || (recipientEmail ? recipientEmail.split('@')[0] : (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___'))}
+              </span>
+              <span className="ml-auto shrink-0 text-xs">
+                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
             </div>
           </div>
 

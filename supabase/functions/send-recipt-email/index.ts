@@ -86,15 +86,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const subject = `📬 ${senderName} sent you an Inklings`
   const text = `${senderName} sent you a personal note on Inklings.\n\nOpen it here: ${link}\n\n— Inklings`
 
+  const fontStack = `'Printvetica', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif`
   const html = `<!doctype html>
-<html><body style="margin:0;padding:32px 16px;background:#ece8df;font-family:Georgia,serif;color:#1a1a1a;">
-  <div style="max-width:420px;margin:0 auto;background:#fbf6e6;border:1px solid #969696;padding:24px;text-align:center;">
-    <p style="margin:0 0 8px;font-size:14px;color:#787878;letter-spacing:0.1em;">📬 you've got mail</p>
-    <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;">${escapeHtml(senderName)} sent you a message</h1>
-    <p style="margin:0 0 24px;font-size:14px;color:#1a1a1a;">Tap below to open it on Inklings.</p>
-    <a href="${link}" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:#fbf6e6;text-decoration:none;font-size:14px;font-weight:bold;letter-spacing:0.05em;">Open my Inklings</a>
-    <p style="margin:24px 0 0;font-size:11px;color:#787878;word-break:break-all;">${escapeHtml(link)}</p>
+<html><body style="margin:0;padding:48px 16px;background:#ffffff;font-family:${fontStack};color:#000000;">
+  <div style="max-width:420px;margin:0 auto;background:#ffffff;border:1px solid #d4d4d8;padding:32px 24px;text-align:center;">
+    <p style="margin:0 0 12px;font-size:12px;color:#787878;letter-spacing:0.2em;text-transform:uppercase;">📬 you've got mail</p>
+    <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;font-weight:600;color:#000000;">${escapeHtml(senderName)} sent you an Inkling</h1>
+    <p style="margin:0 0 28px;font-size:14px;color:#000000;">Tap below to open it on Inklings.</p>
+    <a href="${link}" style="display:inline-block;padding:14px 28px;background:#000000;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;border-radius:6px;font-family:${fontStack};">Open my Inkling</a>
+    <p style="margin:28px 0 0;font-size:11px;color:#969696;word-break:break-all;">${escapeHtml(link)}</p>
   </div>
+  <p style="max-width:420px;margin:16px auto 0;font-size:11px;color:#969696;text-align:center;">Sent via Inklings · inklings.thecupidproject.org</p>
 </body></html>`
 
   const sendRes = await fetch('https://api.resend.com/emails', {
