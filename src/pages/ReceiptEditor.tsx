@@ -32,7 +32,6 @@ const PROMPTS = [
   'Something I want to remember from this week is...',
 ]
 
-const FONTS_WITH_ITALIC = ['inter', 'normal', 'heading', 'handwriting', 'liquida', 'dottonoji', 'tsuchinoko', 'redaction'] as const
 const DEFAULT_CORNER_STICKER_ROTATION = 0
 const DEFAULT_CORNER_STICKER_SCALE = 1.1
 const MIN_CORNER_STICKER_SCALE = 0.5
@@ -54,10 +53,6 @@ function normalizeCornerSticker(sticker: CornerSticker): CornerSticker {
   }
 }
 
-function supportsItalic(style: TextStyle): boolean {
-  return FONTS_WITH_ITALIC.includes(style as any)
-}
-
 interface ReceiptEditorProps {
   onboarding?: boolean
 }
@@ -73,7 +68,15 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const draft = loadDraft()
 
   // State
-  const [blocks, setBlocks] = useState<Block[]>([])
+  const [blocks, setBlocks] = useState<Block[]>(() => {
+    const existing: Block[] = (onboarding ? loadDraft().content?.blocks : null) ?? []
+    const hasImage = existing.some((b) => b.type === 'image')
+    const hasText = existing.some((b) => b.type === 'text')
+    const merged: Block[] = []
+    if (!hasImage) merged.push({ id: newBlockId(), type: 'image', dataUrl: '' })
+    if (!hasText) merged.push({ id: newBlockId(), type: 'text', content: '', style: 'inter' })
+    return [...merged, ...existing]
+  })
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null)
   const [showStickerPicker, setShowStickerPicker] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -81,7 +84,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [selectedFriendId, setSelectedFriendId] = useState('')
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null)
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [cornerSticker, setCornerSticker] = useState<CornerSticker | null>(null)
   const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
   const [showGiphyPicker, setShowGiphyPicker] = useState(false)
@@ -238,6 +240,12 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   }
 
   const handleAddSticker = (stickerId: string) => {
+    const active = blocks.find((b) => b.id === activeBlockId)
+    if (active && active.type === 'sticker' && !active.stickerId) {
+      // Fill the existing empty sticker slot instead of appending a new one.
+      setBlocks(blocks.map((b) => (b.id === active.id ? { ...b, stickerId } : b)))
+      return
+    }
     const newBlock: Block = {
       id: newBlockId(),
       type: 'sticker',
@@ -252,19 +260,8 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   }
 
   const deleteBlock = (id: string) => {
-    setDeleteConfirmId(id)
-  }
-
-  const confirmDelete = () => {
-    if (deleteConfirmId) {
-      setBlocks(blocks.filter(block => block.id !== deleteConfirmId))
-      setActiveBlockId(null)
-      setDeleteConfirmId(null)
-    }
-  }
-
-  const cancelDelete = () => {
-    setDeleteConfirmId(null)
+    setBlocks(blocks.filter(block => block.id !== id))
+    setActiveBlockId(null)
   }
 
   const handleDragStart = (blockId: string) => {
@@ -601,7 +598,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   return (
     <div className="min-h-screen bg-white flex flex-col pb-16">
       <div className="px-6 pt-8 flex-1 overflow-y-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Share an Inkling</h1>
 
         {/* Friend picker - only for authenticated users */}
         {!onboarding && friends.length > 0 && (
@@ -906,9 +902,11 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             ) : (
               <button
                 onClick={() => setShowGiphyPicker(true)}
-                className="absolute bottom-0 right-0 w-28 h-28 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-300 text-5xl hover:text-gray-400 hover:border-gray-300 transition-all focus:outline-none"
+                className="absolute bottom-0 right-0 w-28 h-28 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-300 hover:text-gray-400 hover:border-gray-300 transition-all focus:outline-none"
+                style={{ fontFamily: 'var(--font-printvetica), Inter, sans-serif' }}
               >
-                +
+                <span className="text-3xl leading-none">+</span>
+                <span className="text-xs">Add a sticker</span>
               </button>
             )}
             </div>
@@ -950,9 +948,14 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           onAddSticker={addStickerBlock}
         />
 
-        {/* Font Style Picker - shown when text block is active */}
+        {/* Font Style Picker - collapsed by default; click 'Customize text' to open */}
         {activeBlock?.type === 'text' && (
-          <div className="mt-4 space-y-2">
+          <details className="mt-4 group">
+            <summary className="text-xs font-medium text-gray-500 cursor-pointer select-none list-none flex items-center gap-1 hover:text-gray-700">
+              <span className="inline-block transition-transform group-open:rotate-90">›</span>
+              Customize text
+            </summary>
+            <div className="mt-3 space-y-5">
             <FontStylePicker
               current={activeBlock.style}
               onChange={style => updateBlock(activeBlock.id, { style: style as TextStyle })}
@@ -968,27 +971,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
               />
             )}
             {activeBlock.style === 'inter' && (
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <FontWeightSlider
-                    value={activeBlock.fontWeight ?? 400}
-                    onChange={fontWeight => updateBlock(activeBlock.id, { fontWeight })}
-                  />
-                </div>
-                {supportsItalic(activeBlock.style) && (
-                  <button
-                    onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
-                    className={`mt-8 px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
-                      activeBlock.isItalic
-                        ? 'bg-fill-primary text-white'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
-                    }`}
-                    style={{ fontStyle: 'italic' }}
-                  >
-                    I
-                  </button>
-                )}
-              </div>
+              <FontWeightSlider
+                value={activeBlock.fontWeight ?? 400}
+                onChange={fontWeight => updateBlock(activeBlock.id, { fontWeight })}
+              />
             )}
             {activeBlock.style === 'tsuchinoko' && (
               <div className="flex gap-2">
@@ -1002,35 +988,10 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                 >
                   Bold
                 </button>
-                {supportsItalic(activeBlock.style) && (
-                  <button
-                    onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
-                    className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
-                      activeBlock.isItalic
-                        ? 'bg-fill-primary text-white'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
-                    }`}
-                    style={{ fontStyle: 'italic' }}
-                  >
-                    I
-                  </button>
-                )}
               </div>
             )}
-            {supportsItalic(activeBlock.style) && activeBlock.style !== 'inter' && activeBlock.style !== 'tsuchinoko' && (
-              <button
-                onClick={() => updateBlock(activeBlock.id, { isItalic: !activeBlock.isItalic })}
-                className={`px-3 py-2 rounded text-sm font-semibold transition-colors ${
-                  activeBlock.isItalic
-                    ? 'bg-fill-primary text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:border-gray-400'
-                }`}
-                style={{ fontStyle: 'italic' }}
-              >
-                I
-              </button>
-            )}
-          </div>
+            </div>
+          </details>
         )}
 
         {/* Signature Font Picker - shown when signature is active */}
@@ -1054,13 +1015,19 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
         )}
 
-        {/* Image Adjustment Panel - shown when image block is active */}
+        {/* Image Adjustment Panel - collapsed by default */}
         {activeBlock?.type === 'image' && (
-          <ImageAdjustmentPanel
-            dataUrl={activeBlock.dataUrl}
-            adjustments={activeBlock.adjustments ?? DEFAULT_ADJUSTMENTS}
-            onAdjustmentsChange={adjustments => updateBlock(activeBlock.id, { adjustments })}
-          />
+          <details className="mt-4 group">
+            <summary className="text-xs font-medium text-gray-500 cursor-pointer select-none list-none flex items-center gap-1 hover:text-gray-700">
+              <span className="inline-block transition-transform group-open:rotate-90">›</span>
+              Customize image
+            </summary>
+            <ImageAdjustmentPanel
+              dataUrl={activeBlock.dataUrl}
+              adjustments={activeBlock.adjustments ?? DEFAULT_ADJUSTMENTS}
+              onAdjustmentsChange={adjustments => updateBlock(activeBlock.id, { adjustments })}
+            />
+          </details>
         )}
 
         {/* Corner Sticker Control Panel */}
@@ -1149,7 +1116,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           <div className="fixed inset-0 bg-black/50 flex items-end z-50">
             <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom max-h-[80vh] overflow-y-auto">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Send to</h2>
+                <h2 className="text-lg font-semibold text-black mb-4">Send to</h2>
                 <input
                   type="text"
                   placeholder="Search friends..."
@@ -1177,7 +1144,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                           <Avatar avatarId={1} size={40} />
                         </div>
                       )}
-                      <span className="text-sm font-medium text-gray-900">{friendLabel(f)}</span>
+                      <span className="text-sm font-medium text-black">{friendLabel(f)}</span>
                     </button>
                   ))
                 )}
@@ -1185,7 +1152,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
 
               <button
                 onClick={() => setShowFriendPicker(false)}
-                className="w-full py-3 rounded-lg border border-gray-300 bg-white text-gray-900 font-semibold text-sm active:bg-gray-50 transition-colors"
+                className="w-full py-3 rounded-lg border border-gray-300 bg-white text-black font-semibold text-sm active:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
@@ -1197,33 +1164,8 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           <p className="mt-4 text-xs text-red-600">{error}</p>
         )}
 
-        {/* Delete Confirmation Modal */}
-        {deleteConfirmId && (
-          <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-            <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom">
-              <p className="text-sm text-gray-700">
-                Are you sure you want to delete this section? This action cannot be undone.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={cancelDelete}
-                  className="flex-1 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 font-semibold text-sm active:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="flex-1 py-3 rounded-lg bg-red-600 text-white font-semibold text-sm active:bg-red-700 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Inline CTA — placed at end of scroll content so it works reliably on iOS Safari */}
-        <div className="mt-8 mb-6 flex gap-3">
+        {/* CTA — sits at the bottom of the scroll content (not fixed, so iOS taps land) */}
+        <div className="mt-10 mb-8 flex gap-3">
           {onboarding ? (
             <button
               type="button"

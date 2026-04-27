@@ -116,7 +116,7 @@ export const FONT_STYLES: Record<TextStyle, FontStyleConfig> = {
     lineHeight: 1.4,
   },
   inter: {
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-printvetica), Inter, sans-serif",
     fontSize: 14,
     fontWeight: 400,
     lineHeight: 1.5,

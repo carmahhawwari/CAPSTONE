@@ -17,7 +17,7 @@ export default function OnboardRecipient() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-6">
       <div className="w-full max-w-sm">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-black">
           Who do you want to send this to?
         </h1>
 

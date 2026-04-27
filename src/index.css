@@ -17,7 +17,7 @@
 
 @theme {
   --font-primary:
-    'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Printvetica', 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     sans-serif;
   --font-secondary:
     'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
@@ -73,7 +73,7 @@
   --color-bg-selected-1: rgba(0, 0, 0, 0.1);
   --color-bg-selected-2: rgba(0, 0, 0, 0.02);
 
-  --color-fill-primary: #222121;
+  --color-fill-primary: #000000;
   --color-fill-secondary: #969696;
   --color-fill-tertiary: #d4d4d8;
   --color-fill-quaternary: #e8e8e8;
@@ -89,7 +89,7 @@
   --color-accent-ink: #8c0017;
   --color-accent-ink-50: rgba(140, 0, 23, 0.5);
 
-  --color-text-primary: #222121;
+  --color-text-primary: #000000;
   --color-text-secondary: #787878;
   --color-text-tertiary: #969696;
   --color-text-quaternary: #b4b4b4;
