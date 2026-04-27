@@ -646,7 +646,15 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
     setTestPrintError(null)
 
     try {
-      const buffer = await renderToPrintBuffer(printReceiptRef.current)
+      const buffer = await renderToPrintBuffer(printReceiptRef.current, {
+        cornerSticker: cornerSticker ? {
+          imageUrl: cornerSticker.ditheredDataUrl || cornerSticker.fullUrl,
+          offsetX: cornerSticker.offsetX ?? 0,
+          offsetY: cornerSticker.offsetY ?? 0,
+          rotation: cornerSticker.rotation ?? 0,
+          scale: cornerSticker.scale ?? 1,
+        } : undefined,
+      })
       console.log('✓ Rasterization successful! Buffer size:', buffer.length, 'bytes')
       setTestPrintStatus('sending')
 

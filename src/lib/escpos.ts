@@ -7,8 +7,17 @@ const CAPTURE_ATTR = 'data-escpos-capture'
 
 export type DitherMethod = 'floyd-steinberg' | 'atkinson' | 'ordered' | 'threshold'
 
+export interface CornerStickerData {
+  imageUrl: string
+  offsetX: number
+  offsetY: number
+  rotation: number
+  scale: number
+}
+
 interface RenderToPrintOptions {
   ditherMethod?: DitherMethod
+  cornerSticker?: CornerStickerData
 }
 
 function inlineComputedStyles(sourceRoot: HTMLElement, clonedRoot: HTMLElement): void {
@@ -44,6 +53,16 @@ function applyCaptureStyle(doc: Document): HTMLStyleElement {
 `
   doc.head.appendChild(style)
   return style
+}
+
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`))
+    img.src = url
+  })
 }
 
 /**
@@ -84,12 +103,35 @@ export async function renderToPrintBuffer(
       },
     })
 
-    // 2. Get pixel data and convert to 1-bit
+    // 2. Composite corner sticker on top if provided
+    if (options.cornerSticker) {
+      try {
+        const stickerImg = await loadImage(options.cornerSticker.imageUrl)
+        const ctx = canvas.getContext('2d')!
+
+        // Calculate sticker position and size
+        const stickerX = Math.round(options.cornerSticker.offsetX * scale)
+        const stickerY = Math.round(options.cornerSticker.offsetY * scale)
+        const stickerWidth = Math.round(stickerImg.width * options.cornerSticker.scale)
+        const stickerHeight = Math.round(stickerImg.height * options.cornerSticker.scale)
+
+        // Apply rotation and draw sticker
+        ctx.save()
+        ctx.translate(stickerX, stickerY)
+        ctx.rotate((options.cornerSticker.rotation * Math.PI) / 180)
+        ctx.drawImage(stickerImg, 0, 0, stickerWidth, stickerHeight)
+        ctx.restore()
+      } catch (err) {
+        console.warn('Failed to composite corner sticker:', err)
+      }
+    }
+
+    // 3. Get pixel data and convert to 1-bit
     const ctx = canvas.getContext('2d')!
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const mono = ditherImage(imageData, options.ditherMethod ?? 'floyd-steinberg')
 
-    // 3. Build ESC/POS command buffer
+    // 4. Build ESC/POS command buffer
     return buildEscPosBuffer(mono, canvas.width, canvas.height)
   } finally {
     captureStyle.remove()
