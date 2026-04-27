@@ -75,6 +75,12 @@ export async function renderToPrintBuffer(
 
         inlineComputedStyles(element, clonedElement)
         clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => node.remove())
+
+        // Remove all class attributes to prevent oklch color parsing errors
+        clonedElement.removeAttribute('class')
+        clonedElement.querySelectorAll('[class]').forEach((node) => {
+          node.removeAttribute('class')
+        })
       },
     })
 
