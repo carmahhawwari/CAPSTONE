@@ -18,7 +18,6 @@ export default function PrintingScreen() {
   const [state, setState] = useState<PrintState>('confirm')
   const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null)
   const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
-  const [messageCount] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const content = (location.state as any)?.content || ''
 
@@ -114,9 +113,6 @@ export default function PrintingScreen() {
       {state === 'confirm' && !isLoading && (
         <div className="flex flex-col items-center justify-center gap-8 w-full max-w-sm">
           <div className="text-center">
-            <p className="text-sm text-gray-600 mb-1">
-              {messageCount === 1 ? '1 message' : `${messageCount} messages`} waiting
-            </p>
             <p className="text-2xl font-bold text-gray-900">
               {recipientName}
             </p>
