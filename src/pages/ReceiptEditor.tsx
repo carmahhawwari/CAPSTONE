@@ -571,10 +571,20 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { content } })
         return
       }
-      const senderName =
-        (user?.user_metadata?.display_name as string | undefined) ||
-        user?.email?.split('@')[0] ||
-        'A friend'
+      let senderName = (user?.user_metadata?.display_name as string | undefined) ?? ''
+      if (!senderName && user?.id) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('display_name, username')
+            .eq('id', user.id)
+            .maybeSingle()
+          senderName = (profile?.display_name as string | null) ?? (profile?.username as string | null) ?? ''
+        } catch {
+          // ignore — fall through to email-local-part fallback
+        }
+      }
+      if (!senderName) senderName = user?.email?.split('@')[0] || 'A friend'
       try {
         const { data, error } = await supabase.functions.invoke('send-recipt-email', {
           body: {
