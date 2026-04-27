@@ -94,7 +94,7 @@ export default function HomeScreen() {
         <div className="fixed inset-0 bg-black/50 flex items-end z-50">
           <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom max-h-[80vh] overflow-y-auto">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Send to</h2>
+              <h2 className="text-lg font-semibold text-black mb-4">Send to</h2>
               <div className="relative">
                 <input
                   type="text"
@@ -124,7 +124,7 @@ export default function HomeScreen() {
                         <span className="text-sm font-semibold text-text-primary">@</span>
                       </div>
                       <div className="flex-1">
-                        <span className="text-sm font-medium text-gray-900">{sunetEmail}</span>
+                        <span className="text-sm font-medium text-black">{sunetEmail}</span>
                         <p className="text-xs text-gray-500">New recipient</p>
                       </div>
                     </button>
@@ -149,7 +149,7 @@ export default function HomeScreen() {
                               <Avatar avatarId={1} size={40} />
                             </div>
                           )}
-                          <span className="text-sm font-medium text-gray-900">{label}</span>
+                          <span className="text-sm font-medium text-black">{label}</span>
                         </button>
                       )
                     })
@@ -160,7 +160,7 @@ export default function HomeScreen() {
 
             <button
               onClick={() => setShowFriendPicker(false)}
-              className="w-full py-3 rounded-lg border border-gray-300 bg-white text-gray-900 font-semibold text-sm active:bg-gray-50 transition-colors"
+              className="w-full py-3 rounded-lg border border-gray-300 bg-white text-black font-semibold text-sm active:bg-gray-50 transition-colors"
             >
               Cancel
             </button>

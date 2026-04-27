@@ -189,13 +189,13 @@ export default function RecipientReceipt() {
             backgroundColor: '#fbf6e6',
             border: '1px solid #969696',
             fontFamily: 'Georgia, serif',
-            color: '#1a1a1a',
+            color: '#000',
           }}
         >
-          <div style={{ borderBottom: '2px solid #1a1a1a', padding: '16px', textAlign: 'center', fontSize: 18 }}>
+          <div style={{ borderBottom: '2px solid #000', padding: '16px', textAlign: 'center', fontSize: 18 }}>
             {dateStr}
           </div>
-          <div style={{ borderBottom: '2px solid #1a1a1a', padding: '12px 16px', fontSize: 14, fontWeight: 600 }}>
+          <div style={{ borderBottom: '2px solid #000', padding: '12px 16px', fontSize: 14, fontWeight: 600 }}>
             From: {receipt.sender_name}
           </div>
           <div style={{ padding: '16px', fontSize: 14, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
@@ -220,7 +220,7 @@ export default function RecipientReceipt() {
               return null
             })}
           </div>
-          <div style={{ borderTop: '2px solid #1a1a1a', padding: '16px', fontSize: 14 }}>
+          <div style={{ borderTop: '2px solid #000', padding: '16px', fontSize: 14 }}>
             Love,
             <br />
             {receipt.sender_name}

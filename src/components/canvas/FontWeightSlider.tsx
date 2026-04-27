@@ -18,7 +18,7 @@ const weightLabels: Record<number, string> = {
 export default function FontWeightSlider({ value, onChange }: FontWeightSliderProps) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-xs font-medium text-gray-600 w-10">Weight</span>
+      <span className="text-xs font-medium text-gray-600 w-12 shrink-0">Weight</span>
       <input
         type="range"
         min="100"
@@ -28,7 +28,7 @@ export default function FontWeightSlider({ value, onChange }: FontWeightSliderPr
         onChange={(e) => onChange(parseInt(e.target.value))}
         className="flex-1 h-1 bg-gray-200 rounded-full appearance-none cursor-pointer accent-black"
       />
-      <span className="text-xs text-gray-500 w-10 text-right tabular-nums">
+      <span className="text-xs text-gray-500 w-24 shrink-0 text-right tabular-nums">
         {weightLabels[value] || value}
       </span>
     </div>

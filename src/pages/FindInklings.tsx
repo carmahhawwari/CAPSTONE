@@ -143,7 +143,7 @@ export default function FindInklings() {
   return (
     <div className="flex h-screen flex-col items-center bg-white px-6 py-12">
       <div className="flex w-full max-w-sm flex-1 flex-col min-h-0">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-black">
           Find your inklings
         </h1>
         <p className="text-sm text-gray-600 mt-2">
@@ -156,7 +156,7 @@ export default function FindInklings() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search ..."
-          className="text-sm text-gray-900 placeholder:text-gray-400 border-gray-200 bg-gray-50 rounded-md mt-6 w-full border px-4 py-4 focus:outline-none focus:border-fill-primary"
+          className="text-sm text-black placeholder:text-gray-400 border-gray-200 bg-gray-50 rounded-md mt-6 w-full border px-4 py-4 focus:outline-none focus:border-fill-primary"
         />
 
         <div className="mt-4 flex-1 overflow-y-auto">
@@ -196,7 +196,7 @@ export default function FindInklings() {
                       <div className="bg-gray-200 h-10 w-10 rounded-full" />
                     )}
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">
+                      <div className="text-sm font-medium text-black truncate">
                         {name}
                       </div>
                       {handle && (

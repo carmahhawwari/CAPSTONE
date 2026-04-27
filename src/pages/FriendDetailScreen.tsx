@@ -77,7 +77,7 @@ export default function FriendDetailScreen() {
           <div className="w-18 h-18 rounded-full bg-gray-300" />
         )}
         <div>
-          <h2 className="text-xl font-bold text-gray-900">{friend.profile.display_name || friend.profile.username}</h2>
+          <h2 className="text-xl font-bold text-black">{friend.profile.display_name || friend.profile.username}</h2>
           <p className="text-sm text-gray-500 mt-0.5">@{friend.profile.username}</p>
         </div>
       </div>
