@@ -1392,12 +1392,9 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             </div>
 
             {/* Recipient Bar */}
-            <div style={{ position: 'relative', marginBottom: '12px' }}>
-              <img src={recipientBarSvg} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingLeft: '12px', color: 'white', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', fontWeight: 400 }}>
-                To: Test
-              </div>
-              <div style={{ position: 'absolute', top: '50%', right: '12px', transform: 'translateY(-50%)', color: 'white', fontSize: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontWeight: 400 }}>
+            <div style={{ backgroundColor: '#000000', color: 'white', padding: '12px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', fontWeight: 400 }}>
+              <div>To: Test</div>
+              <div style={{ fontSize: '12px' }}>
                 {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </div>
             </div>
