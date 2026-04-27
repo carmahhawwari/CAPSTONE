@@ -44,11 +44,17 @@ export default function GiphyStickerPicker({ onSelect, onClose }: GiphyStickerPi
   const handleSelectSticker = async (sticker: CornerSticker) => {
     setDitherLoading(sticker.id)
     try {
-      const dithered = await ditherStickerImage(sticker.fullUrl)
-      onSelect({ ...sticker, ditheredDataUrl: dithered })
+      try {
+        const dithered = await ditherStickerImage(sticker.fullUrl)
+        onSelect({ ...sticker, ditheredDataUrl: dithered })
+      } catch (ditherErr) {
+        console.warn('Dithering failed, using original URL:', ditherErr)
+        // Fall back to using the original URL if dithering fails
+        onSelect(sticker)
+      }
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to process sticker')
+      setError(err instanceof Error ? err.message : 'Failed to select sticker')
     } finally {
       setDitherLoading(null)
     }
