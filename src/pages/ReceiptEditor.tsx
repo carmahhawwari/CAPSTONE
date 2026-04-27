@@ -1436,16 +1436,13 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             </div>
 
             {/* Signature */}
-            {signature && (
+            {signature && signature.text && (
               <div
                 style={{
-                  ...FONT_STYLES[signature.style as TextStyle],
-                  fontSize: `${FONT_STYLES[signature.style as TextStyle].fontSize * (signature.scale ?? 1)}px`,
-                  fontWeight: FONT_STYLES[signature.style as TextStyle].fontWeight,
+                  fontFamily: "'Inter Variable', sans-serif",
+                  fontSize: `${14 * (signature.scale ?? 1)}px`,
                   color: '#4b5563',
                   fontStyle: 'italic',
-                  transform: `rotate(${signature.rotation ?? 0}deg)`,
-                  transformOrigin: '0 0',
                   marginLeft: `${signature.offsetX ?? 0}px`,
                   marginTop: `${signature.offsetY ?? 0}px`,
                   lineHeight: 1.4,
