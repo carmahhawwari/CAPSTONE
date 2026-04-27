@@ -12,7 +12,6 @@ import FontSizeSlider from '@/components/canvas/FontSizeSlider'
 import FontWeightSlider from '@/components/canvas/FontWeightSlider'
 import RedactionLevelSlider from '@/components/canvas/RedactionLevelSlider'
 import ImageAdjustmentPanel from '@/components/canvas/ImageAdjustmentPanel'
-import html2canvas from 'html2canvas'
 import { DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
 import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
 import { getFriends } from '@/lib/friends'
@@ -83,7 +82,6 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
   const [error, setError] = useState<string | null>(null)
   const [testPrintStatus, setTestPrintStatus] = useState<'idle' | 'rendering' | 'sending' | 'done' | 'error'>('idle')
   const [testPrintError, setTestPrintError] = useState<string | null>(null)
-  const [rasterizedImage, setRasterizedImage] = useState<string | null>(null)
   const [friends, setFriends] = useState<FriendProfile[]>([])
   const [selectedFriendId, setSelectedFriendId] = useState('')
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
@@ -641,22 +639,6 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
       receiptClone.style.width = '576px'
 
       try {
-        // Capture the canvas to display the rasterized result
-        const canvas = await html2canvas(receiptClone, {
-          width: receiptClone.offsetWidth,
-          scale: 2,
-          backgroundColor: '#ffffff',
-          logging: false,
-          allowTaint: true,
-          useCORS: true,
-          ignoreElements: (element) => {
-            // Ignore any elements that might have problematic styles
-            return element.tagName === 'STYLE' || element.tagName === 'LINK'
-          },
-        })
-        const imageUrl = canvas.toDataURL('image/png')
-        setRasterizedImage(imageUrl)
-
         const buffer = await renderToPrintBuffer(receiptClone)
         console.log('✓ Rasterization successful! Buffer size:', buffer.length, 'bytes')
         setTestPrintStatus('sending')
@@ -1340,12 +1322,6 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               </button>
               {testPrintError && (
                 <p className="text-xs text-red-600 mt-2">{testPrintError}</p>
-              )}
-              {rasterizedImage && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Rasterized Preview</p>
-                  <img src={rasterizedImage} alt="Rasterized receipt" className="w-full border border-gray-200 rounded" />
-                </div>
               )}
             </>
           ) : (
