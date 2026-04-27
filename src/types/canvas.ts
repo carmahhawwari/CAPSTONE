@@ -25,7 +25,7 @@ export interface Signature {
 export type Block =
   | { id: string; type: 'text'; content: string; style: TextStyle; fontSizeMultiplier?: number; redactionLevel?: number; fontWeight?: number; isItalic?: boolean; isBold?: boolean }
   | { id: string; type: 'image'; dataUrl: string; adjustments?: ImageAdjustments }
-  | { id: string; type: 'sticker'; stickerId: string; size?: number; outline?: boolean }
+  | { id: string; type: 'sticker'; stickerId: string; dataUrl?: string; size?: number; outline?: boolean }
 
 export interface FontStyleConfig {
   fontFamily: string

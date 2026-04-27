@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import ReactDOM from 'react-dom/client'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Avatar from '@/components/Avatar'
 import TextBlock from '@/components/canvas/TextBlock'
@@ -269,11 +270,43 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
     setShowStickerPicker(true)
   }
 
-  const handleAddSticker = (stickerId: string) => {
+  const handleAddSticker = async (stickerId: string, svg: React.ReactNode) => {
+    let dataUrl: string | undefined
+
+    try {
+      // Convert SVG React node to data URL
+      const container = document.createElement('div')
+      const root = ReactDOM.createRoot(container)
+      root.render(svg as React.ReactElement)
+      document.body.appendChild(container)
+
+      const svgElement = container.querySelector('svg')
+      if (svgElement) {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')!
+        canvas.width = 64
+        canvas.height = 64
+
+        const data = new XMLSerializer().serializeToString(svgElement)
+        const img = new Image()
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0)
+          dataUrl = canvas.toDataURL()
+        }
+        img.src = 'data:image/svg+xml;base64,' + btoa(data)
+      }
+
+      document.body.removeChild(container)
+      root.unmount()
+    } catch (e) {
+      console.error('Failed to convert sticker to data URL:', e)
+    }
+
     const newBlock: Block = {
       id: newBlockId(),
       type: 'sticker',
       stickerId,
+      dataUrl,
     }
     setBlocks([...blocks, newBlock])
     setActiveBlockId(newBlock.id)
@@ -1420,7 +1453,10 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
                   {block.type === 'image' && (
                     <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '8px' }} />
                   )}
-                  {block.type === 'sticker' && (
+                  {block.type === 'sticker' && block.dataUrl && (
+                    <img src={block.dataUrl} alt="sticker" style={{ maxWidth: '100%', marginBottom: '8px' }} />
+                  )}
+                  {block.type === 'sticker' && !block.dataUrl && (
                     <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px', border: '1px dashed #d1d5db', padding: '8px', textAlign: 'center' }}>🎨 Sticker ({block.stickerId})</div>
                   )}
                 </div>
