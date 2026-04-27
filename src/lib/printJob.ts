@@ -83,6 +83,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
 
   // If a printer is explicitly specified, use it directly (admin override)
   if (specifiedPrinterId) {
+    console.log('[PrintJob] Using specified printer:', specifiedPrinterId)
     const position = await getCurrentPosition()
     const lat = position?.coords.latitude ?? null
     const lng = position?.coords.longitude ?? null
@@ -105,6 +106,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
       .single()
 
     if (error) throw error
+    console.log('[PrintJob] Job submitted:', job.id)
     return job.id
   }
 
@@ -115,6 +117,9 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
     const position = await getCurrentPosition()
     lat = position?.coords.latitude ?? null
     lng = position?.coords.longitude ?? null
+    console.log('[PrintJob] User location:', { lat, lng })
+  } else {
+    console.log('[PrintJob] Geofence skipped (test mode)')
   }
 
   // 3. Find nearest printer via the DB function
@@ -122,16 +127,21 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
   if (lat !== null && lng !== null) {
     const { data } = await supabase.rpc('nearest_printer', { lat, lng })
     printerId = data ?? null
+    console.log('[PrintJob] Nearest printer from geofence:', printerId)
   }
 
   // If no printer in range or geofence skipped, fall back to any active printer
   if (!printerId) {
+    console.log('[PrintJob] No printer found via geofence, querying active printers...')
     const { data: printers } = await supabase
       .from('printers')
-      .select('id')
+      .select('*')
       .eq('is_active', true)
       .limit(1)
     printerId = printers?.[0]?.id ?? null
+    if (printers?.[0]) {
+      console.log('[PrintJob] Using fallback active printer:', { id: printers[0].id, name: printers[0].name })
+    }
   }
 
   if (!printerId) throw new Error('No active printers available')
@@ -140,6 +150,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
   const { data: { user } } = await supabase.auth.getUser()
 
   // 5. Insert print job
+  console.log('[PrintJob] Submitting job to printer:', printerId)
   const { data: job, error } = await supabase
     .from('print_jobs')
     .insert({
@@ -156,5 +167,6 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
     .single()
 
   if (error) throw error
+  console.log('[PrintJob] Job submitted successfully:', job.id)
   return job.id
 }
