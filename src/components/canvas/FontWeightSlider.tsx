@@ -29,7 +29,7 @@ export default function FontWeightSlider({ value, onChange }: FontWeightSliderPr
         step="100"
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value))}
-        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
       />
       <div className="flex justify-between text-xs text-gray-500 px-1">
         <span>100</span>

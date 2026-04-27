@@ -96,7 +96,7 @@ export default function TextBlock({
   }, [content])
 
   return (
-    <div className={`group relative ${isActive ? 'ring-2 ring-blue-400 ring-offset-1 rounded' : ''}`}>
+    <div className={`group relative ${isActive ? 'ring-2 ring-fill-primary ring-offset-1 rounded' : ''}`}>
       <div
         ref={ref}
         contentEditable

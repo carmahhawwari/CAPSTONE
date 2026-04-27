@@ -67,7 +67,7 @@ export default function FriendsScreen() {
 
         {/* Friend list */}
         {friends.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No friends yet. <a href="/find-friends" className="text-blue-600">Find some!</a></p>
+          <p className="text-gray-500 text-center py-8">No friends yet. <a href="/share/recipient" className="text-text-primary">Send your first Inkling!</a></p>
         ) : (
           <div className="flex flex-col gap-3">
             {friends.map(friend => (

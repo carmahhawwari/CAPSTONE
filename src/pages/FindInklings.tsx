@@ -156,7 +156,7 @@ export default function FindInklings() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search ..."
-          className="text-sm text-gray-900 placeholder:text-gray-400 border-gray-200 bg-gray-50 rounded-md mt-6 w-full border px-4 py-4 focus:outline-none focus:border-blue-500"
+          className="text-sm text-gray-900 placeholder:text-gray-400 border-gray-200 bg-gray-50 rounded-md mt-6 w-full border px-4 py-4 focus:outline-none focus:border-fill-primary"
         />
 
         <div className="mt-4 flex-1 overflow-y-auto">
@@ -213,7 +213,7 @@ export default function FindInklings() {
                     className={`text-xs rounded-md px-4 py-2 shrink-0 transition-opacity font-medium ${
                       isDisabled
                         ? 'text-gray-500 bg-gray-100'
-                        : 'text-white bg-blue-600 hover:bg-blue-700'
+                        : 'text-white bg-fill-primary hover:opacity-80'
                     } ${isLoading ? 'opacity-50' : ''}`}
                   >
                     {isLoading ? 'Loading...' : getButtonLabel(friendshipInfo.status)}
@@ -227,7 +227,7 @@ export default function FindInklings() {
         <button
           type="button"
           onClick={handleInvite}
-          className="text-base font-semibold text-white bg-blue-600 rounded-md mt-4 w-full py-4 shrink-0"
+          className="text-base font-semibold text-white bg-fill-primary rounded-md mt-4 w-full py-4 shrink-0"
         >
           Invite contacts
         </button>
