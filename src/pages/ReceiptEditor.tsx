@@ -1390,12 +1390,10 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             </div>
 
             {/* Recipient Bar */}
-            <div style={{ position: 'relative', marginBottom: '12px', width: '100%' }}>
-              <img src="/src/assets/icons/recipient-bar.png" alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: '12px', paddingRight: '12px' }}>
-                <span style={{ fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', color: 'rgb(255, 255, 255)', fontWeight: '400' }}>To: Test</span>
-                <span style={{ fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '12px', color: 'rgb(255, 255, 255)', fontWeight: '400' }}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-              </div>
+            <img src="/src/assets/icons/recipient-bar.png" alt="" style={{ width: '100%', height: 'auto', marginBottom: '8px', display: 'block' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '14px', color: 'rgb(255, 255, 255)', fontWeight: '400', backgroundColor: '#000000', padding: '8px 12px' }}>
+              <span>To: Test</span>
+              <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
             </div>
 
             {/* Current Prompt */}
