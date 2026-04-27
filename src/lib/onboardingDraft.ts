@@ -42,7 +42,14 @@ export function saveDraft(patch: Partial<OnboardingDraft>): OnboardingDraft {
     ...patch,
     createdAt: current.createdAt || new Date().toISOString(),
   }
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  } catch (err) {
+    // Likely localStorage quota exceeded (a large image dataUrl). Don't crash
+    // the caller — best-effort persistence; the in-memory state and edge
+    // function call will still complete the send.
+    console.warn('saveDraft: failed to persist to localStorage', err)
+  }
   return next
 }
 

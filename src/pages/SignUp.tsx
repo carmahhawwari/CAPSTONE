@@ -74,8 +74,10 @@ export default function SignUp() {
 
       if (nextPath) {
         navigate(nextPath)
+      } else if (isOnboardingDeliver) {
+        navigate('/onboard/sent')
       } else {
-        navigate('/onboard/verify-email')
+        navigate('/home')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed')

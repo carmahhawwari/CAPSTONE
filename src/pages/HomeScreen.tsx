@@ -80,7 +80,7 @@ export default function HomeScreen() {
         </div>
       </header>
 
-      <div className="mt-6 flex flex-col gap-3 w-4/5 mx-auto">
+      <div className="mt-6 flex flex-col gap-3">
         <Tile label="Printer" onClick={handlePrintClick}>
           <PrinterPlaceholder />
         </Tile>
@@ -206,7 +206,7 @@ function Tile({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="bg-bg-primary rounded-md flex aspect-[16/9] w-full items-center justify-center active:opacity-70"
+      className="bg-bg-primary rounded-md flex aspect-[4/3] w-full items-center justify-center overflow-hidden active:opacity-70"
     >
       {children}
     </button>
@@ -257,7 +257,7 @@ function PrinterPlaceholder() {
     <img
       src={printerImg}
       alt="Printer"
-      className="h-full w-full object-contain p-6"
+      className="h-full w-full object-contain p-2"
     />
   )
 }
@@ -267,7 +267,7 @@ function ArchivePlaceholder() {
     <img
       src={archiveImg}
       alt="Archive"
-      className="h-full w-full object-contain p-6"
+      className="h-full w-full object-contain p-2"
     />
   )
 }

@@ -18,7 +18,7 @@ export default function VerifyEmail() {
     }
 
     if (user.email_confirmed_at) {
-      navigate('/find-friends')
+      navigate('/home')
     }
   }, [user, navigate])
 
@@ -61,7 +61,7 @@ export default function VerifyEmail() {
       if (err) throw err
 
       if (updatedUser?.email_confirmed_at) {
-        navigate('/find-friends')
+        navigate('/home')
       } else {
         setError('Email not verified yet. Please check your inbox.')
       }

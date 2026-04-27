@@ -2,6 +2,31 @@ import { useRef, useState, useEffect } from 'react'
 import type { ImageAdjustments } from '@/lib/imageProcessing'
 import { DEFAULT_ADJUSTMENTS, applyImageAdjustments } from '@/lib/imageProcessing'
 
+// Compress a file to a JPEG data URL with the longest edge clamped to maxEdge.
+// Keeps localStorage drafts and edge-function bodies within reasonable size.
+async function compressToDataUrl(file: File, maxEdge = 1200, quality = 0.82): Promise<string> {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image()
+      i.onload = () => resolve(i)
+      i.onerror = reject
+      i.src = url
+    })
+    const ratio = Math.min(1, maxEdge / Math.max(img.width, img.height))
+    const w = Math.round(img.width * ratio)
+    const h = Math.round(img.height * ratio)
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(img, 0, 0, w, h)
+    return canvas.toDataURL('image/jpeg', quality)
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 interface ImageBlockProps {
   dataUrl: string
   adjustments?: ImageAdjustments
@@ -34,13 +59,14 @@ export default function ImageBlock({
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        onImageChange(reader.result)
+    compressToDataUrl(file, 1200, 0.82).then(onImageChange).catch((err) => {
+      console.warn('Image compression failed, falling back to raw read:', err)
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') onImageChange(reader.result)
       }
-    }
-    reader.readAsDataURL(file)
+      reader.readAsDataURL(file)
+    })
   }
 
   if (!dataUrl) {
