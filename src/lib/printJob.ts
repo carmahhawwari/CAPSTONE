@@ -104,6 +104,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
         receipt_state_json: receiptStateJson ?? null,
         sender_latitude: lat,
         sender_longitude: lng,
+        printed_at: new Date().toISOString(),
       })
       .select('id')
       .single()
@@ -166,6 +167,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
       receipt_state_json: receiptStateJson ?? null,
       sender_latitude: lat,
       sender_longitude: lng,
+      printed_at: new Date().toISOString(),
     })
     .select('id')
     .single()
