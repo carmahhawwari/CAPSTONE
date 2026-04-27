@@ -15,6 +15,8 @@ import ImageAdjustmentPanel from '@/components/canvas/ImageAdjustmentPanel'
 import { DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
 import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
 import { getFriends } from '@/lib/friends'
+import { renderToPrintBuffer } from '@/lib/escpos'
+import { submitPrintJob } from '@/lib/printJob'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Block, TextStyle, CornerSticker, Signature } from '@/types/canvas'
 import type { FriendProfile } from '@/types/app'
@@ -78,6 +80,8 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null)
   const [showStickerPicker, setShowStickerPicker] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [testPrintStatus, setTestPrintStatus] = useState<'idle' | 'rendering' | 'sending' | 'done' | 'error'>('idle')
+  const [testPrintError, setTestPrintError] = useState<string | null>(null)
   const [friends, setFriends] = useState<FriendProfile[]>([])
   const [selectedFriendId, setSelectedFriendId] = useState('')
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
@@ -603,6 +607,32 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
     if (blocks.length === 0) return
     // TODO: Implement actual saving to archive
     navigate('/archive')
+  }
+
+  const handleTestPrint = async () => {
+    if (blocks.length === 0 || !receiptRef.current || !user?.id) return
+
+    setTestPrintStatus('rendering')
+    setTestPrintError(null)
+
+    try {
+      await renderToPrintBuffer(receiptRef.current)
+      setTestPrintStatus('sending')
+
+      await submitPrintJob({
+        receiptElement: receiptRef.current,
+        recipientName: 'Test',
+        messageText: 'Test receipt print',
+        skipGeofence: true,
+      })
+
+      setTestPrintStatus('done')
+      setTimeout(() => setTestPrintStatus('idle'), 2000)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setTestPrintError(msg)
+      setTestPrintStatus('error')
+    }
   }
 
   const activeBlock = blocks.find(b => b.id === activeBlockId)
@@ -1242,6 +1272,24 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             >
               Continue to Send
             </button>
+          ) : testMode ? (
+            <>
+              <button
+                type="button"
+                onClick={handleTestPrint}
+                disabled={blocks.length === 0 || testPrintStatus !== 'idle'}
+                className="text-callout text-text-inverse bg-fill-primary rounded-md w-full py-3.5 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
+              >
+                {testPrintStatus === 'idle' && 'Test Print'}
+                {testPrintStatus === 'rendering' && 'Rendering...'}
+                {testPrintStatus === 'sending' && 'Sending...'}
+                {testPrintStatus === 'done' && 'Sent!'}
+                {testPrintStatus === 'error' && 'Error'}
+              </button>
+              {testPrintError && (
+                <p className="text-xs text-red-600 mt-2">{testPrintError}</p>
+              )}
+            </>
           ) : (
             <>
               <button
