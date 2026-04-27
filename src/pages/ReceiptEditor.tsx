@@ -1424,6 +1424,22 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
               ))}
             </div>
 
+            {/* Corner Sticker */}
+            {cornerSticker && (
+              <img
+                src={cornerSticker.ditheredDataUrl || cornerSticker.fullUrl}
+                alt="corner sticker"
+                style={{
+                  maxWidth: '100%',
+                  marginBottom: '8px',
+                  transform: `rotate(${cornerSticker.rotation ?? 0}deg) scale(${cornerSticker.scale ?? 1})`,
+                  transformOrigin: '0 0',
+                  marginLeft: `${cornerSticker.offsetX ?? 0}px`,
+                  marginTop: `${cornerSticker.offsetY ?? 0}px`,
+                }}
+              />
+            )}
+
             {/* Signature */}
             {signature && signature.text && (
               <div
