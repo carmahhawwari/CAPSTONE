@@ -562,6 +562,15 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     return JSON.stringify(blocks)
   }
 
+  const getReceiptState = () => ({
+    blocks,
+    prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
+    cornerSticker: cornerSticker ?? undefined,
+    signature,
+    headerVariant,
+    currentPrompt,
+  })
+
   const handleSend = async () => {
     if (blocks.length === 0) return
     const content = serializeContent()
@@ -609,8 +618,16 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     setSelectedFriendId(friendId)
     setShowFriendPicker(false)
     setFriendSearchQuery('')
-    const content = serializeContent()
-    navigate(`/printing?to=${friendId}`, { state: { content } })
+    const receiptState = getReceiptState()
+    navigate(`/printing?to=${friendId}`, { state: { receiptState } })
+  }
+
+  const handleSendToEmail = (sunet: string) => {
+    setShowFriendPicker(false)
+    setFriendSearchQuery('')
+    const receiptState = getReceiptState()
+    const email = `${sunet}@stanford.edu`
+    navigate(`/printing?email=${encodeURIComponent(email)}`, { state: { receiptState } })
   }
 
   const filteredFriends = friends.filter(f =>
@@ -1160,7 +1177,25 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
 
               <div className="space-y-2">
                 {filteredFriends.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-6">No friends found</p>
+                  <div className="space-y-3 py-6">
+                    {friendSearchQuery && !friendSearchQuery.includes('@') && (
+                      <button
+                        onClick={() => handleSendToEmail(friendSearchQuery)}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors text-left border-2 border-fill-primary"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-fill-primary rounded-full text-white font-medium text-sm">
+                          @
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-black">{friendSearchQuery}@stanford.edu</span>
+                          <p className="text-xs text-gray-500">Send directly to SUNet</p>
+                        </div>
+                      </button>
+                    )}
+                    {(!friendSearchQuery || friendSearchQuery.includes('@')) && (
+                      <p className="text-sm text-gray-500 text-center py-4">No friends found</p>
+                    )}
+                  </div>
                 ) : (
                   filteredFriends.map((f) => (
                     <button
