@@ -652,8 +652,16 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
           })
           console.log('✓ Print submitted successfully')
         } catch (submitErr) {
-          console.warn('Print submission failed (this is OK for testing rasterization):', submitErr)
-          // For test mode, rasterization success is the important part
+          const errMsg = submitErr instanceof Error ? submitErr.message : String(submitErr)
+          console.error('Print submission failed:', errMsg)
+
+          if (errMsg.includes('fetch') || errMsg.includes('Failed to')) {
+            console.error('Could not connect to printer. Make sure:')
+            console.error('  1. Local print server is running at http://127.0.0.1:9100, OR')
+            console.error('  2. You are logged in with Supabase and have active printers configured')
+          }
+
+          throw submitErr
         }
 
         setTestPrintStatus('done')
