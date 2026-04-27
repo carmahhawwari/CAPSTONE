@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import printerImg from '@/assets/printer.png'
 import wifiSymbol from '@/assets/wifi-symbol.svg'
+import recipientBarImg from '@/assets/icons/recipient-bar-new.png'
 import { submitPrintJob, checkNearestPrinter } from '@/lib/printJob'
 import type { FriendProfile } from '@/types/app'
 import type { Block, TextStyle } from '@/types/canvas'
@@ -280,7 +281,7 @@ export default function PrintingScreen() {
             </div>
 
             {/* Recipient Bar */}
-            <img src="/src/assets/icons/recipient-bar-new.png" alt="" style={{ width: '100%', height: 'auto', marginBottom: '8px', display: 'block' }} />
+            <img src={recipientBarImg} alt="" style={{ width: '100%', height: 'auto', marginBottom: '8px', display: 'block' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121' }}>
               <span>To: {recipientName}</span>
               <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
