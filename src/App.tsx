@@ -15,7 +15,6 @@ import ReceiptEditor from '@/pages/ReceiptEditor'
 import ReceiptSent from '@/pages/ReceiptSent'
 import PrintingScreen from '@/pages/PrintingScreen'
 import TestPrintScreen from '@/pages/TestPrintScreen'
-import TestRasterization from '@/pages/TestRasterization'
 import AdminScreen from '@/pages/AdminScreen'
 import OnboardIntro from '@/pages/onboarding/OnboardIntro'
 import OnboardRecipient from '@/pages/onboarding/OnboardRecipient'
@@ -61,7 +60,7 @@ function App() {
           <Route path="/prints" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminScreen /></ProtectedRoute>} />
           <Route path="/test-print" element={<TestPrintScreen />} />
-          <Route path="/test-rasterization" element={<TestRasterization />} />
+          <Route path="/test-rasterization" element={<ReceiptEditor />} />
           <Route path="/onboard" element={<OnboardIntro />} />
           <Route path="*" element={<OnboardIntro />} />
           <Route path="/onboard/recipient" element={<OnboardRecipient />} />
