@@ -1390,12 +1390,16 @@ export default function ReceiptEditor({ onboarding = false, testMode = false }: 
             </div>
 
             {/* Recipient Bar */}
-            <div style={{ width: '536px', backgroundColor: '#000000', color: '#ffffff', padding: '12px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', fontWeight: '400', boxSizing: 'border-box' }}>
-              <span style={{ color: '#ffffff' }}>To: Test</span>
-              <span style={{ fontSize: '12px', color: '#ffffff' }}>
-                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </span>
-            </div>
+            <table style={{ width: '100%', backgroundColor: '#000000', borderCollapse: 'collapse', marginBottom: '12px' }}>
+              <tbody>
+                <tr>
+                  <td style={{ padding: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '15.4px', fontWeight: '400', color: '#ffffff' }}>To: Test</td>
+                  <td style={{ padding: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '12px', fontWeight: '400', color: '#ffffff', textAlign: 'right' }}>
+                    {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
             {/* Current Prompt */}
             {currentPrompt && currentPrompt !== 'No prompt' && (
