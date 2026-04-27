@@ -66,6 +66,7 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
   // 1. Render receipt to ESC/POS binary
   const { buffer, imageBase64 } = await renderToPrintBuffer(receiptElement, { cornerSticker })
   const payload = bufferToBase64(buffer)
+  console.log('[PrintJob] Received imageBase64:', imageBase64 ? imageBase64.substring(0, 50) + '...' : 'null')
 
   if (USE_LOCAL_PRINT_SERVER || !supabase) {
     const response = await fetch(PRINT_SERVER_URL + '/print', {

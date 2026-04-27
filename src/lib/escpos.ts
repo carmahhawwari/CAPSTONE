@@ -172,6 +172,7 @@ export async function renderToPrintBuffer(
 
     // 5. Convert canvas to PNG base64 for archive display
     const imageBase64 = canvas.toDataURL('image/png')
+    console.log('[escpos] Generated image base64:', imageBase64.substring(0, 50) + '...')
 
     return { buffer, imageBase64 }
   } finally {
