@@ -32,7 +32,7 @@ export default function RecipientReceipt() {
   const shouldAutoPrint = searchParams.get('print') === 'true'
 
   useEffect(() => {
-    if (!id) return
+    if (!id || !user?.email) return
     if (!supabase) {
       setLoadError('Supabase not configured')
       return
@@ -41,6 +41,7 @@ export default function RecipientReceipt() {
       .from('delivered_receipts')
       .select('*')
       .eq('id', id)
+      .eq('recipient_email', user.email)
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) {
@@ -54,7 +55,7 @@ export default function RecipientReceipt() {
         setReceipt(data as unknown as DeliveredReceipt)
         if ((data as { printed_at?: string | null }).printed_at) setPrinted(true)
       })
-  }, [id])
+  }, [id, user?.email])
 
   const handlePrint = async () => {
     if (!receipt || !receiptRef.current) return
