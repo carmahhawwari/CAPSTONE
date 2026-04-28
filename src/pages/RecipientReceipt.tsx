@@ -252,7 +252,7 @@ export default function RecipientReceipt() {
                   <div
                     style={{
                       ...FONT_STYLES[block.style as TextStyle],
-                      fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1)}px`,
+                      fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1) * 1.5}px`,
                       fontWeight: block.fontWeight ?? FONT_STYLES[block.style as TextStyle].fontWeight,
                       fontStyle: block.isItalic ? 'italic' : 'normal',
                       textDecoration: block.isBold ? 'underline' : 'none',
@@ -273,7 +273,7 @@ export default function RecipientReceipt() {
             ))}
           </div>
 
-          <div style={{ borderTop: '2px solid #000', padding: '16px', fontSize: '14px' }}>
+          <div style={{ borderTop: '2px solid #000', padding: '16px', fontSize: '18px' }}>
             Love,
             <br />
             {receipt.sender_name}
