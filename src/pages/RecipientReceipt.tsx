@@ -234,8 +234,12 @@ export default function RecipientReceipt() {
             <path d="M0,8 Q25,2 50,8 T100,8 L100,18 Q75,20 50,18 T0,18 Z" fill="black" />
           </svg>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', marginTop: '8px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121', lineHeight: 1.5 }}>
-            <span>From: {receipt.sender_name}</span>
+            <span>To: {receipt.recipient_email?.split('@')[0] || 'You'}</span>
             <span>{dateStr}</span>
+          </div>
+
+          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif" }}>
+            From: {receipt.sender_name}
           </div>
 
           {/* Current Prompt */}

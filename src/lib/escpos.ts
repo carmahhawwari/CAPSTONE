@@ -192,9 +192,23 @@ export async function renderToPrintBuffer(
     // 4. Build ESC/POS command buffer
     const buffer = buildEscPosBuffer(mono, canvas.width, canvas.height)
 
-    // 5. Convert canvas to PNG base64 for archive display
-    const imageBase64 = canvas.toDataURL('image/png')
-    console.log('[escpos] Generated image base64:', imageBase64.substring(0, 50) + '...')
+    // 5. Convert dithered 1-bit image to visual PNG for archive display
+    // This ensures the saved receipt looks like what will actually print
+    const ditherCanvas = document.createElement('canvas')
+    ditherCanvas.width = canvas.width
+    ditherCanvas.height = canvas.height
+    const ditherCtx = ditherCanvas.getContext('2d')!
+    const ditherImageData = ditherCtx.createImageData(canvas.width, canvas.height)
+    for (let i = 0; i < mono.length; i++) {
+      const pixel = mono[i] ? 0 : 255 // 1 (black) → 0, 0 (white) → 255
+      ditherImageData.data[i * 4] = pixel
+      ditherImageData.data[i * 4 + 1] = pixel
+      ditherImageData.data[i * 4 + 2] = pixel
+      ditherImageData.data[i * 4 + 3] = 255 // alpha
+    }
+    ditherCtx.putImageData(ditherImageData, 0, 0)
+    const imageBase64 = ditherCanvas.toDataURL('image/png')
+    console.log('[escpos] Generated dithered image base64:', imageBase64.substring(0, 50) + '...')
 
     return { buffer, imageBase64 }
   } finally {
