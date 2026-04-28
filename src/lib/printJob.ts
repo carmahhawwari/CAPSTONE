@@ -32,8 +32,11 @@ export async function requestLocationPermission(): Promise<boolean> {
   return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
       () => resolve(true),
-      () => resolve(false),
-      { enableHighAccuracy: true, timeout: 10_000 }
+      (error) => {
+        console.error('Geolocation error:', error.code, error.message)
+        resolve(false)
+      },
+      { enableHighAccuracy: true, timeout: 30_000, maximumAge: 0 }
     )
   })
 }

@@ -160,9 +160,10 @@ export default function PrintingScreen() {
   }
 
   const handleAllowLocation = async () => {
-    setState('locating')
     const hasPermission = await requestLocationPermission()
-    if (!hasPermission) {
+    if (hasPermission) {
+      setState('locating')
+    } else {
       setState('no-location')
     }
   }
