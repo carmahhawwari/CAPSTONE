@@ -66,7 +66,7 @@ function getCurrentPosition(): Promise<GeolocationPosition | null> {
 export async function checkNearestPrinter(): Promise<string | null> {
   if (!supabase) throw new Error('Supabase not configured')
 
-  // Get all printers and log them
+  // Get all printers
   const { data: printers, error } = await supabase
     .from('printers')
     .select('*')
@@ -83,14 +83,26 @@ export async function checkNearestPrinter(): Promise<string | null> {
     return null
   }
 
-  // Select the first printer (or the most recently updated one)
-  const selectedPrinter = printers.sort((a: any, b: any) => {
+  // Filter out stale printers
+  const stalePrinterIds = [
+    '09029d8e-b86b-4f7e-b478-3cb36ffe4956',
+    'b29f0568-61f9-402e-89cd-2af1bc731993',
+  ]
+  const activePrinters = printers.filter((p: any) => !stalePrinterIds.includes(p.id))
+
+  if (activePrinters.length === 0) {
+    console.log('[PrintJob] No active printers available (all are stale)')
+    return null
+  }
+
+  // Select the most recently updated printer
+  const selectedPrinter = activePrinters.sort((a: any, b: any) => {
     const aTime = new Date(a.updated_at || a.created_at || 0).getTime()
     const bTime = new Date(b.updated_at || b.created_at || 0).getTime()
     return bTime - aTime
   })[0]
 
-  console.log('[PrintJob] Selected printer:', selectedPrinter?.id, selectedPrinter?.name)
+  console.log('[PrintJob] Selected active printer:', selectedPrinter?.id, selectedPrinter?.name)
   return selectedPrinter?.id ?? null
 }
 
