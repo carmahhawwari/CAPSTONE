@@ -21,6 +21,24 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 }
 
 /**
+ * Request location permission from the user (mobile-friendly).
+ * Shows a system permission prompt on mobile devices.
+ */
+export async function requestLocationPermission(): Promise<boolean> {
+  if (!navigator.geolocation) {
+    return false
+  }
+
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      () => resolve(true),
+      () => resolve(false),
+      { enableHighAccuracy: true, timeout: 10_000 }
+    )
+  })
+}
+
+/**
  * Get the user's current position via the Geolocation API.
  * Returns null if permission is denied or unavailable.
  */

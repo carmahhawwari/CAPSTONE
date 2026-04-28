@@ -5,13 +5,13 @@ import { getFriends } from '@/lib/friends'
 import { getReceivedUnprintedReceipts } from '@/lib/receipts'
 import printerImg from '@/assets/printer.png'
 import wifiSymbol from '@/assets/wifi-symbol.svg'
-import { submitPrintJob, checkNearestPrinter } from '@/lib/printJob'
+import { submitPrintJob, checkNearestPrinter, requestLocationPermission } from '@/lib/printJob'
 import { markReceiptAsPrinted } from '@/lib/receipts'
 import type { FriendProfile, Receipt } from '@/types/app'
 import type { Block, TextStyle } from '@/types/canvas'
 import { FONT_STYLES } from '@/types/canvas'
 
-type PrintState = 'select' | 'confirm' | 'locating' | 'no-location' | 'no-printer' | 'printing' | 'done' | 'failed'
+type PrintState = 'select' | 'confirm' | 'request-location' | 'locating' | 'no-location' | 'no-printer' | 'printing' | 'done' | 'failed'
 
 export default function PrintingScreen() {
   const navigate = useNavigate()
@@ -68,7 +68,7 @@ export default function PrintingScreen() {
   }, [searchParams, user?.id, user?.email])
 
   useEffect(() => {
-    if (state !== 'confirm' && state !== 'select') {
+    if (state === 'locating') {
       const checkPrinter = async () => {
         try {
           // In test mode, skip printer check and go straight to printing
@@ -156,7 +156,15 @@ export default function PrintingScreen() {
   const handleBack = () => navigate('/home')
 
   const handleConfirmPrint = () => {
+    setState('request-location')
+  }
+
+  const handleAllowLocation = async () => {
     setState('locating')
+    const hasPermission = await requestLocationPermission()
+    if (!hasPermission) {
+      setState('no-location')
+    }
   }
 
   const recipientName = selectedFriend
@@ -216,6 +224,34 @@ export default function PrintingScreen() {
           <button
             onClick={handleBack}
             className="w-full px-6 py-2 text-gray-700 text-center font-medium hover:text-black"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Location Permission Request */}
+      {state === 'request-location' && (
+        <div className="flex flex-col items-center justify-center gap-6">
+          <div className="text-center">
+            <p className="text-xl font-semibold text-black mb-2">
+              Enable Location Access
+            </p>
+            <p className="text-sm text-gray-600 max-w-xs">
+              We need your location to find the nearest printer and send your message.
+            </p>
+          </div>
+
+          <button
+            onClick={handleAllowLocation}
+            className="w-full max-w-xs px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800"
+          >
+            Allow Location Access
+          </button>
+
+          <button
+            onClick={handleBack}
+            className="w-full max-w-xs px-6 py-2 text-gray-700 text-center font-medium hover:text-black"
           >
             Cancel
           </button>
