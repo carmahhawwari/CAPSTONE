@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { submitPrintJob } from '@/lib/printJob'
-import { renderToPrintBuffer } from '@/lib/escpos'
 import type { Block, TextStyle } from '@/types/canvas'
 import { FONT_STYLES } from '@/types/canvas'
 
@@ -29,7 +28,6 @@ export default function RecipientReceipt() {
   const [printing, setPrinting] = useState(false)
   const [printError, setPrintError] = useState<string | null>(null)
   const [printed, setPrinted] = useState(false)
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const receiptRef = useRef<HTMLDivElement>(null)
   const shouldAutoPrint = searchParams.get('print') === 'true'
 
@@ -106,18 +104,6 @@ export default function RecipientReceipt() {
     }
   }
 
-  // Generate preview image for print display
-  useEffect(() => {
-    if (receipt && receiptRef.current && !previewImage) {
-      renderToPrintBuffer(receiptRef.current)
-        .then(({ imageBase64 }) => {
-          setPreviewImage(imageBase64)
-        })
-        .catch((err) => {
-          console.error('Failed to generate preview:', err)
-        })
-    }
-  }, [receipt, previewImage])
 
   // Auto-print when page loads with print=true parameter
   useEffect(() => {
@@ -219,14 +205,6 @@ export default function RecipientReceipt() {
         >
           Done
         </button>
-
-        {/* Print Preview */}
-        {previewImage && (
-          <div className="mt-8 w-full border border-gray-300 rounded-lg overflow-hidden bg-white p-4">
-            <p className="text-mini text-text-tertiary mb-2">Print Preview</p>
-            <img src={previewImage} alt="Print preview" className="w-full h-auto" />
-          </div>
-        )}
       </motion.div>
 
       {/* Hidden receipt — kept in DOM so html2canvas can rasterize it for the print job. */}
