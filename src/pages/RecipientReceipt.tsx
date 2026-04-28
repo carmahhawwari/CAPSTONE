@@ -52,7 +52,7 @@ export default function RecipientReceipt() {
       .eq('id', id)
       .eq('recipient_email', user.email)
       .maybeSingle()
-      .then(({ data, error }) => {
+      .then(({ data, error }: any) => {
         if (error) {
           setLoadError(error.message)
           return
@@ -61,8 +61,16 @@ export default function RecipientReceipt() {
           setLoadError('Receipt not found')
           return
         }
-        setReceipt(data as unknown as DeliveredReceipt)
-        if ((data as { printed_at?: string | null }).printed_at) setPrinted(true)
+        try {
+          const parsed: DeliveredReceipt = {
+            ...data,
+            content: typeof data.content === 'string' ? JSON.parse(data.content) : data.content,
+          }
+          setReceipt(parsed)
+          if (data.printed_at) setPrinted(true)
+        } catch (err) {
+          setLoadError('Failed to parse receipt data: ' + (err instanceof Error ? err.message : String(err)))
+        }
       })
   }, [id, user?.email, authLoading])
 
