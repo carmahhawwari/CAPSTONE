@@ -18,6 +18,32 @@ export interface SaveReceiptInput {
 }
 
 /**
+ * Send a receipt email notification to the recipient.
+ */
+async function sendReceiptEmail(receiptId: string, senderName: string, recipientEmail: string): Promise<void> {
+  if (!supabase) return
+
+  try {
+    // Call Supabase function to send email
+    const { error } = await supabase.functions.invoke('send-receipt-email', {
+      body: {
+        receipt_id: receiptId,
+        sender_name: senderName,
+        recipient_email: recipientEmail,
+      },
+    })
+
+    if (error) {
+      console.error('[Receipt] Email send error:', error)
+    } else {
+      console.log('[Receipt] Email sent to', recipientEmail)
+    }
+  } catch (error) {
+    console.error('[Receipt] Email send exception:', error)
+  }
+}
+
+/**
  * Get all receipts (print jobs) sent to a specific friend.
  * Uses recipient_id to match jobs sent to that profile.
  */
@@ -89,6 +115,10 @@ export async function saveReceipt(input: SaveReceiptInput): Promise<string> {
 
     const result = data as any
     console.log('[Receipt] Saved to delivered_receipts:', result.id)
+
+    // Send email notification to recipient
+    await sendReceiptEmail(result.id, input.sender_name, input.recipient_email)
+
     return result.id
   } catch (error) {
     console.error('saveReceipt exception:', error)
