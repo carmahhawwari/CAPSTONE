@@ -371,6 +371,7 @@ export async function getReceivedUnprintedReceipts(userEmail: string): Promise<R
   if (!supabase) return []
 
   try {
+    console.log('[Receipts] Loading unprinted receipts for:', userEmail)
     const { data, error } = await supabase
       .from('delivered_receipts')
       .select('*')
@@ -379,8 +380,13 @@ export async function getReceivedUnprintedReceipts(userEmail: string): Promise<R
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('getReceivedUnprintedReceipts error:', error)
+      console.error('[Receipts] Query error:', error)
       return []
+    }
+
+    console.log('[Receipts] Found unprinted receipts:', data?.length ?? 0)
+    if (data && data.length > 0) {
+      console.log('[Receipts] Sample receipt:', JSON.stringify(data[0], null, 2))
     }
 
     return (data || []).map((job: any) => ({
@@ -399,7 +405,7 @@ export async function getReceivedUnprintedReceipts(userEmail: string): Promise<R
       printedAt: job.printed_at,
     }))
   } catch (error) {
-    console.error('getReceivedUnprintedReceipts exception:', error)
+    console.error('[Receipts] Exception:', error)
     return []
   }
 }
