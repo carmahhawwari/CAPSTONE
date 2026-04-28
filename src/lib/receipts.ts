@@ -18,29 +18,26 @@ export interface SaveReceiptInput {
 }
 
 /**
- * Send a receipt email notification to the recipient.
+ * Send a receipt email notification to the recipient (fire-and-forget).
  */
-async function sendReceiptEmail(receiptId: string, senderName: string, recipientEmail: string): Promise<void> {
+function sendReceiptEmail(receiptId: string, senderName: string, recipientEmail: string): void {
   if (!supabase) return
 
-  try {
-    // Call Supabase function to send email
-    const { error } = await supabase.functions.invoke('send-receipt-email', {
+  // Fire-and-forget with timeout to prevent blocking
+  Promise.race([
+    supabase.functions.invoke('send-receipt-email', {
       body: {
         receipt_id: receiptId,
         sender_name: senderName,
         recipient_email: recipientEmail,
       },
-    })
-
-    if (error) {
-      console.error('[Receipt] Email send error:', error)
-    } else {
-      console.log('[Receipt] Email sent to', recipientEmail)
-    }
-  } catch (error) {
-    console.error('[Receipt] Email send exception:', error)
-  }
+    }),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000)),
+  ]).then(() => {
+    console.log('[Receipt] Email sent to', recipientEmail)
+  }).catch((error) => {
+    console.warn('[Receipt] Email send failed (non-blocking):', error instanceof Error ? error.message : String(error))
+  })
 }
 
 /**
@@ -116,8 +113,8 @@ export async function saveReceipt(input: SaveReceiptInput): Promise<string> {
     const result = data as any
     console.log('[Receipt] Saved to delivered_receipts:', result.id)
 
-    // Send email notification to recipient
-    await sendReceiptEmail(result.id, input.sender_name, input.recipient_email)
+    // Send email notification to recipient (fire-and-forget)
+    sendReceiptEmail(result.id, input.sender_name, input.recipient_email)
 
     return result.id
   } catch (error) {
