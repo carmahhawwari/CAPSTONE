@@ -53,9 +53,6 @@ export default function PrintingScreen() {
           // Load received unprinted receipts
           const receipts = await getReceivedUnprintedReceipts(user.email)
           setUnprinted(receipts)
-          if (receipts.length === 0) {
-            setState('confirm')
-          }
         }
       } catch (err) {
         console.error('Failed to load recipient info:', err)
@@ -166,34 +163,48 @@ export default function PrintingScreen() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
       {/* Receipt Selection State */}
-      {state === 'select' && !isLoading && unprinted.length > 0 && (
+      {state === 'select' && !isLoading && (
         <div className="flex flex-col gap-4 w-full max-w-sm">
           <h2 className="text-xl font-bold text-black">Print Received Messages</h2>
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-            {unprinted.map((receipt) => (
+          {unprinted.length > 0 ? (
+            <>
+              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                {unprinted.map((receipt) => (
+                  <button
+                    key={receipt.id}
+                    onClick={() => {
+                      // Navigate to the receipt page with print parameter
+                      navigate(`/r/${receipt.id}?print=true`)
+                    }}
+                    className="w-full p-4 border border-gray-300 rounded-lg text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold text-black">From: {receipt.from}</p>
+                        <p className="text-sm text-gray-600">{receipt.date}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
               <button
-                key={receipt.id}
-                onClick={() => {
-                  // Navigate to the receipt page with print parameter
-                  navigate(`/r/${receipt.id}?print=true`)
-                }}
-                className="w-full p-4 border border-gray-300 rounded-lg text-left hover:bg-gray-50 transition-colors"
+                onClick={handleBack}
+                className="w-full px-6 py-2 text-gray-700 text-center font-medium hover:text-black mt-4"
               >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-semibold text-black">From: {receipt.from}</p>
-                    <p className="text-sm text-gray-600">{receipt.date}</p>
-                  </div>
-                </div>
+                Cancel
               </button>
-            ))}
-          </div>
-          <button
-            onClick={handleBack}
-            className="w-full px-6 py-2 text-gray-700 text-center font-medium hover:text-black mt-4"
-          >
-            Cancel
-          </button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-4 py-8">
+              <p className="text-gray-600 text-center">No messages waiting to print</p>
+              <button
+                onClick={handleBack}
+                className="w-full px-6 py-2 text-gray-700 text-center font-medium hover:text-black"
+              >
+                Back to Home
+              </button>
+            </div>
+          )}
         </div>
       )}
 
