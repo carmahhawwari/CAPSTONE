@@ -32,11 +32,20 @@ export default function RecipientReceipt() {
   const shouldAutoPrint = searchParams.get('print') === 'true'
 
   useEffect(() => {
-    if (!id || !user?.email) return
+    if (authLoading) return
+    if (!id) return
+
+    // If user is not logged in, don't try to load
+    if (!user?.email) {
+      setLoadError('Not authenticated')
+      return
+    }
+
     if (!supabase) {
       setLoadError('Supabase not configured')
       return
     }
+
     supabase
       .from('delivered_receipts')
       .select('*')
@@ -55,7 +64,7 @@ export default function RecipientReceipt() {
         setReceipt(data as unknown as DeliveredReceipt)
         if ((data as { printed_at?: string | null }).printed_at) setPrinted(true)
       })
-  }, [id, user?.email])
+  }, [id, user?.email, authLoading])
 
   const handlePrint = async () => {
     if (!receipt || !receiptRef.current) return
