@@ -66,18 +66,32 @@ function getCurrentPosition(): Promise<GeolocationPosition | null> {
 export async function checkNearestPrinter(): Promise<string | null> {
   if (!supabase) throw new Error('Supabase not configured')
 
-  // Geofence disabled for now - get the first available printer
+  // Get all printers and log them
   const { data: printers, error } = await supabase
     .from('printers')
-    .select('id')
-    .limit(1)
+    .select('*')
 
-  if (error || !printers || printers.length === 0) {
-    console.log('[PrintJob] No printers found:', error?.message)
+  if (error) {
+    console.error('[PrintJob] Printer query error:', error)
     return null
   }
 
-  return printers[0].id ?? null
+  console.log('[PrintJob] Available printers:', printers?.map((p: any) => ({ id: p.id, name: p.name })))
+
+  if (!printers || printers.length === 0) {
+    console.log('[PrintJob] No printers found')
+    return null
+  }
+
+  // Select the first printer (or the most recently updated one)
+  const selectedPrinter = printers.sort((a: any, b: any) => {
+    const aTime = new Date(a.updated_at || a.created_at || 0).getTime()
+    const bTime = new Date(b.updated_at || b.created_at || 0).getTime()
+    return bTime - aTime
+  })[0]
+
+  console.log('[PrintJob] Selected printer:', selectedPrinter?.id, selectedPrinter?.name)
+  return selectedPrinter?.id ?? null
 }
 
 /**
