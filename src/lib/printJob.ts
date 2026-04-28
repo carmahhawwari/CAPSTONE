@@ -66,9 +66,18 @@ function getCurrentPosition(): Promise<GeolocationPosition | null> {
 export async function checkNearestPrinter(): Promise<string | null> {
   if (!supabase) throw new Error('Supabase not configured')
 
-  // Geofence disabled for now - return the default printer
-  const { data: printerId } = await supabase.rpc('nearest_printer', { lat: 0, lng: 0 })
-  return printerId ?? null
+  // Geofence disabled for now - get the first available printer
+  const { data: printers, error } = await supabase
+    .from('printers')
+    .select('id')
+    .limit(1)
+
+  if (error || !printers || printers.length === 0) {
+    console.log('[PrintJob] No printers found:', error?.message)
+    return null
+  }
+
+  return printers[0].id ?? null
 }
 
 /**
@@ -173,16 +182,17 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
     console.log('[PrintJob] Location unavailable, proceeding without geofence')
   }
 
-  // 3. Get the default printer (geofence disabled for now)
-  const { data: printerId } = await supabase.rpc('nearest_printer', {
-    lat: lat ?? 0,
-    lng: lng ?? 0,
-  })
+  // 3. Get the first available printer (geofence disabled for now)
+  const { data: printers, error: printerError } = await supabase
+    .from('printers')
+    .select('id')
+    .limit(1)
 
-  if (!printerId) {
+  if (printerError || !printers || printers.length === 0) {
     throw new Error('No printer available')
   }
 
+  const printerId = printers[0].id
   console.log('[PrintJob] Using printer:', printerId)
 
   // 4. Get current user and their display name
