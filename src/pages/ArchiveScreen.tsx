@@ -6,7 +6,6 @@ import { getReceiptsByFriend, getReceivedReceiptsByFriend, getReceiptsByCurrentU
 import type { FriendProfile, Receipt } from '@/types/app'
 import type { Block, TextStyle } from '@/types/canvas'
 import { FONT_STYLES } from '@/types/canvas'
-import recipientBarImg from '@/assets/icons/recipient-bar-new.png'
 
 type TabType = 'sent' | 'received'
 
@@ -164,7 +163,7 @@ export default function LettersScreen() {
           <div>Sent: {sentReceipts.length} | Received: {receivedReceipts.length}</div>
           {(activeTab === 'sent' ? sentReceipts : receivedReceipts).map((r) => (
             <div key={r.id} className="text-xs text-text-secondary mt-1">
-              {r.to} - {r.date} - {r.content?.substring(0, 30)}...
+              {r.to} - {r.date} - {typeof r.content === 'string' ? r.content.substring(0, 30) : '(visual receipt)'}...
             </div>
           ))}
         </div>
@@ -184,20 +183,50 @@ export default function LettersScreen() {
 }
 
 function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
-  // If we have the receipt image, display it
-  if (receipt.receiptImage) {
+  const [showPreview, setShowPreview] = useState(false)
+
+  // Show preview mode: display the raw base64 image
+  if (showPreview && receipt.receiptImage) {
     return (
       <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
+        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary">
+          <p className="text-mini text-text-tertiary">{receipt.date}</p>
+          <button
+            onClick={() => setShowPreview(false)}
+            className="text-xs text-fill-primary hover:underline"
+          >
+            Back to Rendered
+          </button>
+        </div>
         <img
           src={receipt.receiptImage}
           alt={`Receipt to ${receipt.to}`}
           className="w-full h-auto"
+          style={{ filter: 'grayscale(100%)' }}
         />
-        <div className="p-3">
-          <p className="text-mini text-text-tertiary">
-            {receipt.date}
-          </p>
+      </div>
+    )
+  }
+
+  // If we have the receipt image, display it with preview button
+  if (receipt.receiptImage) {
+    return (
+      <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
+        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary">
+          <p className="text-mini text-text-tertiary">{receipt.date}</p>
+          <button
+            onClick={() => setShowPreview(true)}
+            className="text-xs text-fill-primary hover:underline"
+          >
+            Preview Base64
+          </button>
         </div>
+        <img
+          src={receipt.receiptImage}
+          alt={`Receipt to ${receipt.to}`}
+          className="w-full h-auto"
+          style={{ filter: 'grayscale(100%)' }}
+        />
       </div>
     )
   }
@@ -215,10 +244,11 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
   }
 
   if (!receiptState) {
+    const contentStr = typeof receipt.content === 'string' ? receipt.content : '(no text)'
     return (
       <div className="border-fill-tertiary bg-bg-secondary rounded-md border p-4 flex flex-col justify-between overflow-hidden">
         <p className="text-callout text-text-primary line-clamp-4">
-          {receipt.content || '(no text)'}
+          {contentStr || '(no text)'}
         </p>
         <p className="text-mini text-text-tertiary mt-3">
           {receipt.date}
@@ -242,8 +272,10 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
         </div>
 
         {/* Recipient Bar */}
-        <img src={recipientBarImg} alt="" style={{ width: '100%', height: 'auto', marginBottom: '6px', display: 'block' }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '20px', color: '#222121' }}>
+        <svg width="100%" height="20" viewBox="0 0 100 20" style={{ marginBottom: '12px', display: 'block', backgroundColor: 'white' }} preserveAspectRatio="none">
+          <path d="M0,8 Q25,2 50,8 T100,8 L100,18 Q75,20 50,18 T0,18 Z" fill="black" />
+        </svg>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '20px', color: '#222121', lineHeight: 1.4 }}>
           <span>To: {receipt.to}</span>
           <span>{receipt.date}</span>
         </div>
@@ -275,7 +307,7 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
                 </div>
               )}
               {block.type === 'image' && (
-                <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '6px' }} />
+                <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '6px', filter: 'grayscale(100%)' }} />
               )}
               {block.type === 'sticker' && (
                 <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>[sticker]</div>

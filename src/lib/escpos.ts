@@ -31,7 +31,16 @@ function inlineComputedStyles(sourceRoot: HTMLElement, clonedRoot: HTMLElement):
     const computed = window.getComputedStyle(source)
     for (let j = 0; j < computed.length; j++) {
       const prop = computed.item(j)
-      target.style.setProperty(prop, computed.getPropertyValue(prop), computed.getPropertyPriority(prop))
+      let value = computed.getPropertyValue(prop)
+
+      // Filter out unsupported CSS color functions
+      if ((prop.includes('color') || prop.includes('background')) &&
+          (value.includes('oklab') || value.includes('oklch') || value.includes('lch'))) {
+        // Skip unsupported colors, let html2canvas use defaults
+        continue
+      }
+
+      target.style.setProperty(prop, value, computed.getPropertyPriority(prop))
     }
     target.removeAttribute('class')
   }
@@ -49,6 +58,17 @@ function applyCaptureStyle(doc: Document): HTMLStyleElement {
   outline-color: #d1d5db !important;
   text-shadow: none !important;
   box-shadow: none !important;
+}
+/* Hide selector and UI elements */
+[${CAPTURE_ATTR}] select,
+[${CAPTURE_ATTR}] input[type="range"],
+[${CAPTURE_ATTR}] input[type="color"],
+[${CAPTURE_ATTR}] button:not([data-render]) {
+  display: none !important;
+}
+/* Hide text selection cursors and decorations */
+[${CAPTURE_ATTR}] *::selection {
+  background: transparent !important;
 }
 `
   doc.head.appendChild(style)
@@ -93,6 +113,8 @@ export async function renderToPrintBuffer(
       scale,
       backgroundColor: '#ffffff',
       logging: false,
+      useCORS: true,
+      allowTaint: true,
       onclone: (clonedDoc) => {
         const clonedElement = clonedDoc.querySelector<HTMLElement>(`[${CAPTURE_ATTR}="${captureId}"]`)
         if (!clonedElement) return
@@ -183,6 +205,39 @@ export async function renderToPrintBuffer(
       element.setAttribute(CAPTURE_ATTR, previousCaptureAttr)
     }
   }
+}
+
+/**
+ * Convert a base64 PNG image directly to ESC/POS buffer for re-printing.
+ */
+export async function renderBase64ToPrintBuffer(base64Image: string): Promise<RenderToPrintResult> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      try {
+        // Create canvas from image
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0)
+
+        // Get pixel data and dither to 1-bit
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const mono = ditherImage(imageData, 'floyd-steinberg')
+
+        // Build ESC/POS buffer
+        const buffer = buildEscPosBuffer(mono, canvas.width, canvas.height)
+
+        // Return both buffer and the original base64 image
+        resolve({ buffer, imageBase64: base64Image })
+      } catch (err) {
+        reject(err)
+      }
+    }
+    img.onerror = () => reject(new Error('Failed to load image'))
+    img.src = base64Image
+  })
 }
 
 function toGrayscaleFloat(imageData: ImageData): Float32Array {

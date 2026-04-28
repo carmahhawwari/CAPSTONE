@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
+import { getUnprintedReceiptCount } from '@/lib/receipts'
 import Avatar from '@/components/Avatar'
 import archiveImg from '@/assets/archive.png'
 import printerImg from '@/assets/printer.png'
@@ -14,6 +15,7 @@ export default function HomeScreen() {
   const [friendSearchQuery, setFriendSearchQuery] = useState('')
   const [friends, setFriends] = useState<FriendProfile[]>([])
   const [loading, setLoading] = useState(false)
+  const [unprintedCount, setUnprintedCount] = useState(0)
 
   useEffect(() => {
     if (!user) return
@@ -25,6 +27,15 @@ export default function HomeScreen() {
     }
     loadFriends()
   }, [user])
+
+  useEffect(() => {
+    if (!user?.email) return
+    const loadUnprintedCount = async () => {
+      const count = await getUnprintedReceiptCount(user.email!)
+      setUnprintedCount(count)
+    }
+    loadUnprintedCount()
+  }, [user?.email])
 
   const handleSendClick = () => {
     setShowFriendPicker(true)
@@ -81,9 +92,16 @@ export default function HomeScreen() {
       </header>
 
       <div className="mt-6 flex flex-col gap-3">
-        <Tile label="Printer" onClick={handlePrintClick}>
-          <PrinterPlaceholder />
-        </Tile>
+        <div className="relative">
+          <Tile label="Printer" onClick={handlePrintClick}>
+            <PrinterPlaceholder />
+          </Tile>
+          {unprintedCount > 0 && (
+            <div className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold">
+              {unprintedCount}
+            </div>
+          )}
+        </div>
         <Tile label="Send" onClick={handleSendClick}>
           <ArchivePlaceholder />
         </Tile>

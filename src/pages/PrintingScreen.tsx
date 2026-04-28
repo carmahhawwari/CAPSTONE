@@ -2,28 +2,36 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
+import { getReceivedUnprintedReceipts } from '@/lib/receipts'
 import printerImg from '@/assets/printer.png'
 import wifiSymbol from '@/assets/wifi-symbol.svg'
-import recipientBarImg from '@/assets/icons/recipient-bar-new.png'
 import { submitPrintJob, checkNearestPrinter } from '@/lib/printJob'
-import type { FriendProfile } from '@/types/app'
+import { markReceiptAsPrinted } from '@/lib/receipts'
+import type { FriendProfile, Receipt } from '@/types/app'
 import type { Block, TextStyle } from '@/types/canvas'
 import { FONT_STYLES } from '@/types/canvas'
 
-type PrintState = 'confirm' | 'locating' | 'no-location' | 'no-printer' | 'printing' | 'done' | 'failed'
+type PrintState = 'select' | 'confirm' | 'locating' | 'no-location' | 'no-printer' | 'printing' | 'done' | 'failed'
 
 export default function PrintingScreen() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const location = useLocation()
   const { user } = useAuth()
-  const [state, setState] = useState<PrintState>('confirm')
+  const [state, setState] = useState<PrintState>('select')
   const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null)
   const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const receiptState = (location.state as any)?.receiptState
+  const [unprinted, setUnprinted] = useState<Receipt[]>([])
+  const [receiptState, setReceiptState] = useState<any>((location.state as any)?.receiptState || null)
   const receiptRef = useRef<HTMLDivElement>(null)
   const isTestMode = !searchParams.get('to') && !searchParams.get('email')
+
+  useEffect(() => {
+    if ((location.state as any)?.receiptState) {
+      setReceiptState((location.state as any).receiptState)
+    }
+  }, [location.state])
 
   useEffect(() => {
     const loadRecipientInfo = async () => {
@@ -33,11 +41,20 @@ export default function PrintingScreen() {
 
         if (email) {
           setRecipientEmail(email)
+          setState('confirm')
         } else if (friendId && user?.id) {
           const friends = await getFriends(user.id)
           const friend = friends.find(f => f.friendRowId === friendId)
           if (friend) {
             setSelectedFriend(friend)
+          }
+          setState('confirm')
+        } else if (user?.email) {
+          // Load received unprinted receipts
+          const receipts = await getReceivedUnprintedReceipts(user.email)
+          setUnprinted(receipts)
+          if (receipts.length === 0) {
+            setState('confirm')
           }
         }
       } catch (err) {
@@ -48,10 +65,10 @@ export default function PrintingScreen() {
     }
 
     loadRecipientInfo()
-  }, [searchParams, user?.id])
+  }, [searchParams, user?.id, user?.email])
 
   useEffect(() => {
-    if (state !== 'confirm') {
+    if (state !== 'confirm' && state !== 'select') {
       const checkPrinter = async () => {
         try {
           // In test mode, skip printer check and go straight to printing
@@ -97,15 +114,23 @@ export default function PrintingScreen() {
   useEffect(() => {
     if (state === 'done' && user?.id && receiptState && receiptRef.current) {
       const submitPrint = async () => {
+        const receiptId = searchParams.get('receiptId')
         try {
           const recipientName = selectedFriend
             ? selectedFriend.profile.display_name || selectedFriend.profile.username || 'Friend'
             : recipientEmail?.split('@')[0] || 'Unknown'
 
+          const finalRecipientEmail = selectedFriend
+            ? selectedFriend.profile.username
+              ? `${selectedFriend.profile.username}@stanford.edu`
+              : undefined
+            : recipientEmail || undefined
+
           await submitPrintJob({
             receiptElement: receiptRef.current!,
             recipientName,
             recipientId: selectedFriend?.profile.id,
+            recipientEmail: finalRecipientEmail,
             skipGeofence: isTestMode,
             cornerSticker: receiptState.cornerSticker ? {
               imageUrl: receiptState.cornerSticker.ditheredDataUrl || receiptState.cornerSticker.fullUrl,
@@ -116,13 +141,17 @@ export default function PrintingScreen() {
             } : undefined,
             receiptStateJson: JSON.stringify(receiptState),
           })
+
+          if (receiptId) {
+            await markReceiptAsPrinted(receiptId)
+          }
         } catch (err) {
           console.error('Failed to submit print job:', err)
         }
       }
       submitPrint()
     }
-  }, [state, user?.id, receiptState, selectedFriend, recipientEmail, isTestMode])
+  }, [state, user?.id, receiptState, selectedFriend, recipientEmail, isTestMode, searchParams])
 
   const handleBack = () => navigate('/home')
 
@@ -136,6 +165,38 @@ export default function PrintingScreen() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
+      {/* Receipt Selection State */}
+      {state === 'select' && !isLoading && unprinted.length > 0 && (
+        <div className="flex flex-col gap-4 w-full max-w-sm">
+          <h2 className="text-xl font-bold text-black">Print Received Messages</h2>
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {unprinted.map((receipt) => (
+              <button
+                key={receipt.id}
+                onClick={() => {
+                  // Navigate to the receipt page with print parameter
+                  navigate(`/r/${receipt.id}?print=true`)
+                }}
+                className="w-full p-4 border border-gray-300 rounded-lg text-left hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold text-black">From: {receipt.from}</p>
+                    <p className="text-sm text-gray-600">{receipt.date}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleBack}
+            className="w-full px-6 py-2 text-gray-700 text-center font-medium hover:text-black mt-4"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       {/* Confirmation State */}
       {state === 'confirm' && !isLoading && (
         <div className="flex flex-col items-center justify-center gap-8 w-full max-w-sm">
@@ -268,10 +329,10 @@ export default function PrintingScreen() {
           <div
             ref={receiptRef}
             className="bg-white overflow-hidden"
-            style={{ fontFamily: 'Georgia, serif', width: '576px', padding: '20px', backgroundColor: '#ffffff', color: '#222121', position: 'relative' }}
+            style={{ fontFamily: 'Georgia, serif', width: '576px', padding: '16px 20px', backgroundColor: '#ffffff', color: '#222121', position: 'relative' }}
           >
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', marginTop: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', marginTop: '12px' }}>
               {receiptState.headerVariant === 'simple' ? (
                 <img src="/src/assets/icons/header-logo.svg" alt="Inklings" style={{ height: '64px', width: 'auto' }} />
               ) : receiptState.headerVariant === 'squids-checkers' ? (
@@ -282,8 +343,10 @@ export default function PrintingScreen() {
             </div>
 
             {/* Recipient Bar */}
-            <img src={recipientBarImg} alt="" style={{ width: '100%', height: 'auto', marginBottom: '8px', display: 'block' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121' }}>
+            <svg width="100%" height="20" viewBox="0 0 100 20" style={{ marginBottom: '12px', display: 'block', backgroundColor: 'white' }} preserveAspectRatio="none">
+              <path d="M0,8 Q25,2 50,8 T100,8 L100,18 Q75,20 50,18 T0,18 Z" fill="black" />
+            </svg>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', marginTop: '8px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121', lineHeight: 1.5 }}>
               <span>To: {recipientName}</span>
               <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
             </div>

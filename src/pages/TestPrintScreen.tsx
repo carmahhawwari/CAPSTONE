@@ -93,7 +93,14 @@ export default function TestPrintScreen() {
       await submitPrintJob({
         receiptElement: imageContainerRef.current,
         recipientName: 'Test',
+        recipientEmail: 'test@stanford.edu',
         messageText: 'Test image print',
+        receiptStateJson: JSON.stringify({
+          blocks: [],
+          prompt: 'Test print',
+          headerVariant: 'simple',
+          currentPrompt: 'Test print',
+        }),
         printerId: selectedPrinterId ?? undefined,
         skipGeofence: !useGeofence,
       })

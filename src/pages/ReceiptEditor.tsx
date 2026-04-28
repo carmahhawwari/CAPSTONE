@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Avatar from '@/components/Avatar'
 import TextBlock from '@/components/canvas/TextBlock'
@@ -14,12 +14,13 @@ import RedactionLevelSlider from '@/components/canvas/RedactionLevelSlider'
 import ImageAdjustmentPanel from '@/components/canvas/ImageAdjustmentPanel'
 import { DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
 import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
-import { supabase } from '@/lib/supabase'
 import { getFriends } from '@/lib/friends'
+import { saveReceipt } from '@/lib/receipts'
+import { renderToPrintBuffer } from '@/lib/escpos'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Block, TextStyle, CornerSticker, Signature } from '@/types/canvas'
 import type { FriendProfile } from '@/types/app'
-import { newBlockId, FONT_STYLES, STYLE_LABELS } from '@/types/canvas'
+import { newBlockId, STYLE_LABELS } from '@/types/canvas'
 import headerLogoSvg from '@/assets/icons/header-logo.svg'
 import headerSquidsCheckersSvg from '@/assets/icons/header-squids-checkers.svg'
 import headerSquidsV1Svg from '@/assets/icons/header-squids-v1.svg'
@@ -37,12 +38,6 @@ const DEFAULT_CORNER_STICKER_ROTATION = 0
 const DEFAULT_CORNER_STICKER_SCALE = 1.1
 const MIN_CORNER_STICKER_SCALE = 0.5
 const MAX_CORNER_STICKER_SCALE = 2.5
-const CORNER_STICKER_DRAG_CLAMP = 0.35
-const CORNER_STICKER_SIZE = 224
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max)
-}
 
 function normalizeCornerSticker(sticker: CornerSticker): CornerSticker {
   return {
@@ -102,42 +97,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [showFriendPicker, setShowFriendPicker] = useState(false)
   const [friendSearchQuery, setFriendSearchQuery] = useState('')
   const receiptRef = useRef<HTMLDivElement>(null)
-  const cornerStickerAreaRef = useRef<HTMLDivElement>(null)
   const signatureAreaRef = useRef<HTMLDivElement>(null)
-  const activeStickerPointersRef = useRef(new Map<number, { x: number; y: number }>())
-  const activeSignaturePointersRef = useRef(new Map<number, { x: number; y: number }>())
-  const stickerGestureRef = useRef<
-    | {
-      type: 'drag'
-      pointerId: number
-      startX: number
-      startY: number
-      initialOffsetX: number
-      initialOffsetY: number
-    }
-    | {
-      type: 'pinch'
-      startDistance: number
-      initialScale: number
-    }
-    | null
-  >(null)
-  const signatureGestureRef = useRef<
-    | {
-      type: 'drag'
-      pointerId: number
-      startX: number
-      startY: number
-      initialOffsetX: number
-      initialOffsetY: number
-    }
-    | {
-      type: 'pinch'
-      startDistance: number
-      initialScale: number
-    }
-    | null
-  >(null)
 
   // Generate 3 random prompts + no prompt option
   const [prompts] = useState(() => {
@@ -303,19 +263,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     navigate('/onboard/deliver')
   }
 
-  const clampStickerOffsets = (offsetX: number, offsetY: number) => {
-    const area = cornerStickerAreaRef.current
-    if (!area) return { offsetX, offsetY }
-
-    const maxHorizontalOffset = area.clientWidth * CORNER_STICKER_DRAG_CLAMP
-    const maxVerticalOffset = area.clientHeight * CORNER_STICKER_DRAG_CLAMP
-
-    return {
-      offsetX: clamp(offsetX, -maxHorizontalOffset, maxHorizontalOffset),
-      offsetY: clamp(offsetY, -maxVerticalOffset, maxVerticalOffset),
-    }
-  }
-
   const updateCornerSticker = (updates: Partial<CornerSticker> | ((current: CornerSticker) => Partial<CornerSticker>)) => {
     setCornerSticker((current) => {
       if (!current) return current
@@ -327,39 +274,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const handleSelectCornerSticker = (sticker: CornerSticker) => {
     setCornerSticker(normalizeCornerSticker(sticker))
     setStickerActive(true)
-  }
-
-  const getStickerPointerDistance = () => {
-    const pointers = [...activeStickerPointersRef.current.values()]
-    if (pointers.length < 2) return null
-    return Math.hypot(pointers[0].x - pointers[1].x, pointers[0].y - pointers[1].y)
-  }
-
-  const resetStickerGesture = () => {
-    stickerGestureRef.current = null
-  }
-
-  const getSignaturePointerDistance = () => {
-    const pointers = [...activeSignaturePointersRef.current.values()]
-    if (pointers.length < 2) return null
-    return Math.hypot(pointers[0].x - pointers[1].x, pointers[0].y - pointers[1].y)
-  }
-
-  const resetSignatureGesture = () => {
-    signatureGestureRef.current = null
-  }
-
-  const clampSignatureOffsets = (offsetX: number, offsetY: number) => {
-    const area = signatureAreaRef.current
-    if (!area) return { offsetX, offsetY }
-
-    const maxHorizontalOffset = area.clientWidth * CORNER_STICKER_DRAG_CLAMP
-    const maxVerticalOffset = area.clientHeight * CORNER_STICKER_DRAG_CLAMP
-
-    return {
-      offsetX: clamp(offsetX, -maxHorizontalOffset, maxHorizontalOffset),
-      offsetY: clamp(offsetY, -maxVerticalOffset, maxVerticalOffset),
-    }
   }
 
   const updateSignature = (updates: Partial<Signature> | ((current: Signature) => Partial<Signature>)) => {
@@ -376,191 +290,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     })
   }
 
-  const handleSignaturePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!signatureActive) {
-      setSignatureActive(true)
-      return
-    }
-
-    e.preventDefault()
-    e.stopPropagation()
-
-    activeSignaturePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
-    ;(e.currentTarget as any).setPointerCapture(e.pointerId)
-
-    if (activeSignaturePointersRef.current.size === 1) {
-      signatureGestureRef.current = {
-        type: 'drag',
-        pointerId: e.pointerId,
-        startX: e.clientX,
-        startY: e.clientY,
-        initialOffsetX: signature.offsetX ?? 0,
-        initialOffsetY: signature.offsetY ?? 0,
-      }
-      return
-    }
-
-    if (activeSignaturePointersRef.current.size === 2) {
-      const startDistance = getSignaturePointerDistance()
-      if (!startDistance) return
-      signatureGestureRef.current = {
-        type: 'pinch',
-        startDistance,
-        initialScale: signature.scale ?? 1,
-      }
-    }
-  }
-
-  const handleSignaturePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!activeSignaturePointersRef.current.has(e.pointerId)) return
-
-    e.preventDefault()
-    activeSignaturePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
-
-    const gesture = signatureGestureRef.current
-    if (!gesture) return
-
-    if (gesture.type === 'drag') {
-      if (gesture.pointerId !== e.pointerId) return
-
-      const nextOffsets = clampSignatureOffsets(
-        gesture.initialOffsetX + (e.clientX - gesture.startX),
-        gesture.initialOffsetY + (e.clientY - gesture.startY),
-      )
-
-      updateSignature(nextOffsets)
-      return
-    }
-
-    const distance = getSignaturePointerDistance()
-    if (!distance) return
-
-    updateSignature({
-      scale: clamp(
-        gesture.initialScale * (distance / gesture.startDistance),
-        MIN_CORNER_STICKER_SCALE,
-        MAX_CORNER_STICKER_SCALE,
-      ),
-    })
-  }
-
-  const handleSignaturePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if ((e.currentTarget as any).hasPointerCapture(e.pointerId)) {
-      (e.currentTarget as any).releasePointerCapture(e.pointerId)
-    }
-    activeSignaturePointersRef.current.delete(e.pointerId)
-
-    if (activeSignaturePointersRef.current.size === 1) {
-      const [[pointerId, pointer]] = activeSignaturePointersRef.current.entries()
-      signatureGestureRef.current = {
-        type: 'drag',
-        pointerId,
-        startX: pointer.x,
-        startY: pointer.y,
-        initialOffsetX: signature.offsetX ?? 0,
-        initialOffsetY: signature.offsetY ?? 0,
-      }
-      return
-    }
-
-    resetSignatureGesture()
-  }
-
-  const handleCornerStickerPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    if (!cornerSticker) return
-
-    if (!stickerActive) {
-      setStickerActive(true)
-      return
-    }
-
-    e.preventDefault()
-    e.stopPropagation()
-
-    activeStickerPointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
-    e.currentTarget.setPointerCapture(e.pointerId)
-
-    if (activeStickerPointersRef.current.size === 1) {
-      stickerGestureRef.current = {
-        type: 'drag',
-        pointerId: e.pointerId,
-        startX: e.clientX,
-        startY: e.clientY,
-        initialOffsetX: cornerSticker.offsetX ?? 0,
-        initialOffsetY: cornerSticker.offsetY ?? 0,
-      }
-      return
-    }
-
-    if (activeStickerPointersRef.current.size === 2) {
-      const startDistance = getStickerPointerDistance()
-      if (!startDistance) return
-      stickerGestureRef.current = {
-        type: 'pinch',
-        startDistance,
-        initialScale: cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE,
-      }
-    }
-  }
-
-  const handleCornerStickerPointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    if (!activeStickerPointersRef.current.has(e.pointerId)) return
-
-    e.preventDefault()
-    activeStickerPointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
-
-    const gesture = stickerGestureRef.current
-    if (!gesture) return
-
-    if (gesture.type === 'drag') {
-      if (gesture.pointerId !== e.pointerId) return
-
-      const nextOffsets = clampStickerOffsets(
-        gesture.initialOffsetX + (e.clientX - gesture.startX),
-        gesture.initialOffsetY + (e.clientY - gesture.startY),
-      )
-
-      updateCornerSticker(nextOffsets)
-      return
-    }
-
-    const distance = getStickerPointerDistance()
-    if (!distance) return
-
-    updateCornerSticker({
-      scale: clamp(
-        gesture.initialScale * (distance / gesture.startDistance),
-        MIN_CORNER_STICKER_SCALE,
-        MAX_CORNER_STICKER_SCALE,
-      ),
-    })
-  }
-
-  const handleCornerStickerPointerUp = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId)
-    }
-    activeStickerPointersRef.current.delete(e.pointerId)
-
-    if (activeStickerPointersRef.current.size === 1 && cornerSticker) {
-      const [[pointerId, pointer]] = activeStickerPointersRef.current.entries()
-      stickerGestureRef.current = {
-        type: 'drag',
-        pointerId,
-        startX: pointer.x,
-        startY: pointer.y,
-        initialOffsetX: cornerSticker.offsetX ?? 0,
-        initialOffsetY: cornerSticker.offsetY ?? 0,
-      }
-      return
-    }
-
-    resetStickerGesture()
-  }
-
-  const serializeContent = () => {
-    return JSON.stringify(blocks)
-  }
 
   const getReceiptState = () => ({
     blocks,
@@ -572,37 +301,46 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   })
 
   const handleSend = async () => {
-    if (blocks.length === 0) return
-    const content = serializeContent()
+    if (blocks.length === 0 || !user?.email) return
+    setError(null)
+
+    const senderName =
+      (user?.user_metadata?.display_name as string | undefined) ||
+      user?.email?.split('@')[0] ||
+      'A friend'
 
     if (recipientEmail) {
-      if (!supabase) {
-        navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { content } })
-        return
-      }
-      const senderName =
-        (user?.user_metadata?.display_name as string | undefined) ||
-        user?.email?.split('@')[0] ||
-        'A friend'
       try {
-        const { data, error } = await supabase.functions.invoke('send-recipt-email', {
-          body: {
-            recipientEmail,
-            senderName,
-            content: {
-              blocks,
-              prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
-              cornerSticker: cornerSticker ?? undefined,
-              signature,
-              headerVariant,
-            },
-          },
+        const receiptState = getReceiptState()
+
+        // Render receipt to get dithered image
+        let receiptImage: string | undefined
+        if (receiptRef.current) {
+          try {
+            console.log('[Receipt] Rendering receipt to get dithered image...')
+            const { imageBase64 } = await renderToPrintBuffer(receiptRef.current, {})
+            console.log('[Receipt] Got imageBase64:', imageBase64 ? imageBase64.substring(0, 50) + '...' : 'null')
+            receiptImage = imageBase64
+          } catch (e) {
+            console.error('[Receipt] Failed to render image:', e)
+          }
+        } else {
+          console.warn('[Receipt] receiptRef.current is null')
+        }
+
+        const receiptId = await saveReceipt({
+          sender_email: user.email,
+          sender_name: senderName,
+          recipient_email: recipientEmail,
+          content: JSON.stringify(receiptState),
+          receiptImage,
         })
-        if (error) throw error
-        if (data?.error) throw new Error(data.error)
-        navigate('/onboard/sent')
+
+        navigate(`/printing?email=${encodeURIComponent(recipientEmail)}&receiptId=${receiptId}`, {
+          state: { receiptState }
+        })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to send')
+        setError(err instanceof Error ? err.message : 'Failed to save receipt')
       }
       return
     }
@@ -611,23 +349,135 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       setShowFriendPicker(true)
       return
     }
-    navigate(`/printing?to=${selectedFriendId}`, { state: { content } })
+
+    try {
+      const receiptState = getReceiptState()
+      const friendEmail = selectedFriend.profile.username ? `${selectedFriend.profile.username}@stanford.edu` : null
+
+      if (!friendEmail) {
+        setError('Friend email not available')
+        return
+      }
+
+      // Render receipt to get dithered image
+      let receiptImage: string | undefined
+      if (receiptRef.current) {
+        try {
+          const { imageBase64 } = await renderToPrintBuffer(receiptRef.current, {})
+          receiptImage = imageBase64
+        } catch (e) {
+          console.warn('[Receipt] Failed to render image:', e)
+        }
+      }
+
+      const receiptId = await saveReceipt({
+        sender_email: user.email,
+        sender_name: senderName,
+        recipient_email: friendEmail,
+        content: JSON.stringify(receiptState),
+        receiptImage,
+      })
+
+      navigate(`/printing?to=${selectedFriendId}&receiptId=${receiptId}`, {
+        state: { receiptState }
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save receipt')
+    }
   }
 
-  const handleSelectFriendFromPicker = (friendId: string) => {
-    setSelectedFriendId(friendId)
-    setShowFriendPicker(false)
-    setFriendSearchQuery('')
-    const receiptState = getReceiptState()
-    navigate(`/printing?to=${friendId}`, { state: { receiptState } })
+  const handleSelectFriendFromPicker = async (friendId: string) => {
+    if (!user?.email) return
+    setError(null)
+
+    try {
+      setSelectedFriendId(friendId)
+      setShowFriendPicker(false)
+      setFriendSearchQuery('')
+
+      const friend = friends.find(f => f.profile.id === friendId)
+      if (!friend) {
+        setError('Friend not found')
+        return
+      }
+
+      const senderName =
+        (user?.user_metadata?.display_name as string | undefined) ||
+        user?.email?.split('@')[0] ||
+        'A friend'
+
+      const receiptState = getReceiptState()
+      const friendEmail = friend.profile.username ? `${friend.profile.username}@stanford.edu` : null
+
+      if (!friendEmail) {
+        setError('Friend email not available')
+        return
+      }
+
+      // Render receipt to get dithered image
+      let receiptImage: string | undefined
+      if (receiptRef.current) {
+        try {
+          const { imageBase64 } = await renderToPrintBuffer(receiptRef.current, {})
+          receiptImage = imageBase64
+        } catch (e) {
+          console.warn('[Receipt] Failed to render image:', e)
+        }
+      }
+
+      const receiptId = await saveReceipt({
+        sender_email: user.email,
+        sender_name: senderName,
+        recipient_email: friendEmail,
+        content: JSON.stringify(receiptState),
+        receiptImage,
+      })
+
+      navigate(`/printing?to=${friendId}&receiptId=${receiptId}`, { state: { receiptState } })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save receipt')
+    }
   }
 
-  const handleSendToEmail = (sunet: string) => {
-    setShowFriendPicker(false)
-    setFriendSearchQuery('')
-    const receiptState = getReceiptState()
-    const email = `${sunet}@stanford.edu`
-    navigate(`/printing?email=${encodeURIComponent(email)}`, { state: { receiptState } })
+  const handleSendToEmail = async (sunet: string) => {
+    if (!user?.email) return
+    setError(null)
+
+    try {
+      setShowFriendPicker(false)
+      setFriendSearchQuery('')
+
+      const senderName =
+        (user?.user_metadata?.display_name as string | undefined) ||
+        user?.email?.split('@')[0] ||
+        'A friend'
+
+      const receiptState = getReceiptState()
+      const email = `${sunet}@stanford.edu`
+
+      // Render receipt to get dithered image
+      let receiptImage: string | undefined
+      if (receiptRef.current) {
+        try {
+          const { imageBase64 } = await renderToPrintBuffer(receiptRef.current, {})
+          receiptImage = imageBase64
+        } catch (e) {
+          console.warn('[Receipt] Failed to render image:', e)
+        }
+      }
+
+      const receiptId = await saveReceipt({
+        sender_email: user.email,
+        sender_name: senderName,
+        recipient_email: email,
+        content: JSON.stringify(receiptState),
+        receiptImage,
+      })
+
+      navigate(`/printing?email=${encodeURIComponent(email)}&receiptId=${receiptId}`, { state: { receiptState } })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save receipt')
+    }
   }
 
   const filteredFriends = friends.filter(f =>
@@ -716,16 +566,20 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </div>
 
           {/* Recipient Bar */}
-          <div className="relative mb-3">
-            <img src={recipientBarSvg} alt="" className="w-full h-auto" />
-            <div className="absolute inset-0 flex items-center px-3 text-white z-10 gap-2" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px' }}>
-              <span className="truncate">
-                To: {recipientName || (recipientEmail ? recipientEmail.split('@')[0] : (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___'))}
-              </span>
-              <span className="ml-auto shrink-0 text-xs">
-                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </span>
+          <div className="mb-3">
+            <div className="h-[24px] mb-2">
+              <img src={recipientBarSvg} alt="" className="w-full h-full object-cover" />
             </div>
+          </div>
+
+          {/* Recipient Info */}
+          <div className="flex items-center px-3 text-black gap-2 mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px', lineHeight: 1.2 }}>
+            <span className="truncate">
+              To: {recipientName || (recipientEmail ? recipientEmail.split('@')[0] : (selectedFriend ? friendLabel(selectedFriend).split(' ')[0] : '___'))}
+            </span>
+            <span className="ml-auto shrink-0 text-xs">
+              {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </span>
           </div>
 
           {/* Prompt Picker */}
@@ -821,142 +675,59 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             )}
           </div>
 
-          {/* Signature and Corner sticker - Same row */}
-          <div className="pt-2 mt-6 flex gap-4 items-end">
-            {/* Signature - Left side */}
+          {/* Bottom row: Signature (left) + Sticker (right) */}
+          <div className="mt-8 pt-4 border-t border-dashed border-gray-200 flex gap-6">
+            {/* Left: Signature */}
             <div className="flex-1">
               <div
                 ref={signatureAreaRef}
-                className="relative h-20"
-                onPointerDown={handleSignaturePointerDown}
-                onPointerMove={handleSignaturePointerMove}
-                onPointerUp={handleSignaturePointerUp}
-                onPointerCancel={handleSignaturePointerUp}
-                style={{ touchAction: signatureActive ? 'none' : 'auto' }}
+                className="py-2"
               >
-                <div
-                  className={`absolute left-0 top-0 ${signatureActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
+                <input
+                  type="text"
+                  value={signature.text}
+                  onChange={(e) => updateSignature({ text: e.target.value })}
+                  placeholder="Love, [your name]"
+                  className="w-full focus:outline-none border-0 bg-transparent px-0 py-1 text-sm italic"
                   style={{
-                    transform: `translate(${signature.offsetX ?? 0}px, ${signature.offsetY ?? 0}px) rotate(${signature.rotation ?? 0}deg) scale(${signature.scale ?? 1})`,
-                    transformOrigin: '0 0',
+                    fontFamily: 'Georgia, serif',
+                    fontSize: '14px',
+                    color: '#4b5563',
                   }}
-                >
-                  {(() => {
-                    const sunetId = user?.email?.split('@')[0] || ''
-                    const defaultText = sunetId ? `Love, ${sunetId}` : 'Love, '
-                    const isEdited = signature.text !== defaultText
-                    const sunetPart = sunetId ? sunetId : ''
-
-                    return (
-                      <div>
-                        <div>
-                          <input
-                            type="text"
-                            value={signature.text}
-                            onChange={(e) => updateSignature({ text: e.target.value })}
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onPointerMove={(e) => e.stopPropagation()}
-                            onPointerUp={(e) => e.stopPropagation()}
-                            className={`whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-fill-primary px-1 py-0 bg-transparent border-0 ${signatureActive ? 'ring-2 ring-fill-primary' : ''}`}
-                            style={{
-                              fontFamily: FONT_STYLES[signature.style].fontFamily,
-                              fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
-                              fontWeight: FONT_STYLES[signature.style].fontWeight,
-                              lineHeight: FONT_STYLES[signature.style].lineHeight,
-                              pointerEvents: signatureActive ? 'auto' : 'none',
-                            }}
-                          />
-                        </div>
-                        {!isEdited && sunetPart && (
-                          <div style={{
-                            fontSize: `${FONT_STYLES[signature.style].fontSize}px`,
-                            color: '#999',
-                            marginTop: '2px',
-                          }}>
-                            ({sunetId})
-                          </div>
-                        )}
-                        {isEdited && sunetPart && (
-                          <div style={{
-                            fontSize: `${FONT_STYLES[signature.style].fontSize * 0.6}px`,
-                            color: '#999',
-                            marginTop: '2px',
-                          }}>
-                            ({sunetId})
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })()}
-                </div>
+                />
               </div>
             </div>
 
-            {/* Corner sticker - Right side */}
-            <div ref={cornerStickerAreaRef} className="relative h-56 w-56 flex-shrink-0">
-            {cornerSticker ? (
-              <div
-                className="absolute bottom-0 right-0 group"
-                style={{
-                  transform: `translate(${cornerSticker.offsetX ?? 0}px, ${cornerSticker.offsetY ?? 0}px)`,
-                }}
-              >
+            {/* Right: GIPHY Sticker */}
+            <div className="w-32 flex-shrink-0">
+              {cornerSticker ? (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCornerSticker(null)
+                      setStickerActive(false)
+                    }}
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                    aria-label="Remove sticker"
+                  >
+                    ×
+                  </button>
+                  <img
+                    src={cornerSticker.ditheredDataUrl || cornerSticker.fullUrl}
+                    alt="Sticker"
+                    className="w-full h-auto object-contain"
+                    style={{ filter: cornerSticker.ditheredDataUrl ? 'none' : 'grayscale(100%)' }}
+                  />
+                </div>
+              ) : (
                 <button
-                  type="button"
-                  onPointerDown={handleCornerStickerPointerDown}
-                  onPointerMove={handleCornerStickerPointerMove}
-                  onPointerUp={handleCornerStickerPointerUp}
-                  onPointerCancel={handleCornerStickerPointerUp}
-                  className={`focus:outline-none transform transition-all ${
-                    stickerActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer hover:scale-110 active:scale-90'
-                  }`}
-                  style={{
-                    transform: `rotate(${cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}deg) scale(${cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE})`,
-                    touchAction: stickerActive ? 'none' : 'auto',
-                  }}
-                  aria-pressed={stickerActive}
+                  onClick={() => setShowGiphyPicker(true)}
+                  className="w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-500 hover:border-gray-400 transition-all text-2xl"
                 >
-                  {cornerSticker.ditheredDataUrl ? (
-                    <img
-                      src={cornerSticker.ditheredDataUrl}
-                      alt="Corner sticker"
-                      className="object-contain"
-                      style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE }}
-                    />
-                  ) : (
-                    <img
-                      src={cornerSticker.fullUrl}
-                      crossOrigin="anonymous"
-                      alt="Corner sticker"
-                      className="object-contain"
-                      style={{ width: CORNER_STICKER_SIZE, height: CORNER_STICKER_SIZE, filter: 'grayscale(100%)' }}
-                    />
-                  )}
+                  +
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCornerSticker(null)
-                    setStickerActive(false)
-                  }}
-                  className={`absolute -top-4 -left-4 w-7 h-7 rounded-full bg-red-500 text-white text-lg flex items-center justify-center hover:bg-red-600 transition-colors shadow-md ${
-                    stickerActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                  }`}
-                  aria-label="Remove corner sticker"
-                >
-                  ×
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowGiphyPicker(true)}
-                className="absolute bottom-0 right-0 w-28 h-28 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-300 hover:text-gray-400 hover:border-gray-300 transition-all focus:outline-none"
-                style={{ fontFamily: 'var(--font-printvetica), Inter, sans-serif' }}
-              >
-                <span className="text-3xl leading-none">+</span>
-                <span className="text-xs">Add a sticker</span>
-              </button>
-            )}
+              )}
             </div>
           </div>
         </div>
@@ -1117,7 +888,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             </div>
 
             <p className="text-xs text-gray-500">
-              Use one finger to drag and two fingers to scale while this panel is open.
+              Adjust sticker rotation and scale using the sliders above.
             </p>
 
             {/* Reset Button */}

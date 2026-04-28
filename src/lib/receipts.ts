@@ -9,6 +9,14 @@ export interface PrintJobInput {
   payload_base64: string
 }
 
+export interface SaveReceiptInput {
+  sender_email: string
+  sender_name: string
+  recipient_email: string
+  content: string
+  receiptImage?: string
+}
+
 /**
  * Get all receipts (print jobs) sent to a specific friend.
  * Uses recipient_id to match jobs sent to that profile.
@@ -25,6 +33,7 @@ export async function getReceiptsByFriend(
       .select('*')
       .eq('sender_email', currentUserEmail)
       .eq('recipient_email', friendEmail)
+      .not('printed_at', 'is', null)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -39,17 +48,51 @@ export async function getReceiptsByFriend(
         day: 'numeric',
         year: 'numeric',
       }),
-      to: job.recipient_name ?? 'Unknown',
+      to: friendEmail.split('@')[0] ?? 'Unknown',
       from: 'You',
-      content: job.message_text ?? '(printed message)',
+      content: job.content ?? '(no content)',
       friendId: friendEmail,
-      receiptStateJson: job.receipt_state_json,
+      receiptStateJson: job.content,
       receiptImage: job.receipt_image,
       printedAt: job.printed_at,
     }))
   } catch (error) {
     console.error('getReceiptsByFriend exception:', error)
     return []
+  }
+}
+
+/**
+ * Save a receipt (message) to delivered_receipts when user hits send.
+ * Returns the receipt ID or throws on error.
+ */
+export async function saveReceipt(input: SaveReceiptInput): Promise<string> {
+  if (!supabase) throw new Error('Supabase not configured')
+
+  try {
+    const { data, error } = await supabase
+      .from('delivered_receipts')
+      .insert([{
+        sender_email: input.sender_email,
+        sender_name: input.sender_name,
+        recipient_email: input.recipient_email,
+        content: input.content,
+        receipt_image: input.receiptImage ?? null,
+      }] as any)
+      .select('id')
+      .single()
+
+    if (error) {
+      console.error('saveReceipt error:', error)
+      throw error
+    }
+
+    const result = data as any
+    console.log('[Receipt] Saved to delivered_receipts:', result.id)
+    return result.id
+  } catch (error) {
+    console.error('saveReceipt exception:', error)
+    throw error
   }
 }
 
@@ -92,6 +135,7 @@ export async function getReceiptsByCurrentUser(userEmail: string): Promise<Recei
       .from('delivered_receipts')
       .select('*')
       .eq('sender_email', userEmail)
+      .not('printed_at', 'is', null)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -106,11 +150,12 @@ export async function getReceiptsByCurrentUser(userEmail: string): Promise<Recei
         day: 'numeric',
         year: 'numeric',
       }),
-      to: job.recipient_name ?? 'Unknown',
+      to: job.recipient_email?.split('@')[0] ?? 'Unknown',
       from: 'You',
-      content: job.message_text ?? '(printed message)',
-      friendId: job.recipient_id ?? '',
-      receiptStateJson: job.receipt_state_json,
+      content: job.content ?? '(no content)',
+      friendId: job.recipient_email ?? '',
+      receiptStateJson: job.content,
+      receiptImage: job.receipt_image,
       printedAt: job.printed_at,
     }))
   } catch (error) {
@@ -134,6 +179,7 @@ export async function getReceivedReceiptsByFriend(
       .select('*')
       .eq('sender_email', friendEmail)
       .eq('recipient_email', currentUserEmail)
+      .not('printed_at', 'is', null)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -149,10 +195,10 @@ export async function getReceivedReceiptsByFriend(
         year: 'numeric',
       }),
       to: 'You',
-      from: job.recipient_name ?? 'Unknown',
-      content: job.message_text ?? '(printed message)',
+      from: job.sender_name ?? job.sender_email ?? 'Unknown',
+      content: job.content ?? '(no content)',
       friendId: friendEmail,
-      receiptStateJson: job.receipt_state_json,
+      receiptStateJson: job.content,
       receiptImage: job.receipt_image,
       printedAt: job.printed_at,
     }))
@@ -173,6 +219,7 @@ export async function getReceivedReceiptsByCurrentUser(userEmail: string): Promi
       .from('delivered_receipts')
       .select('*')
       .eq('recipient_email', userEmail)
+      .not('printed_at', 'is', null)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -188,14 +235,144 @@ export async function getReceivedReceiptsByCurrentUser(userEmail: string): Promi
         year: 'numeric',
       }),
       to: 'You',
-      from: job.recipient_name ?? 'Unknown',
-      content: job.message_text ?? '(printed message)',
-      friendId: job.sender_id ?? '',
-      receiptStateJson: job.receipt_state_json,
+      from: job.sender_name ?? job.sender_email ?? 'Unknown',
+      content: job.content ?? '(no content)',
+      friendId: job.sender_email ?? '',
+      receiptStateJson: job.content,
+      receiptImage: job.receipt_image,
       printedAt: job.printed_at,
     }))
   } catch (error) {
     console.error('getReceivedReceiptsByCurrentUser exception:', error)
+    return []
+  }
+}
+
+/**
+ * Mark a receipt as printed.
+ */
+export async function markReceiptAsPrinted(receiptId: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase not configured')
+
+  try {
+    const { error } = await (supabase
+      .from('delivered_receipts' as never) as any)
+      .update({ printed_at: new Date().toISOString() })
+      .eq('id', receiptId)
+
+    if (error) {
+      console.error('markReceiptAsPrinted error:', error)
+      throw error
+    }
+
+    console.log('[Receipt] Marked as printed:', receiptId)
+  } catch (error) {
+    console.error('markReceiptAsPrinted exception:', error)
+    throw error
+  }
+}
+
+/**
+ * Get count of unprinted receipts sent by the current user.
+ */
+export async function getUnprintedReceiptCount(userEmail: string): Promise<number> {
+  if (!supabase) return 0
+
+  try {
+    const { count, error } = await supabase
+      .from('delivered_receipts')
+      .select('*', { count: 'exact', head: true })
+      .eq('sender_email', userEmail)
+      .is('printed_at', null)
+
+    if (error) {
+      console.error('getUnprintedReceiptCount error:', error)
+      return 0
+    }
+
+    return count ?? 0
+  } catch (error) {
+    console.error('getUnprintedReceiptCount exception:', error)
+    return 0
+  }
+}
+
+/**
+ * Get unprinted receipts sent by the current user.
+ */
+export async function getUnprintedReceipts(userEmail: string): Promise<Receipt[]> {
+  if (!supabase) return []
+
+  try {
+    const { data, error } = await supabase
+      .from('delivered_receipts')
+      .select('*')
+      .eq('sender_email', userEmail)
+      .is('printed_at', null)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('getUnprintedReceipts error:', error)
+      return []
+    }
+
+    return (data || []).map((job: any) => ({
+      id: job.id,
+      date: new Date(job.created_at).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      to: job.recipient_email?.split('@')[0] ?? 'Unknown',
+      from: 'You',
+      content: job.content ?? '(no content)',
+      friendId: job.recipient_email ?? '',
+      receiptStateJson: job.content,
+      receiptImage: job.receipt_image,
+      printedAt: job.printed_at,
+    }))
+  } catch (error) {
+    console.error('getUnprintedReceipts exception:', error)
+    return []
+  }
+}
+
+/**
+ * Get unprinted receipts received by the current user (sent by others).
+ */
+export async function getReceivedUnprintedReceipts(userEmail: string): Promise<Receipt[]> {
+  if (!supabase) return []
+
+  try {
+    const { data, error } = await supabase
+      .from('delivered_receipts')
+      .select('*')
+      .eq('recipient_email', userEmail)
+      .is('printed_at', null)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('getReceivedUnprintedReceipts error:', error)
+      return []
+    }
+
+    return (data || []).map((job: any) => ({
+      id: job.id,
+      date: new Date(job.created_at).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      to: 'You',
+      from: job.sender_name ?? job.sender_email ?? 'Unknown',
+      content: job.content ?? '(no content)',
+      friendId: job.sender_email ?? '',
+      receiptStateJson: job.content,
+      receiptImage: job.receipt_image,
+      printedAt: job.printed_at,
+    }))
+  } catch (error) {
+    console.error('getReceivedUnprintedReceipts exception:', error)
     return []
   }
 }

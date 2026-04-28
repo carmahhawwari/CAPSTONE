@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { renderToPrintBuffer, bufferToBase64, type CornerStickerData } from './escpos'
+import { renderToPrintBuffer, bufferToBase64, renderBase64ToPrintBuffer, type CornerStickerData } from './escpos'
 import { PRINT_SERVER_URL, USE_LOCAL_PRINT_SERVER } from './printBackend'
 
 interface SubmitPrintJobOptions {
@@ -7,6 +7,7 @@ interface SubmitPrintJobOptions {
   recipientName: string
   messageText?: string
   recipientId?: string
+  recipientEmail?: string
   skipGeofence?: boolean
   printerId?: string
   cornerSticker?: CornerStickerData
@@ -62,7 +63,7 @@ export async function checkNearestPrinter(): Promise<string | null> {
  *
  * Returns the job ID on success, or throws on failure.
  */
-export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, skipGeofence, printerId: specifiedPrinterId, cornerSticker, receiptStateJson }: SubmitPrintJobOptions): Promise<string> {
+export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, recipientEmail, skipGeofence, printerId: specifiedPrinterId, cornerSticker, receiptStateJson }: SubmitPrintJobOptions): Promise<string> {
   // 1. Render receipt to ESC/POS binary
   const { buffer, imageBase64 } = await renderToPrintBuffer(receiptElement, { cornerSticker })
   const payload = bufferToBase64(buffer)
@@ -97,14 +98,34 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
       throw new Error('User email not available')
     }
 
+    let senderName = user.email
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name, username')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.display_name) {
+        senderName = profile.display_name
+      } else if (profile?.username) {
+        senderName = profile.username
+      }
+    } catch (e) {
+      console.log('[PrintJob] Could not fetch sender display name, using email:', senderName)
+    }
+
+    console.log('[PrintJob] Inserting with sender_email:', user.email, 'sender_name:', senderName)
     const { data: job, error } = await supabase
       .from('print_jobs')
       .insert({
         printer_id: specifiedPrinterId,
         sender_id: user?.id ?? null,
         sender_email: user.email,
+        sender_name: senderName,
         recipient_name: recipientName,
         recipient_id: recipientId ?? null,
+        recipient_email: recipientEmail ?? null,
         message_text: messageText ?? null,
         payload_base64: payload,
         receipt_state_json: receiptStateJson ?? null,
@@ -116,7 +137,10 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
       .select('id')
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('[PrintJob] Insert error:', error)
+      throw error
+    }
     console.log('[PrintJob] Job submitted:', job.id)
     return job.id
   }
@@ -146,23 +170,42 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
 
   console.log('[PrintJob] Nearest printer from geofence:', printerId)
 
-  // 4. Get current user
+  // 4. Get current user and their display name
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user?.email) {
     throw new Error('User email not available')
   }
 
+  let senderName = user.email
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name, username')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.display_name) {
+      senderName = profile.display_name
+    } else if (profile?.username) {
+      senderName = profile.username
+    }
+  } catch (e) {
+    console.log('[PrintJob] Could not fetch sender display name, using email:', senderName)
+  }
+
   // 5. Insert print job
-  console.log('[PrintJob] Submitting job to printer:', printerId)
+  console.log('[PrintJob] Submitting job to printer:', printerId, 'with sender_email:', user.email, 'sender_name:', senderName)
   const { data: job, error } = await supabase
     .from('print_jobs')
     .insert({
       printer_id: printerId,
       sender_id: user?.id ?? null,
       sender_email: user.email,
+      sender_name: senderName,
       recipient_name: recipientName,
       recipient_id: recipientId ?? null,
+      recipient_email: recipientEmail ?? null,
       message_text: messageText ?? null,
       payload_base64: payload,
       receipt_state_json: receiptStateJson ?? null,
@@ -174,7 +217,90 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
     .select('id')
     .single()
 
-  if (error) throw error
+  if (error) {
+    console.error('[PrintJob] Insert error:', error)
+    throw error
+  }
   console.log('[PrintJob] Job submitted successfully:', job.id)
+  return job.id
+}
+
+/**
+ * Submit a print job directly from a base64 receipt image.
+ * Used for re-printing received receipts.
+ */
+export async function submitBase64PrintJob({
+  base64Image,
+  recipientName,
+  recipientEmail,
+  skipGeofence,
+}: {
+  base64Image: string
+  recipientName: string
+  recipientEmail?: string
+  skipGeofence?: boolean
+}): Promise<string> {
+  // 1. Convert base64 image to ESC/POS buffer
+  const { buffer } = await renderBase64ToPrintBuffer(base64Image)
+  const payload = bufferToBase64(buffer)
+
+  if (USE_LOCAL_PRINT_SERVER || !supabase) {
+    const response = await fetch(PRINT_SERVER_URL + '/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: toArrayBuffer(buffer),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Local print server returned ${response.status}: ${await response.text()}`)
+    }
+
+    return `local-${Date.now()}`
+  }
+
+  if (!supabase) throw new Error('Supabase not configured')
+
+  // 2. Get sender's location for geofence routing
+  let lat: number | null = null
+  let lng: number | null = null
+  if (!skipGeofence) {
+    const position = await getCurrentPosition()
+    lat = position?.coords.latitude ?? null
+    lng = position?.coords.longitude ?? null
+  }
+
+  // 3. Get printer via geofence or use default
+  const printerId = skipGeofence ? null : await checkNearestPrinter()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) throw new Error('User email not available')
+
+  // 4. Insert print job into Supabase
+  const { data: job, error } = await supabase
+    .from('print_jobs')
+    .insert({
+      printer_id: printerId ?? null,
+      sender_id: user?.id ?? null,
+      sender_email: user.email,
+      sender_name: user.email,
+      recipient_name: recipientName,
+      recipient_email: recipientEmail ?? null,
+      message_text: null,
+      payload_base64: payload,
+      receipt_state_json: null,
+      receipt_image: base64Image,
+      sender_latitude: lat,
+      sender_longitude: lng,
+      printed_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    console.error('[PrintJob] Base64 insert error:', error)
+    throw error
+  }
+
+  console.log('[PrintJob] Base64 job submitted successfully:', job.id)
   return job.id
 }
