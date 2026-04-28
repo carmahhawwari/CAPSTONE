@@ -60,21 +60,14 @@ function getCurrentPosition(): Promise<GeolocationPosition | null> {
 }
 
 /**
- * Check which printer is nearest to the user's current location via geofence.
- * Returns the printer UUID if one is within range, or null if not.
- * Throws if geolocation is unavailable.
+ * Check which printer is available (geofence disabled).
+ * Returns the printer UUID or null if unavailable.
  */
 export async function checkNearestPrinter(): Promise<string | null> {
   if (!supabase) throw new Error('Supabase not configured')
 
-  const position = await getCurrentPosition()
-  if (!position) return null
-
-  const lat = position.coords.latitude
-  const lng = position.coords.longitude
-
-  // Query the nearest_printer function
-  const { data: printerId } = await supabase.rpc('nearest_printer', { lat, lng })
+  // Geofence disabled for now - return the default printer
+  const { data: printerId } = await supabase.rpc('nearest_printer', { lat: 0, lng: 0 })
   return printerId ?? null
 }
 
@@ -84,7 +77,7 @@ export async function checkNearestPrinter(): Promise<string | null> {
  *
  * Returns the job ID on success, or throws on failure.
  */
-export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, recipientEmail, skipGeofence, printerId: specifiedPrinterId, cornerSticker, receiptStateJson }: SubmitPrintJobOptions): Promise<string> {
+export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, recipientEmail, skipGeofence: _skipGeofence, printerId: specifiedPrinterId, cornerSticker, receiptStateJson }: SubmitPrintJobOptions): Promise<string> {
   // 1. Render receipt to ESC/POS binary
   const { buffer, imageBase64 } = await renderToPrintBuffer(receiptElement, { cornerSticker })
   const payload = bufferToBase64(buffer)
@@ -166,30 +159,31 @@ export async function submitPrintJob({ receiptElement, recipientName, messageTex
     return job.id
   }
 
-  // 2. Get sender's location for geofence routing (skip if test mode)
+  // 2. Get sender's location for logging (optional, geofence disabled)
   let lat: number | null = null
   let lng: number | null = null
-  if (!skipGeofence) {
+  try {
     const position = await getCurrentPosition()
     lat = position?.coords.latitude ?? null
     lng = position?.coords.longitude ?? null
-    console.log('[PrintJob] User location:', { lat, lng })
-  } else {
-    console.log('[PrintJob] Geofence skipped (test mode)')
+    if (lat && lng) {
+      console.log('[PrintJob] User location:', { lat, lng })
+    }
+  } catch (e) {
+    console.log('[PrintJob] Location unavailable, proceeding without geofence')
   }
 
-  // 3. Find nearest printer via geofence - fail if not in range
-  if (lat === null || lng === null) {
-    throw new Error('Location required for geofence check')
-  }
-
-  const { data: printerId } = await supabase.rpc('nearest_printer', { lat, lng })
+  // 3. Get the default printer (geofence disabled for now)
+  const { data: printerId } = await supabase.rpc('nearest_printer', {
+    lat: lat ?? 0,
+    lng: lng ?? 0,
+  })
 
   if (!printerId) {
-    throw new Error('No printer in range')
+    throw new Error('No printer available')
   }
 
-  console.log('[PrintJob] Nearest printer from geofence:', printerId)
+  console.log('[PrintJob] Using printer:', printerId)
 
   // 4. Get current user and their display name
   const { data: { user } } = await supabase.auth.getUser()
