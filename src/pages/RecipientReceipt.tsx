@@ -230,7 +230,7 @@ export default function RecipientReceipt() {
           </div>
 
           {/* Recipient Bar */}
-          <svg width="100%" height="20" viewBox="0 0 100 20" style={{ marginBottom: '12px', display: 'block', backgroundColor: 'white' }} preserveAspectRatio="none">
+          <svg width="100%" height="40" viewBox="0 0 100 20" style={{ marginBottom: '12px', display: 'block', backgroundColor: 'white' }} preserveAspectRatio="none">
             <path d="M0,8 Q25,2 50,8 T100,8 L100,18 Q75,20 50,18 T0,18 Z" fill="black" />
           </svg>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', marginTop: '8px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121', lineHeight: 1.5 }}>
