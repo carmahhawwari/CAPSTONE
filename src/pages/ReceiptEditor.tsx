@@ -562,45 +562,56 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     return JSON.stringify(blocks)
   }
 
+  const resolveSenderName = async (): Promise<string> => {
+    if (!supabase) return 'A friend'
+    let name = ((user?.user_metadata?.display_name as string | undefined) ?? '').trim()
+    if (!name && user?.id) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', user.id)
+          .maybeSingle()
+        name = ((profile?.display_name as string | null) ?? '').trim()
+      } catch {
+        // ignore — fall through to generic label
+      }
+    }
+    return name || 'A friend'
+  }
+
+  const sendReceiptEmail = async (toEmail: string): Promise<void> => {
+    if (!supabase) return
+    const senderName = await resolveSenderName()
+    const { data, error } = await supabase.functions.invoke('send-recipt-email', {
+      body: {
+        recipientEmail: toEmail,
+        senderName,
+        content: {
+          blocks,
+          prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
+          cornerSticker: cornerSticker ?? undefined,
+          signature,
+          headerVariant,
+        },
+      },
+    })
+    if (error) throw error
+    if (data?.error) throw new Error(data.error)
+  }
+
   const handleSend = async () => {
     if (blocks.length === 0) return
     const content = serializeContent()
 
+    // Onboarding URL-param flow: email-only, no printing.
     if (recipientEmail) {
       if (!supabase) {
         navigate(`/printing?email=${encodeURIComponent(recipientEmail)}`, { state: { content } })
         return
       }
-      let senderName = (user?.user_metadata?.display_name as string | undefined) ?? ''
-      if (!senderName && user?.id) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name, username')
-            .eq('id', user.id)
-            .maybeSingle()
-          senderName = (profile?.display_name as string | null) ?? (profile?.username as string | null) ?? ''
-        } catch {
-          // ignore — fall through to email-local-part fallback
-        }
-      }
-      if (!senderName) senderName = user?.email?.split('@')[0] || 'A friend'
       try {
-        const { data, error } = await supabase.functions.invoke('send-recipt-email', {
-          body: {
-            recipientEmail,
-            senderName,
-            content: {
-              blocks,
-              prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
-              cornerSticker: cornerSticker ?? undefined,
-              signature,
-              headerVariant,
-            },
-          },
-        })
-        if (error) throw error
-        if (data?.error) throw new Error(data.error)
+        await sendReceiptEmail(recipientEmail)
         navigate('/onboard/sent')
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to send')
@@ -611,6 +622,19 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     if (!selectedFriendId || !selectedFriend) {
       setShowFriendPicker(true)
       return
+    }
+
+    // Friend-picker flow: fire the email before sending to the printer so the
+    // recipient gets the digital copy regardless of whether the physical print
+    // succeeds. Email address is `${username}@stanford.edu` by convention.
+    const friendUsername = selectedFriend.profile.username?.trim()
+    if (supabase && friendUsername) {
+      try {
+        await sendReceiptEmail(`${friendUsername}@stanford.edu`)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to send email')
+        return
+      }
     }
     navigate(`/printing?to=${selectedFriendId}`, { state: { content } })
   }
