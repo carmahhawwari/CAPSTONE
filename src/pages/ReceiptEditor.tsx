@@ -120,9 +120,11 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         .single()
         .then(({ data }) => {
           if (data?.first_name) {
+            const firstName = data.first_name.trim()
+            const signatureText = firstName.startsWith('Love,') ? firstName : `Love, ${firstName}`
             setSignature((current) => ({
               ...current,
-              text: `Love, ${data.first_name}`,
+              text: signatureText,
             }))
           }
         })
