@@ -93,6 +93,7 @@ export default function Profile() {
           first_name: formData.first_name || null,
           last_name: formData.last_name || null,
           phone: formData.phone || null,
+          class_year: formData.class_year || null,
         })
         .eq('id', user.id)
 
@@ -106,6 +107,7 @@ export default function Profile() {
               first_name: formData.first_name || null,
               last_name: formData.last_name || null,
               phone: formData.phone || null,
+              class_year: formData.class_year || null,
             }
           : null
       )
