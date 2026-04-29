@@ -227,6 +227,10 @@ export default function Profile() {
       >
         Sign Out
       </button>
+
+      <div className="mt-12 text-xs text-text-tertiary text-center">
+        Deployed: {import.meta.env.VITE_DEPLOYMENT_TIME || 'Development'}
+      </div>
     </div>
   )
 }
