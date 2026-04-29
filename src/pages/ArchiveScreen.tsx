@@ -184,7 +184,6 @@ export default function LettersScreen() {
 }
 
 function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
-  const [showPreview, setShowPreview] = useState(false)
   const [printing, setPrinting] = useState(false)
   const [printError, setPrintError] = useState<string | null>(null)
 
@@ -206,60 +205,19 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
     }
   }
 
-  // Show preview mode: display the raw base64 image
-  if (showPreview && receipt.receiptImage) {
-    return (
-      <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
-        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary gap-2">
-          <p className="text-mini text-text-tertiary">{receipt.date}</p>
-          <div className="flex gap-2">
-            <button
-              onClick={handleReprint}
-              disabled={printing}
-              className="text-xs text-fill-primary hover:underline disabled:opacity-50"
-            >
-              {printing ? 'Printing…' : 'Reprint'}
-            </button>
-            <button
-              onClick={() => setShowPreview(false)}
-              className="text-xs text-fill-primary hover:underline"
-            >
-              Back to Rendered
-            </button>
-          </div>
-        </div>
-        {printError && <p className="text-xs text-fill-red px-3 pt-2">{printError}</p>}
-        <img
-          src={receipt.receiptImage}
-          alt={`Receipt to ${receipt.to}`}
-          className="w-full h-auto"
-          style={{ filter: 'grayscale(100%)' }}
-        />
-      </div>
-    )
-  }
-
-  // If we have the receipt image, display it with preview and reprint buttons
+  // If we have the receipt image, display it with reprint button
   if (receipt.receiptImage) {
     return (
       <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
-        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary gap-2">
+        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary">
           <p className="text-mini text-text-tertiary">{receipt.date}</p>
-          <div className="flex gap-2">
-            <button
-              onClick={handleReprint}
-              disabled={printing}
-              className="text-xs text-fill-primary hover:underline disabled:opacity-50"
-            >
-              {printing ? 'Printing…' : 'Reprint'}
-            </button>
-            <button
-              onClick={() => setShowPreview(true)}
-              className="text-xs text-fill-primary hover:underline"
-            >
-              Preview Base64
-            </button>
-          </div>
+          <button
+            onClick={handleReprint}
+            disabled={printing}
+            className="text-xs text-fill-primary hover:underline disabled:opacity-50"
+          >
+            {printing ? 'Printing…' : 'Reprint'}
+          </button>
         </div>
         {printError && <p className="text-xs text-fill-red px-3 pt-2">{printError}</p>}
         <img
