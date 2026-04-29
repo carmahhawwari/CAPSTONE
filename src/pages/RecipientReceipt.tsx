@@ -15,6 +15,7 @@ type DeliveredReceipt = {
   print_job_id: string | null
   printed_at: string | null
   created_at: string
+  receipt_image?: string | null
 }
 
 export default function RecipientReceipt() {
@@ -90,6 +91,7 @@ export default function RecipientReceipt() {
         recipientEmail: receipt.recipient_email,
         messageText: messageFromBlocks(receipt.content.blocks),
         receiptStateJson: JSON.stringify(receiptState),
+        receiptImageBase64: receipt.receipt_image || undefined,
       })
       if (supabase && !jobId.startsWith('local-')) {
         await (supabase.from('delivered_receipts' as never) as any)
