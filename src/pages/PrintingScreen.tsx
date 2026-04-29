@@ -5,6 +5,9 @@ import { getFriends } from '@/lib/friends'
 import { getReceivedUnprintedReceipts } from '@/lib/receipts'
 import printerImg from '@/assets/printer.png'
 import wifiSymbol from '@/assets/wifi-symbol.svg'
+import headerLogoSvg from '@/assets/icons/header-logo.svg'
+import headerSquidsCheckersSvg from '@/assets/icons/header-squids-checkers.svg'
+import headerSquidsV1Svg from '@/assets/icons/header-squids-v1.svg'
 import { submitPrintJob, checkNearestPrinter } from '@/lib/printJob'
 import { markReceiptAsPrinted } from '@/lib/receipts'
 import type { FriendProfile, Receipt } from '@/types/app'
@@ -344,11 +347,11 @@ export default function PrintingScreen() {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', marginTop: '12px' }}>
               {receiptState.headerVariant === 'simple' ? (
-                <img src="/src/assets/icons/header-logo.svg" alt="Inklings" style={{ height: '64px', width: 'auto' }} />
+                <img src={headerLogoSvg} alt="Inklings" style={{ height: '64px', width: 'auto' }} />
               ) : receiptState.headerVariant === 'squids-checkers' ? (
-                <img src="/src/assets/icons/header-squids-checkers.svg" alt="Inklings squids checkers" style={{ height: '80px', width: 'auto' }} />
+                <img src={headerSquidsCheckersSvg} alt="Inklings squids checkers" style={{ height: '80px', width: 'auto' }} />
               ) : receiptState.headerVariant === 'squids-v1' ? (
-                <img src="/src/assets/icons/header-squids-v1.svg" alt="Inklings squids v1" style={{ height: '80px', width: 'auto' }} />
+                <img src={headerSquidsV1Svg} alt="Inklings squids v1" style={{ height: '80px', width: 'auto' }} />
               ) : null}
             </div>
 

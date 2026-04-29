@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import { getReceiptsByFriend, getReceivedReceiptsByFriend, getReceiptsByCurrentUser, getReceivedReceiptsByCurrentUser } from '@/lib/receipts'
 import { submitBase64PrintJob } from '@/lib/printJob'
+import headerLogoSvg from '@/assets/icons/header-logo.svg'
+import headerSquidsCheckersSvg from '@/assets/icons/header-squids-checkers.svg'
+import headerSquidsV1Svg from '@/assets/icons/header-squids-v1.svg'
 import type { FriendProfile, Receipt } from '@/types/app'
 import type { Block, TextStyle } from '@/types/canvas'
 import { FONT_STYLES } from '@/types/canvas'
@@ -262,11 +265,11 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
           {receiptState.headerVariant === 'simple' ? (
-            <img src="/src/assets/icons/header-logo.svg" alt="Inklings" style={{ height: '48px', width: 'auto' }} />
+            <img src={headerLogoSvg} alt="Inklings" style={{ height: '48px', width: 'auto' }} />
           ) : receiptState.headerVariant === 'squids-checkers' ? (
-            <img src="/src/assets/icons/header-squids-checkers.svg" alt="Inklings squids checkers" style={{ height: '60px', width: 'auto' }} />
+            <img src={headerSquidsCheckersSvg} alt="Inklings squids checkers" style={{ height: '60px', width: 'auto' }} />
           ) : receiptState.headerVariant === 'squids-v1' ? (
-            <img src="/src/assets/icons/header-squids-v1.svg" alt="Inklings squids v1" style={{ height: '60px', width: 'auto' }} />
+            <img src={headerSquidsV1Svg} alt="Inklings squids v1" style={{ height: '60px', width: 'auto' }} />
           ) : null}
         </div>
 

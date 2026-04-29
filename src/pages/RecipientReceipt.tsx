@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { submitPrintJob } from '@/lib/printJob'
+import headerLogoSvg from '@/assets/icons/header-logo.svg'
 import type { Block, TextStyle } from '@/types/canvas'
 import { FONT_STYLES } from '@/types/canvas'
 
@@ -226,7 +227,7 @@ export default function RecipientReceipt() {
         >
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', marginTop: '12px' }}>
-            <img src="/src/assets/icons/header-logo.svg" alt="Inklings" style={{ height: '64px', width: 'auto' }} />
+            <img src={headerLogoSvg} alt="Inklings" style={{ height: '64px', width: 'auto' }} />
           </div>
 
           {/* Recipient Bar */}
