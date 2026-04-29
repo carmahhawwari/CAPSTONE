@@ -181,7 +181,7 @@ export default function RecipientReceipt() {
       >
         <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">📬 you've got mail</p>
         <h1 className="text-regular-semibold text-text-primary mt-3 leading-tight">
-          {receipt.sender_name} has sent you an inkling.
+          Print your Inkling from {receipt.sender_name}
         </h1>
         <p className="text-subheadline text-text-secondary mt-3">
           Head to onCall to receive your message.
