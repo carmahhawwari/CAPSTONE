@@ -271,9 +271,7 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
         </div>
 
         {/* Recipient Bar */}
-        <svg viewBox="0 0 100 20" style={{ width: '100%', height: '40px', marginBottom: '12px', display: 'block', backgroundColor: 'white' }} preserveAspectRatio="none">
-          <path d="M0,8 Q25,2 50,8 T100,8 L100,18 Q75,20 50,18 T0,18 Z" fill="black" />
-        </svg>
+        <img src="/recipient-bar.png" alt="Recipient Bar" style={{ width: '100%', height: 'auto', marginBottom: '12px', display: 'block' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '20px', color: '#222121', lineHeight: 1.4 }}>
           <span>To: {receipt.to}</span>
           <span>{receipt.date}</span>
