@@ -173,8 +173,7 @@ export default function PrintingScreen() {
                   <button
                     key={receipt.id}
                     onClick={() => {
-                      // Navigate to the receipt page with print parameter
-                      navigate(`/r/${receipt.id}?print=true`)
+                      navigate(`/r/${receipt.id}`)
                     }}
                     className="w-full p-4 border border-gray-300 rounded-lg text-left hover:bg-gray-50 transition-colors"
                   >
