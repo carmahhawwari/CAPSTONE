@@ -149,7 +149,7 @@ export default function Profile() {
           {!isEditing ? (
             <>
               <div className="flex flex-col gap-3">
-                <label className="text-callout text-text-secondary">Name</label>
+                <label className="text-callout text-text-secondary">Signature Name</label>
                 <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
                   {profile.display_name || 'No name set'}
                 </div>
@@ -209,12 +209,12 @@ export default function Profile() {
           ) : (
             <>
               <div className="flex flex-col gap-3">
-                <label className="text-callout text-text-secondary">Name</label>
+                <label className="text-callout text-text-secondary">Signature Name</label>
                 <input
                   type="text"
                   value={formData.display_name}
                   onChange={(e) => setFormData((f) => ({ ...f, display_name: e.target.value }))}
-                  placeholder="Your name"
+                  placeholder="Your signature name"
                   className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3 focus:outline-none focus:border-fill-primary"
                 />
               </div>
