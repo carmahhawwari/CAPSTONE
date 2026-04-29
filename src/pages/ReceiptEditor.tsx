@@ -354,7 +354,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         navigate('/receipt-sent', {
           state: {
             printPath: `/prints?email=${encodeURIComponent(recipientEmail)}&receiptId=${receiptId}`,
-            printState: { receiptState },
+            printState: { receiptState, receiptImage },
             recipientLabel: recipientEmail,
           },
         })

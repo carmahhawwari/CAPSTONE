@@ -12,6 +12,7 @@ interface SubmitPrintJobOptions {
   printerId?: string
   cornerSticker?: CornerStickerData
   receiptStateJson?: string
+  receiptImageBase64?: string
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -112,9 +113,11 @@ export async function checkNearestPrinter(): Promise<string | null> {
  *
  * Returns the job ID on success, or throws on failure.
  */
-export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, recipientEmail, skipGeofence: _skipGeofence, printerId: specifiedPrinterId, cornerSticker, receiptStateJson }: SubmitPrintJobOptions): Promise<string> {
+export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, recipientEmail, skipGeofence: _skipGeofence, printerId: specifiedPrinterId, cornerSticker, receiptStateJson, receiptImageBase64 }: SubmitPrintJobOptions): Promise<string> {
   // 1. Render receipt to ESC/POS binary
-  const { buffer, imageBase64 } = await renderToPrintBuffer(receiptElement, { cornerSticker })
+  const { buffer, imageBase64 } = receiptImageBase64
+    ? await renderBase64ToPrintBuffer(receiptImageBase64, { cornerSticker })
+    : await renderToPrintBuffer(receiptElement, { cornerSticker })
   const payload = bufferToBase64(buffer)
   console.log('[PrintJob] Received imageBase64:', imageBase64 ? imageBase64.substring(0, 50) + '...' : 'null')
 

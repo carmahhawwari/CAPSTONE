@@ -24,12 +24,16 @@ export default function PrintingScreen() {
   const [isLoading, setIsLoading] = useState(true)
   const [unprinted, setUnprinted] = useState<Receipt[]>([])
   const [receiptState, setReceiptState] = useState<any>((location.state as any)?.receiptState || null)
+  const [receiptImage, setReceiptImage] = useState<string | null>((location.state as any)?.receiptImage || null)
   const receiptRef = useRef<HTMLDivElement>(null)
   const isTestMode = !searchParams.get('to') && !searchParams.get('email')
 
   useEffect(() => {
     if ((location.state as any)?.receiptState) {
       setReceiptState((location.state as any).receiptState)
+    }
+    if ((location.state as any)?.receiptImage) {
+      setReceiptImage((location.state as any).receiptImage)
     }
   }, [location.state])
 
@@ -138,6 +142,7 @@ export default function PrintingScreen() {
               scale: receiptState.cornerSticker.scale ?? 1,
             } : undefined,
             receiptStateJson: JSON.stringify(receiptState),
+            receiptImageBase64: receiptImage || undefined,
           })
 
           if (receiptId && !isSenderCopy) {
