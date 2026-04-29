@@ -7,8 +7,17 @@ const CAPTURE_ATTR = 'data-escpos-capture'
 
 export type DitherMethod = 'floyd-steinberg' | 'atkinson' | 'ordered' | 'threshold'
 
+export interface CornerStickerData {
+  imageUrl: string
+  offsetX: number
+  offsetY: number
+  rotation: number
+  scale: number
+}
+
 interface RenderToPrintOptions {
   ditherMethod?: DitherMethod
+  cornerSticker?: CornerStickerData
 }
 
 function inlineComputedStyles(sourceRoot: HTMLElement, clonedRoot: HTMLElement): void {
@@ -22,7 +31,16 @@ function inlineComputedStyles(sourceRoot: HTMLElement, clonedRoot: HTMLElement):
     const computed = window.getComputedStyle(source)
     for (let j = 0; j < computed.length; j++) {
       const prop = computed.item(j)
-      target.style.setProperty(prop, computed.getPropertyValue(prop), computed.getPropertyPriority(prop))
+      let value = computed.getPropertyValue(prop)
+
+      // Filter out unsupported CSS color functions
+      if ((prop.includes('color') || prop.includes('background')) &&
+          (value.includes('oklab') || value.includes('oklch') || value.includes('lch'))) {
+        // Skip unsupported colors, let html2canvas use defaults
+        continue
+      }
+
+      target.style.setProperty(prop, value, computed.getPropertyPriority(prop))
     }
     target.removeAttribute('class')
   }
@@ -41,19 +59,45 @@ function applyCaptureStyle(doc: Document): HTMLStyleElement {
   text-shadow: none !important;
   box-shadow: none !important;
 }
+/* Hide selector and UI elements */
+[${CAPTURE_ATTR}] select,
+[${CAPTURE_ATTR}] input[type="range"],
+[${CAPTURE_ATTR}] input[type="color"],
+[${CAPTURE_ATTR}] button:not([data-render]) {
+  display: none !important;
+}
+/* Hide text selection cursors and decorations */
+[${CAPTURE_ATTR}] *::selection {
+  background: transparent !important;
+}
 `
   doc.head.appendChild(style)
   return style
+}
+
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`))
+    img.src = url
+  })
 }
 
 /**
  * Render a DOM element to a 1-bit bitmap ESC/POS buffer ready for the printer.
  * Returns a Uint8Array containing full ESC/POS commands (init, bitmap, cut).
  */
+export interface RenderToPrintResult {
+  buffer: Uint8Array
+  imageBase64: string
+}
+
 export async function renderToPrintBuffer(
   element: HTMLElement,
   options: RenderToPrintOptions = {},
-): Promise<Uint8Array> {
+): Promise<RenderToPrintResult> {
   const previousCaptureAttr = element.getAttribute(CAPTURE_ATTR)
   const captureStyle = applyCaptureStyle(document)
   const captureId = Math.random().toString(36).slice(2)
@@ -69,22 +113,104 @@ export async function renderToPrintBuffer(
       scale,
       backgroundColor: '#ffffff',
       logging: false,
+      useCORS: true,
+      allowTaint: true,
       onclone: (clonedDoc) => {
         const clonedElement = clonedDoc.querySelector<HTMLElement>(`[${CAPTURE_ATTR}="${captureId}"]`)
         if (!clonedElement) return
 
         inlineComputedStyles(element, clonedElement)
         clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => node.remove())
+
+        // Remove all class attributes to prevent oklch color parsing errors
+        clonedElement.removeAttribute('class')
+        clonedElement.querySelectorAll('[class]').forEach((node) => {
+          node.removeAttribute('class')
+        })
       },
     })
 
-    // 2. Get pixel data and convert to 1-bit
-    const ctx = canvas.getContext('2d')!
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    // 2. Get pixel data and convert receipt to 1-bit (dither before sticker)
+    let ctx = canvas.getContext('2d')!
+    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const mono = ditherImage(imageData, options.ditherMethod ?? 'floyd-steinberg')
 
-    // 3. Build ESC/POS command buffer
-    return buildEscPosBuffer(mono, canvas.width, canvas.height)
+    // 3. If corner sticker provided, composite it onto the 1-bit image
+    if (options.cornerSticker) {
+      try {
+        console.log('[escpos] Loading corner sticker:', options.cornerSticker.imageUrl.substring(0, 50))
+        const stickerImg = await loadImage(options.cornerSticker.imageUrl)
+        console.log('[escpos] Sticker loaded:', stickerImg.width, 'x', stickerImg.height)
+
+        // Calculate sticker position and size
+        const stickerX = Math.round(options.cornerSticker.offsetX * scale)
+        const stickerY = Math.round(options.cornerSticker.offsetY * scale)
+        const stickerWidth = Math.round(stickerImg.width * options.cornerSticker.scale)
+        const stickerHeight = Math.round(stickerImg.height * options.cornerSticker.scale)
+
+        console.log('[escpos] Canvas:', canvas.width, 'x', canvas.height)
+        console.log('[escpos] Drawing sticker at x:', stickerX, 'y:', stickerY, 'w:', stickerWidth, 'h:', stickerHeight, 'rot:', options.cornerSticker.rotation)
+
+        // Draw sticker to temp canvas for dithering
+        const stickerCanvas = document.createElement('canvas')
+        stickerCanvas.width = stickerWidth
+        stickerCanvas.height = stickerHeight
+        const stickerCtx = stickerCanvas.getContext('2d')!
+
+        // Draw with rotation
+        stickerCtx.save()
+        stickerCtx.translate(stickerWidth / 2, stickerHeight / 2)
+        stickerCtx.rotate((options.cornerSticker.rotation * Math.PI) / 180)
+        stickerCtx.drawImage(stickerImg, -stickerWidth / 2, -stickerHeight / 2, stickerWidth, stickerHeight)
+        stickerCtx.restore()
+
+        // Dither the sticker separately
+        const stickerImageData = stickerCtx.getImageData(0, 0, stickerWidth, stickerHeight)
+        const stickerMono = ditherImage(stickerImageData, 'floyd-steinberg')
+
+        // Composite dithered sticker onto the receipt mono image
+        for (let y = 0; y < stickerHeight; y++) {
+          for (let x = 0; x < stickerWidth; x++) {
+            const destX = stickerX + x
+            const destY = stickerY + y
+            if (destX >= 0 && destX < canvas.width && destY >= 0 && destY < canvas.height) {
+              const srcIdx = y * stickerWidth + x
+              const destIdx = destY * canvas.width + destX
+              // Use sticker pixel if it's black (1)
+              if (stickerMono[srcIdx]) {
+                mono[destIdx] = 1
+              }
+            }
+          }
+        }
+        console.log('[escpos] Sticker composited successfully')
+      } catch (err) {
+        console.error('[escpos] Failed to composite corner sticker:', err)
+      }
+    }
+
+    // 4. Build ESC/POS command buffer
+    const buffer = buildEscPosBuffer(mono, canvas.width, canvas.height)
+
+    // 5. Convert dithered 1-bit image to visual PNG for archive display
+    // This ensures the saved receipt looks like what will actually print
+    const ditherCanvas = document.createElement('canvas')
+    ditherCanvas.width = canvas.width
+    ditherCanvas.height = canvas.height
+    const ditherCtx = ditherCanvas.getContext('2d')!
+    const ditherImageData = ditherCtx.createImageData(canvas.width, canvas.height)
+    for (let i = 0; i < mono.length; i++) {
+      const pixel = mono[i] ? 0 : 255 // 1 (black) → 0, 0 (white) → 255
+      ditherImageData.data[i * 4] = pixel
+      ditherImageData.data[i * 4 + 1] = pixel
+      ditherImageData.data[i * 4 + 2] = pixel
+      ditherImageData.data[i * 4 + 3] = 255 // alpha
+    }
+    ditherCtx.putImageData(ditherImageData, 0, 0)
+    const imageBase64 = ditherCanvas.toDataURL('image/png')
+    console.log('[escpos] Generated dithered image base64:', imageBase64.substring(0, 50) + '...')
+
+    return { buffer, imageBase64 }
   } finally {
     captureStyle.remove()
     if (previousCaptureAttr === null) {
@@ -93,6 +219,39 @@ export async function renderToPrintBuffer(
       element.setAttribute(CAPTURE_ATTR, previousCaptureAttr)
     }
   }
+}
+
+/**
+ * Convert a base64 PNG image directly to ESC/POS buffer for re-printing.
+ */
+export async function renderBase64ToPrintBuffer(base64Image: string): Promise<RenderToPrintResult> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      try {
+        // Create canvas from image
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0)
+
+        // Get pixel data and dither to 1-bit
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const mono = ditherImage(imageData, 'floyd-steinberg')
+
+        // Build ESC/POS buffer
+        const buffer = buildEscPosBuffer(mono, canvas.width, canvas.height)
+
+        // Return both buffer and the original base64 image
+        resolve({ buffer, imageBase64: base64Image })
+      } catch (err) {
+        reject(err)
+      }
+    }
+    img.onerror = () => reject(new Error('Failed to load image'))
+    img.src = base64Image
+  })
 }
 
 function toGrayscaleFloat(imageData: ImageData): Float32Array {

@@ -33,14 +33,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
-  let body: { recipientEmail?: string; senderName?: string; content?: unknown; message?: string }
+  let body: {
+    recipientEmail?: string
+    senderName?: string
+    content?: unknown
+    message?: string
+    receiptId?: string
+  }
   try {
     body = await req.json()
   } catch {
     return json({ error: 'Invalid JSON body' }, 400)
   }
 
-  const { recipientEmail, senderName } = body
+  const { recipientEmail, senderName, receiptId: providedReceiptId } = body
   const content = body.content ?? { blocks: [], prompt: '', legacyMessage: body.message ?? '' }
   if (!recipientEmail || !senderName) {
     return json({ error: 'recipientEmail and senderName are required' }, 400)
@@ -54,30 +60,37 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: 'Supabase env not available in function runtime' }, 500)
   }
 
-  // Insert into delivered_receipts via REST (service role bypasses RLS).
-  const insertRes = await fetch(`${supabaseUrl}/rest/v1/delivered_receipts`, {
-    method: 'POST',
-    headers: {
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-    },
-    body: JSON.stringify({
-      sender_name: senderName,
-      recipient_email: recipientEmail,
-      content,
-    }),
-  })
+  // If the caller already persisted the row (saveReceipt path), use that id
+  // and skip the insert. Otherwise insert here (legacy onboarding path).
+  let receiptId: string
+  if (providedReceiptId) {
+    receiptId = providedReceiptId
+  } else {
+    const insertRes = await fetch(`${supabaseUrl}/rest/v1/delivered_receipts`, {
+      method: 'POST',
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({
+        sender_name: senderName,
+        recipient_email: recipientEmail,
+        content,
+      }),
+    })
 
-  if (!insertRes.ok) {
-    const detail = await insertRes.text()
-    return json({ error: 'Failed to persist receipt', status: insertRes.status, detail }, 500)
+    if (!insertRes.ok) {
+      const detail = await insertRes.text()
+      return json({ error: 'Failed to persist receipt', status: insertRes.status, detail }, 500)
+    }
+
+    const rows = await insertRes.json()
+    const insertedId = Array.isArray(rows) ? rows[0]?.id : rows?.id
+    if (!insertedId) return json({ error: 'No receipt id returned from insert' }, 500)
+    receiptId = insertedId
   }
-
-  const rows = await insertRes.json()
-  const receiptId = Array.isArray(rows) ? rows[0]?.id : rows?.id
-  if (!receiptId) return json({ error: 'No receipt id returned from insert' }, 500)
 
   const siteUrl = Deno.env.get('SITE_URL') ?? 'https://inklings.thecupidproject.org'
   const link = `${siteUrl}/r/${receiptId}`

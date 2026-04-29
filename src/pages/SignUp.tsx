@@ -162,6 +162,17 @@ export default function SignUp() {
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
+
+        <p className="text-center mt-4 text-sm text-text-secondary">
+          Already have an account?{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="text-fill-primary font-medium hover:underline"
+          >
+            Login
+          </button>
+        </p>
       </div>
     </div>
   )

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { submitPrintJob } from '@/lib/printJob'
-import type { Block } from '@/types/canvas'
+import type { Block, TextStyle } from '@/types/canvas'
+import { FONT_STYLES } from '@/types/canvas'
 
 type DeliveredReceipt = {
   id: string
@@ -18,6 +19,7 @@ type DeliveredReceipt = {
 
 export default function RecipientReceipt() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
 
@@ -27,19 +29,30 @@ export default function RecipientReceipt() {
   const [printError, setPrintError] = useState<string | null>(null)
   const [printed, setPrinted] = useState(false)
   const receiptRef = useRef<HTMLDivElement>(null)
+  const shouldAutoPrint = searchParams.get('print') === 'true'
 
   useEffect(() => {
+    if (authLoading) return
     if (!id) return
+
+    // If user is not logged in, don't try to load
+    if (!user?.email) {
+      setLoadError('Not authenticated')
+      return
+    }
+
     if (!supabase) {
       setLoadError('Supabase not configured')
       return
     }
+
     supabase
       .from('delivered_receipts')
       .select('*')
       .eq('id', id)
+      .eq('recipient_email', user.email)
       .maybeSingle()
-      .then(({ data, error }) => {
+      .then(({ data, error }: any) => {
         if (error) {
           setLoadError(error.message)
           return
@@ -48,20 +61,35 @@ export default function RecipientReceipt() {
           setLoadError('Receipt not found')
           return
         }
-        setReceipt(data as unknown as DeliveredReceipt)
-        if ((data as { printed_at?: string | null }).printed_at) setPrinted(true)
+        try {
+          const parsed: DeliveredReceipt = {
+            ...data,
+            content: typeof data.content === 'string' ? JSON.parse(data.content) : data.content,
+          }
+          setReceipt(parsed)
+          if (data.printed_at) setPrinted(true)
+        } catch (err) {
+          setLoadError('Failed to parse receipt data: ' + (err instanceof Error ? err.message : String(err)))
+        }
       })
-  }, [id])
+  }, [id, user?.email, authLoading])
 
   const handlePrint = async () => {
     if (!receipt || !receiptRef.current) return
     setPrintError(null)
     setPrinting(true)
     try {
+      const receiptState = {
+        blocks: receipt.content.blocks,
+        currentPrompt: receipt.content.prompt || 'No prompt',
+        headerVariant: 'simple',
+      }
       const jobId = await submitPrintJob({
         receiptElement: receiptRef.current,
         recipientName: receipt.recipient_email.split('@')[0],
+        recipientEmail: receipt.recipient_email,
         messageText: messageFromBlocks(receipt.content.blocks),
+        receiptStateJson: JSON.stringify(receiptState),
       })
       if (supabase && !jobId.startsWith('local-')) {
         await (supabase.from('delivered_receipts' as never) as any)
@@ -75,6 +103,14 @@ export default function RecipientReceipt() {
       setPrinting(false)
     }
   }
+
+
+  // Auto-print when page loads with print=true parameter
+  useEffect(() => {
+    if (receipt && receiptRef.current && shouldAutoPrint && !printing && !printed) {
+      handlePrint()
+    }
+  }, [receipt, shouldAutoPrint, printing, printed])
 
   if (authLoading) {
     return (
@@ -178,49 +214,71 @@ export default function RecipientReceipt() {
           position: 'absolute',
           left: '-9999px',
           top: 0,
-          width: 384,
+          width: 0,
+          height: 0,
           opacity: 0,
-          pointerEvents: 'none',
+          overflow: 'hidden',
         }}
       >
         <div
           ref={receiptRef}
-          style={{
-            backgroundColor: '#fbf6e6',
-            border: '1px solid #969696',
-            fontFamily: 'Georgia, serif',
-            color: '#000',
-          }}
+          style={{ fontFamily: 'Georgia, serif', padding: '16px 20px', backgroundColor: '#ffffff', color: '#222121', position: 'relative', width: '576px' }}
         >
-          <div style={{ borderBottom: '2px solid #000', padding: '16px', textAlign: 'center', fontSize: 18 }}>
-            {dateStr}
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', marginTop: '12px' }}>
+            <img src="/src/assets/icons/header-logo.svg" alt="Inklings" style={{ height: '64px', width: 'auto' }} />
           </div>
-          <div style={{ borderBottom: '2px solid #000', padding: '12px 16px', fontSize: 14, fontWeight: 600 }}>
+
+          {/* Recipient Bar */}
+          <svg width="100%" height="20" viewBox="0 0 100 20" style={{ marginBottom: '12px', display: 'block', backgroundColor: 'white' }} preserveAspectRatio="none">
+            <path d="M0,8 Q25,2 50,8 T100,8 L100,18 Q75,20 50,18 T0,18 Z" fill="black" />
+          </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', marginTop: '8px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121', lineHeight: 1.5 }}>
+            <span>To: {receipt.recipient_email?.split('@')[0] || 'You'}</span>
+            <span>{dateStr}</span>
+          </div>
+
+          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif" }}>
             From: {receipt.sender_name}
           </div>
-          <div style={{ padding: '16px', fontSize: 14, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-            {receipt.content.blocks.map((b, i) => {
-              if (b.type === 'text') {
-                return (
-                  <p key={i} style={{ margin: '0 0 12px' }}>
-                    {b.content}
-                  </p>
-                )
-              }
-              if (b.type === 'image') {
-                return (
-                  <img
-                    key={i}
-                    src={b.dataUrl}
-                    alt=""
-                    style={{ width: '100%', display: 'block', marginBottom: 12 }}
-                  />
-                )
-              }
-              return null
-            })}
+
+          {/* Current Prompt */}
+          {receipt.content.prompt && receipt.content.prompt !== 'No prompt' && (
+            <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
+              {receipt.content.prompt}
+            </div>
+          )}
+
+          {/* Render blocks */}
+          <div style={{ marginBottom: '16px' }}>
+            {receipt.content.blocks.map((block: Block, i: number) => (
+              <div key={i} style={{ marginBottom: '8px' }}>
+                {block.type === 'text' && (
+                  <div
+                    style={{
+                      ...FONT_STYLES[block.style as TextStyle],
+                      fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1) * 2.5}px`,
+                      fontWeight: block.fontWeight ?? FONT_STYLES[block.style as TextStyle].fontWeight,
+                      fontStyle: block.isItalic ? 'italic' : 'normal',
+                      textDecoration: block.isBold ? 'underline' : 'none',
+                      color: '#1f2937',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {block.content}
+                  </div>
+                )}
+                {block.type === 'image' && (
+                  <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '8px' }} />
+                )}
+                {block.type === 'sticker' && (
+                  <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px' }}>[sticker]</div>
+                )}
+              </div>
+            ))}
           </div>
-          <div style={{ borderTop: '2px solid #000', padding: '16px', fontSize: 14 }}>
+
+          <div style={{ borderTop: '2px solid #000', padding: '16px', fontSize: '24px' }}>
             Love,
             <br />
             {receipt.sender_name}

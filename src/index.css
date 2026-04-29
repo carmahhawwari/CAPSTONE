@@ -396,7 +396,7 @@
   background-clip: text !important;
   animation: shine 1s linear forwards;
   background:
-    radial-gradient(circle at center, oklab(from var(--background) l a b / 0.85), transparent) -200%
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.85), transparent) -200%
       50% / 200% 100% no-repeat,
     var(--foreground);
 }

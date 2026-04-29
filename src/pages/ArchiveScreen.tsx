@@ -2,15 +2,22 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
-import { getReceiptsByFriend } from '@/lib/receipts'
+import { getReceiptsByFriend, getReceivedReceiptsByFriend, getReceiptsByCurrentUser, getReceivedReceiptsByCurrentUser } from '@/lib/receipts'
 import type { FriendProfile, Receipt } from '@/types/app'
+import type { Block, TextStyle } from '@/types/canvas'
+import { FONT_STYLES } from '@/types/canvas'
+
+type TabType = 'sent' | 'received'
 
 export default function LettersScreen() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [friends, setFriends] = useState<FriendProfile[]>([])
   const [activeFriendId, setActiveFriendId] = useState<string | null>(null)
-  const [receipts, setReceipts] = useState<Receipt[]>([])
+  const [activeFriendEmail, setActiveFriendEmail] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<TabType>('sent')
+  const [sentReceipts, setSentReceipts] = useState<Receipt[]>([])
+  const [receivedReceipts, setReceivedReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,9 +29,7 @@ export default function LettersScreen() {
     const loadFriends = async () => {
       const friendsList = await getFriends(user.id)
       setFriends(friendsList)
-      if (friendsList.length > 0) {
-        setActiveFriendId(friendsList[0].profile.id)
-      }
+      setActiveFriendId(null)
       setLoading(false)
     }
 
@@ -32,18 +37,28 @@ export default function LettersScreen() {
   }, [user?.id])
 
   useEffect(() => {
-    if (!user?.id || !activeFriendId) {
-      setReceipts([])
+    if (!user?.id) {
+      setSentReceipts([])
+      setReceivedReceipts([])
       return
     }
 
     const loadReceipts = async () => {
-      const recs = await getReceiptsByFriend(user.id, activeFriendId)
-      setReceipts(recs)
+      if (activeFriendEmail) {
+        const sent = await getReceiptsByFriend(user.email!, activeFriendEmail)
+        const received = await getReceivedReceiptsByFriend(user.email!, activeFriendEmail)
+        setSentReceipts(sent)
+        setReceivedReceipts(received)
+      } else {
+        const sent = await getReceiptsByCurrentUser(user.email!)
+        const received = await getReceivedReceiptsByCurrentUser(user.email!)
+        setSentReceipts(sent)
+        setReceivedReceipts(received)
+      }
     }
 
     loadReceipts()
-  }, [user?.id, activeFriendId])
+  }, [user?.id, activeFriendEmail])
 
   if (loading) {
     return (
@@ -60,28 +75,42 @@ export default function LettersScreen() {
           <div className="flex min-w-0 flex-1 flex-col gap-4">
             <h1 className="text-regular-semibold text-text-primary">Letters</h1>
             <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
-              {friends.length === 0 ? (
-                <p className="text-callout text-text-tertiary">No friends yet</p>
-              ) : (
-                friends.map((f) => {
-                  const label = (f.profile.display_name || f.profile.username || 'Friend').split(' ')[0]
-                  const isActive = activeFriendId === f.profile.id
-                  return (
-                    <button
-                      key={f.friendRowId}
-                      type="button"
-                      onClick={() => setActiveFriendId(f.profile.id)}
-                      className={
-                        isActive
-                          ? 'text-callout text-text-inverse bg-fill-primary rounded-md whitespace-nowrap px-4 py-2'
-                          : 'text-callout text-text-secondary whitespace-nowrap px-3 py-2'
-                      }
-                    >
-                      {label}
-                    </button>
-                  )
-                })
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveFriendId(null)
+                  setActiveFriendEmail(null)
+                }}
+                className={
+                  activeFriendId === null
+                    ? 'text-callout text-text-inverse bg-fill-primary rounded-md whitespace-nowrap px-4 py-2'
+                    : 'text-callout text-text-secondary whitespace-nowrap px-3 py-2'
+                }
+              >
+                All
+              </button>
+              {friends.map((f) => {
+                const label = (f.profile.display_name || f.profile.username || 'Friend').split(' ')[0]
+                const isActive = activeFriendId === f.profile.id
+                return (
+                  <button
+                    key={f.friendRowId}
+                    type="button"
+                    onClick={() => {
+                      setActiveFriendId(f.profile.id)
+                      const friendEmail = f.profile.username ? `${f.profile.username}@stanford.edu` : null
+                      setActiveFriendEmail(friendEmail)
+                    }}
+                    className={
+                      isActive
+                        ? 'text-callout text-text-inverse bg-fill-primary rounded-md whitespace-nowrap px-4 py-2'
+                        : 'text-callout text-text-secondary whitespace-nowrap px-3 py-2'
+                    }
+                  >
+                    {label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -104,23 +133,204 @@ export default function LettersScreen() {
         </header>
       </div>
 
-      <div className="mt-6 flex flex-col gap-5 px-6 pb-8">
-        {receipts.length === 0 ? (
-          <p className="text-callout text-text-tertiary">No letters yet.</p>
-        ) : (
-          receipts.map((r) => (
-            <div
-              key={r.id}
-              className="border-fill-tertiary bg-bg-secondary rounded-md border p-4 flex flex-col justify-between overflow-hidden"
-            >
-              <p className="text-callout text-text-primary line-clamp-4">
-                {r.content || '(no text)'}
-              </p>
-              <p className="text-mini text-text-tertiary mt-3">
-                {r.date}
-              </p>
+      <div className="flex flex-col gap-4 px-6">
+        <div className="flex gap-2 border-b border-fill-tertiary">
+          <button
+            onClick={() => setActiveTab('sent')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'sent'
+                ? 'text-text-primary border-b-2 border-fill-primary -mb-px'
+                : 'text-text-secondary'
+            }`}
+          >
+            Sent
+          </button>
+          <button
+            onClick={() => setActiveTab('received')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'received'
+                ? 'text-text-primary border-b-2 border-fill-primary -mb-px'
+                : 'text-text-secondary'
+            }`}
+          >
+            Received
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-col gap-4 px-6 pb-8">
+        <div className="text-xs text-text-tertiary bg-bg-secondary p-2 rounded">
+          <div>Sent: {sentReceipts.length} | Received: {receivedReceipts.length}</div>
+          {(activeTab === 'sent' ? sentReceipts : receivedReceipts).map((r) => (
+            <div key={r.id} className="text-xs text-text-secondary mt-1">
+              {r.to} - {r.date} - {typeof r.content === 'string' ? r.content.substring(0, 30) : '(visual receipt)'}...
             </div>
-          ))
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-8">
+          {(activeTab === 'sent' ? sentReceipts : receivedReceipts).length === 0 ? (
+            <p className="text-callout text-text-tertiary">No letters yet.</p>
+          ) : (
+            (activeTab === 'sent' ? sentReceipts : receivedReceipts).map((r) => (
+              <ReceiptDisplay key={r.id} receipt={r} />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
+  const [showPreview, setShowPreview] = useState(false)
+
+  // Show preview mode: display the raw base64 image
+  if (showPreview && receipt.receiptImage) {
+    return (
+      <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
+        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary">
+          <p className="text-mini text-text-tertiary">{receipt.date}</p>
+          <button
+            onClick={() => setShowPreview(false)}
+            className="text-xs text-fill-primary hover:underline"
+          >
+            Back to Rendered
+          </button>
+        </div>
+        <img
+          src={receipt.receiptImage}
+          alt={`Receipt to ${receipt.to}`}
+          className="w-full h-auto"
+          style={{ filter: 'grayscale(100%)' }}
+        />
+      </div>
+    )
+  }
+
+  // If we have the receipt image, display it with preview button
+  if (receipt.receiptImage) {
+    return (
+      <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
+        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary">
+          <p className="text-mini text-text-tertiary">{receipt.date}</p>
+          <button
+            onClick={() => setShowPreview(true)}
+            className="text-xs text-fill-primary hover:underline"
+          >
+            Preview Base64
+          </button>
+        </div>
+        <img
+          src={receipt.receiptImage}
+          alt={`Receipt to ${receipt.to}`}
+          className="w-full h-auto"
+          style={{ filter: 'grayscale(100%)' }}
+        />
+      </div>
+    )
+  }
+
+  let receiptState
+  try {
+    // Try new format first (receipt_state_json), fall back to legacy format (content as JSON)
+    if (receipt.receiptStateJson) {
+      receiptState = JSON.parse(receipt.receiptStateJson)
+    } else {
+      receiptState = JSON.parse(receipt.content)
+    }
+  } catch {
+    receiptState = null
+  }
+
+  if (!receiptState) {
+    const contentStr = typeof receipt.content === 'string' ? receipt.content : '(no text)'
+    return (
+      <div className="border-fill-tertiary bg-bg-secondary rounded-md border p-4 flex flex-col justify-between overflow-hidden">
+        <p className="text-callout text-text-primary line-clamp-4">
+          {contentStr || '(no text)'}
+        </p>
+        <p className="text-mini text-text-tertiary mt-3">
+          {receipt.date}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
+      <div style={{ fontFamily: 'Georgia, serif', padding: '16px', backgroundColor: '#ffffff', color: '#222121' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+          {receiptState.headerVariant === 'simple' ? (
+            <img src="/src/assets/icons/header-logo.svg" alt="Inklings" style={{ height: '48px', width: 'auto' }} />
+          ) : receiptState.headerVariant === 'squids-checkers' ? (
+            <img src="/src/assets/icons/header-squids-checkers.svg" alt="Inklings squids checkers" style={{ height: '60px', width: 'auto' }} />
+          ) : receiptState.headerVariant === 'squids-v1' ? (
+            <img src="/src/assets/icons/header-squids-v1.svg" alt="Inklings squids v1" style={{ height: '60px', width: 'auto' }} />
+          ) : null}
+        </div>
+
+        {/* Recipient Bar */}
+        <svg width="100%" height="20" viewBox="0 0 100 20" style={{ marginBottom: '12px', display: 'block', backgroundColor: 'white' }} preserveAspectRatio="none">
+          <path d="M0,8 Q25,2 50,8 T100,8 L100,18 Q75,20 50,18 T0,18 Z" fill="black" />
+        </svg>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '20px', color: '#222121', lineHeight: 1.4 }}>
+          <span>To: {receipt.to}</span>
+          <span>{receipt.date}</span>
+        </div>
+
+        {/* Current Prompt */}
+        {receiptState.currentPrompt && receiptState.currentPrompt !== 'No prompt' && (
+          <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic', marginBottom: '12px', lineHeight: 1.5 }}>
+            {receiptState.currentPrompt}
+          </div>
+        )}
+
+        {/* Render blocks */}
+        <div style={{ marginBottom: '12px' }}>
+          {receiptState.blocks?.map((block: Block) => (
+            <div key={block.id} style={{ marginBottom: '6px' }}>
+              {block.type === 'text' && (
+                <div
+                  style={{
+                    ...FONT_STYLES[block.style as TextStyle],
+                    fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1)}px`,
+                    fontWeight: block.fontWeight ?? FONT_STYLES[block.style as TextStyle].fontWeight,
+                    fontStyle: block.isItalic ? 'italic' : 'normal',
+                    textDecoration: block.isBold ? 'underline' : 'none',
+                    color: '#1f2937',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {block.content}
+                </div>
+              )}
+              {block.type === 'image' && (
+                <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '6px', filter: 'grayscale(100%)' }} />
+              )}
+              {block.type === 'sticker' && (
+                <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>[sticker]</div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Signature */}
+        {receiptState.signature && receiptState.signature.text && (
+          <div
+            style={{
+              fontFamily: "'Inter Variable', sans-serif",
+              fontSize: `${11 * (receiptState.signature.scale ?? 1)}px`,
+              color: '#4b5563',
+              fontStyle: 'italic',
+              marginLeft: `${receiptState.signature.offsetX ?? 0}px`,
+              marginTop: `${receiptState.signature.offsetY ?? 0}px`,
+              lineHeight: 1.4,
+            }}
+          >
+            {receiptState.signature.text}
+          </div>
         )}
       </div>
     </div>
