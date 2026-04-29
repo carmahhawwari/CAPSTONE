@@ -71,7 +71,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       const draftSignature = loadDraft().content?.signature
       if (draftSignature) return draftSignature
     }
-    return { text: 'Love, ', style: 'inter' }
+    return { text: 'Love, ', style: 'printvetica' }
   })
   const [signatureActive, setSignatureActive] = useState(false)
   const [headerVariant, setHeaderVariant] = useState<'simple' | 'squids-checkers' | 'squids-v1' | 'none'>('simple')

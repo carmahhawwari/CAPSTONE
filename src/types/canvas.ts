@@ -1,4 +1,4 @@
-export type TextStyle = 'normal' | 'heading' | 'handwriting' | 'pixel' | 'shout' | 'artsy' | 'decorative' | 'comic' | 'bold' | 'liquida' | 'dottonoji' | 'tsuchinoko' | 'redaction' | 'inter'
+export type TextStyle = 'normal' | 'heading' | 'handwriting' | 'pixel' | 'shout' | 'artsy' | 'decorative' | 'comic' | 'bold' | 'liquida' | 'dottonoji' | 'tsuchinoko' | 'redaction' | 'inter' | 'printvetica'
 
 import type { ImageAdjustments } from '@/lib/imageProcessing'
 
@@ -121,6 +121,12 @@ export const FONT_STYLES: Record<TextStyle, FontStyleConfig> = {
     fontWeight: 400,
     lineHeight: 1.5,
   },
+  printvetica: {
+    fontFamily: "var(--font-printvetica), monospace",
+    fontSize: 14,
+    fontWeight: 400,
+    lineHeight: 1.5,
+  },
 }
 
 export const STYLE_LABELS: Record<TextStyle, string> = {
@@ -138,6 +144,7 @@ export const STYLE_LABELS: Record<TextStyle, string> = {
   tsuchinoko: 'Tsuchinoko',
   redaction: 'Redaction',
   inter: 'Inter',
+  printvetica: 'Printvetica',
 }
 
 let _blockId = 0
