@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
-  signUp: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string, displayName?: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
 }
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, displayName?: string) => {
     if (!supabase) {
       if (password.length < 6) {
         throw new Error('Password must be at least 6 characters')
@@ -71,7 +71,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    const { error } = await supabase.auth.signUp({ email, password })
+    const trimmed = displayName?.trim()
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: trimmed ? { data: { display_name: trimmed } } : undefined,
+    })
     if (error) throw error
   }
 

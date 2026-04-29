@@ -300,15 +300,31 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     currentPrompt,
   })
 
+  const resolveSenderName = async (): Promise<string> => {
+    if (!supabase) return 'A friend'
+    let name = ((user?.user_metadata?.display_name as string | undefined) ?? '').trim()
+    if (!name && user?.id) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', user.id)
+          .maybeSingle()
+        name = ((profile?.display_name as string | null) ?? '').trim()
+      } catch {
+        // ignore — fall through to generic label
+      }
+    }
+    return name || 'A friend'
+  }
+
   const handleSend = async () => {
     if (blocks.length === 0 || !user?.email) return
     setError(null)
 
-    const senderName =
-      (user?.user_metadata?.display_name as string | undefined) ||
-      user?.email?.split('@')[0] ||
-      'A friend'
+    const senderName = await resolveSenderName()
 
+    // Onboarding URL-param flow: email-only, no printing.
     if (recipientEmail) {
       try {
         const receiptState = getReceiptState()
@@ -317,15 +333,11 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         let receiptImage: string | undefined
         if (receiptRef.current) {
           try {
-            console.log('[Receipt] Rendering receipt to get dithered image...')
             const { imageBase64 } = await renderToPrintBuffer(receiptRef.current, {})
-            console.log('[Receipt] Got imageBase64:', imageBase64 ? imageBase64.substring(0, 50) + '...' : 'null')
             receiptImage = imageBase64
           } catch (e) {
-            console.error('[Receipt] Failed to render image:', e)
+            console.warn('[Receipt] Failed to render image:', e)
           }
-        } else {
-          console.warn('[Receipt] receiptRef.current is null')
         }
 
         const receiptId = await saveReceipt({
@@ -401,10 +413,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         return
       }
 
-      const senderName =
-        (user?.user_metadata?.display_name as string | undefined) ||
-        user?.email?.split('@')[0] ||
-        'A friend'
+      const senderName = await resolveSenderName()
 
       const receiptState = getReceiptState()
       const friendEmail = friend.profile.username ? `${friend.profile.username}@stanford.edu` : null
@@ -447,10 +456,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       setShowFriendPicker(false)
       setFriendSearchQuery('')
 
-      const senderName =
-        (user?.user_metadata?.display_name as string | undefined) ||
-        user?.email?.split('@')[0] ||
-        'A friend'
+      const senderName = await resolveSenderName()
 
       const receiptState = getReceiptState()
       const email = `${sunet}@stanford.edu`

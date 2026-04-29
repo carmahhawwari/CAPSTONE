@@ -19,17 +19,18 @@ export interface SaveReceiptInput {
 
 /**
  * Send a receipt email notification to the recipient (fire-and-forget).
+ * Calls the deployed `send-recipt-email` edge function with `receiptId` so
+ * the function uses the existing row instead of inserting a duplicate.
  */
 function sendReceiptEmail(receiptId: string, senderName: string, recipientEmail: string): void {
   if (!supabase) return
 
-  // Fire-and-forget with timeout to prevent blocking
   Promise.race([
-    supabase.functions.invoke('send-receipt-email', {
+    supabase.functions.invoke('send-recipt-email', {
       body: {
-        receipt_id: receiptId,
-        sender_name: senderName,
-        recipient_email: recipientEmail,
+        receiptId,
+        recipientEmail,
+        senderName,
       },
     }),
     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000)),

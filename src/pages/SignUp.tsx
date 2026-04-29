@@ -48,9 +48,12 @@ export default function SignUp() {
     setLoading(true)
     setError('')
 
+    const fullName = `${firstName} ${lastName}`.trim()
+
     try {
-      // Sign up with email/password
-      await signUp(email, password)
+      // Sign up with email/password — pass display_name so it's available in
+      // user_metadata immediately, even before email confirmation.
+      await signUp(email, password, fullName)
 
       // If Supabase is configured, create/update profile with name
       if (supabase) {
@@ -62,14 +65,14 @@ export default function SignUp() {
             .upsert({
               id: user.id,
               username,
-              display_name: `${firstName} ${lastName}`,
+              display_name: fullName,
             })
         }
       }
 
       // If this signup is part of the onboarding flow, fire the receipt email.
       if (isOnboardingDeliver) {
-        await deliverDraftAsEmail(`${firstName} ${lastName}`.trim() || 'A friend')
+        await deliverDraftAsEmail(fullName || 'A friend')
       }
 
       if (nextPath) {

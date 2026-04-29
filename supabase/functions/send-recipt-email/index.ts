@@ -33,14 +33,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
-  let body: { recipientEmail?: string; senderName?: string; content?: unknown; message?: string }
+  let body: {
+    recipientEmail?: string
+    senderName?: string
+    content?: unknown
+    message?: string
+    receiptId?: string
+  }
   try {
     body = await req.json()
   } catch {
     return json({ error: 'Invalid JSON body' }, 400)
   }
 
-  const { recipientEmail, senderName } = body
+  const { recipientEmail, senderName, receiptId: providedReceiptId } = body
   const content = body.content ?? { blocks: [], prompt: '', legacyMessage: body.message ?? '' }
   if (!recipientEmail || !senderName) {
     return json({ error: 'recipientEmail and senderName are required' }, 400)
@@ -54,49 +60,59 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: 'Supabase env not available in function runtime' }, 500)
   }
 
-  // Insert into delivered_receipts via REST (service role bypasses RLS).
-  const insertRes = await fetch(`${supabaseUrl}/rest/v1/delivered_receipts`, {
-    method: 'POST',
-    headers: {
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-    },
-    body: JSON.stringify({
-      sender_name: senderName,
-      recipient_email: recipientEmail,
-      content,
-    }),
-  })
+  // If the caller already persisted the row (saveReceipt path), use that id
+  // and skip the insert. Otherwise insert here (legacy onboarding path).
+  let receiptId: string
+  if (providedReceiptId) {
+    receiptId = providedReceiptId
+  } else {
+    const insertRes = await fetch(`${supabaseUrl}/rest/v1/delivered_receipts`, {
+      method: 'POST',
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({
+        sender_name: senderName,
+        recipient_email: recipientEmail,
+        content,
+      }),
+    })
 
-  if (!insertRes.ok) {
-    const detail = await insertRes.text()
-    return json({ error: 'Failed to persist receipt', status: insertRes.status, detail }, 500)
+    if (!insertRes.ok) {
+      const detail = await insertRes.text()
+      return json({ error: 'Failed to persist receipt', status: insertRes.status, detail }, 500)
+    }
+
+    const rows = await insertRes.json()
+    const insertedId = Array.isArray(rows) ? rows[0]?.id : rows?.id
+    if (!insertedId) return json({ error: 'No receipt id returned from insert' }, 500)
+    receiptId = insertedId
   }
-
-  const rows = await insertRes.json()
-  const receiptId = Array.isArray(rows) ? rows[0]?.id : rows?.id
-  if (!receiptId) return json({ error: 'No receipt id returned from insert' }, 500)
 
   const siteUrl = Deno.env.get('SITE_URL') ?? 'https://inklings.thecupidproject.org'
   const link = `${siteUrl}/r/${receiptId}`
 
   const from = Deno.env.get('RESEND_FROM') ?? 'Inklings <onboarding@resend.dev>'
-  const subject = `📬 ${senderName} sent you an Inklings`
-  const text = `${senderName} sent you a personal note on Inklings.\n\nOpen it here: ${link}\n\n— Inklings`
+  const subject = `${senderName} sent you an Inkling`
+  const text = `${senderName} sent you an Inkling.\n\nInklings is a new campus messaging system designed to spread love. Head to oncall and find the Inklings printer (by drink pick up section) before pressing the button below to print your message.\n\nPrint it here: ${link}\n\n— Inklings`
 
+  // Printvetica with broad email-client fallbacks. Most email clients
+  // strip <link rel="font"> and don't load custom @font-face, so we list
+  // Printvetica first and fall through to common system fonts.
   const fontStack = `'Printvetica', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif`
   const html = `<!doctype html>
-<html><body style="margin:0;padding:48px 16px;background:#ffffff;font-family:${fontStack};color:#000000;">
-  <div style="max-width:420px;margin:0 auto;background:#ffffff;border:1px solid #d4d4d8;padding:32px 24px;text-align:center;">
-    <p style="margin:0 0 12px;font-size:12px;color:#787878;letter-spacing:0.2em;text-transform:uppercase;">📬 you've got mail</p>
-    <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;font-weight:600;color:#000000;">${escapeHtml(senderName)} sent you an Inkling</h1>
-    <p style="margin:0 0 28px;font-size:14px;color:#000000;">Tap below to open it on Inklings.</p>
-    <a href="${link}" style="display:inline-block;padding:14px 28px;background:#000000;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;border-radius:6px;font-family:${fontStack};">Open my Inkling</a>
-    <p style="margin:28px 0 0;font-size:11px;color:#969696;word-break:break-all;">${escapeHtml(link)}</p>
+<html><body style="margin:0;padding:48px 16px;background:#faf6ed;font-family:${fontStack};color:#000000;">
+  <div style="max-width:420px;margin:0 auto;background:#fdfbf5;border:1px solid #d4d4d8;padding:32px 24px;text-align:center;font-family:${fontStack};">
+    <p style="margin:0 0 12px;font-size:12px;color:#787878;letter-spacing:0.2em;text-transform:uppercase;font-family:${fontStack};">you've got mail</p>
+    <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;font-weight:600;color:#000000;font-family:${fontStack};">${escapeHtml(senderName)} sent you an Inkling</h1>
+    <p style="margin:0 0 28px;font-size:14px;line-height:1.5;color:#000000;font-family:${fontStack};">Inklings is a new campus messaging system designed to spread love. Head to oncall and find the Inklings printer (by drink pick up section) before pressing the button below to print your message.</p>
+    <a href="${link}" style="display:inline-block;padding:14px 28px;background:#000000;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;border-radius:6px;font-family:${fontStack};">Print my Inkling</a>
+    <p style="margin:28px 0 0;font-size:11px;color:#969696;word-break:break-all;font-family:${fontStack};">${escapeHtml(link)}</p>
   </div>
-  <p style="max-width:420px;margin:16px auto 0;font-size:11px;color:#969696;text-align:center;">Sent via Inklings · inklings.thecupidproject.org</p>
+  <p style="max-width:420px;margin:16px auto 0;font-size:11px;color:#969696;text-align:center;font-family:${fontStack};">Sent via Inklings · inklings.thecupidproject.org</p>
 </body></html>`
 
   const sendRes = await fetch('https://api.resend.com/emails', {
