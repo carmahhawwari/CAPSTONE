@@ -315,8 +315,12 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           receiptImage,
         })
 
-        navigate(`/printing?email=${encodeURIComponent(recipientEmail)}&receiptId=${receiptId}`, {
-          state: { receiptState }
+        navigate('/receipt-sent', {
+          state: {
+            printPath: `/printing?email=${encodeURIComponent(recipientEmail)}&receiptId=${receiptId}`,
+            printState: { receiptState },
+            recipientLabel: recipientEmail,
+          },
         })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save receipt')
@@ -357,8 +361,12 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         receiptImage,
       })
 
-      navigate(`/printing?to=${selectedFriendId}&receiptId=${receiptId}`, {
-        state: { receiptState }
+      navigate('/receipt-sent', {
+        state: {
+          printPath: `/printing?to=${selectedFriendId}&receiptId=${receiptId}`,
+          printState: { receiptState },
+          recipientLabel: friendLabel(selectedFriend),
+        },
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save receipt')
@@ -409,7 +417,13 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         receiptImage,
       })
 
-      navigate(`/printing?to=${friendId}&receiptId=${receiptId}`, { state: { receiptState } })
+      navigate('/receipt-sent', {
+        state: {
+          printPath: `/printing?to=${friendId}&receiptId=${receiptId}`,
+          printState: { receiptState },
+          recipientLabel: friendLabel(friend),
+        },
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save receipt')
     }
@@ -447,7 +461,13 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         receiptImage,
       })
 
-      navigate(`/printing?email=${encodeURIComponent(email)}&receiptId=${receiptId}`, { state: { receiptState } })
+      navigate('/receipt-sent', {
+        state: {
+          printPath: `/printing?email=${encodeURIComponent(email)}&receiptId=${receiptId}`,
+          printState: { receiptState },
+          recipientLabel: sunet,
+        },
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save receipt')
     }
