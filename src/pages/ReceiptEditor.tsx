@@ -330,7 +330,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
 
         navigate('/receipt-sent', {
           state: {
-            printPath: `/printing?email=${encodeURIComponent(recipientEmail)}&receiptId=${receiptId}`,
+            printPath: `/prints?email=${encodeURIComponent(recipientEmail)}&receiptId=${receiptId}`,
             printState: { receiptState },
             recipientLabel: recipientEmail,
           },
@@ -376,7 +376,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
 
       navigate('/receipt-sent', {
         state: {
-          printPath: `/printing?to=${selectedFriendId}&receiptId=${receiptId}`,
+          printPath: `/prints?to=${selectedFriendId}&receiptId=${receiptId}`,
           printState: { receiptState },
           recipientLabel: friendLabel(selectedFriend),
         },
@@ -432,7 +432,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
 
       navigate('/receipt-sent', {
         state: {
-          printPath: `/printing?to=${friendId}&receiptId=${receiptId}`,
+          printPath: `/prints?to=${friendId}&receiptId=${receiptId}`,
           printState: { receiptState },
           recipientLabel: friendLabel(friend),
         },
@@ -476,7 +476,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
 
       navigate('/receipt-sent', {
         state: {
-          printPath: `/printing?email=${encodeURIComponent(email)}&receiptId=${receiptId}`,
+          printPath: `/prints?email=${encodeURIComponent(email)}&receiptId=${receiptId}`,
           printState: { receiptState },
           recipientLabel: sunet,
         },
