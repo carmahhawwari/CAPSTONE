@@ -12,10 +12,10 @@ export default function ReceiptSent() {
   const { printPath, printState, recipientLabel } = (location.state as ReceiptSentState | null) ?? {}
 
   const handlePrint = () => {
-    if (printPath) {
-      navigate(printPath, { replace: true, state: printState })
+    if (printPath && printState) {
+      navigate(printPath, { state: printState })
     } else {
-      navigate('/home', { replace: true })
+      navigate('/home')
     }
   }
 
