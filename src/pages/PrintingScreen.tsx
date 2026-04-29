@@ -112,6 +112,7 @@ export default function PrintingScreen() {
     if (state === 'done' && user?.id && receiptState && receiptRef.current) {
       const submitPrint = async () => {
         const receiptId = searchParams.get('receiptId')
+        const isSenderCopy = searchParams.get('senderCopy') === 'true'
         try {
           const recipientName = selectedFriend
             ? selectedFriend.profile.display_name || selectedFriend.profile.username || 'Friend'
@@ -139,7 +140,7 @@ export default function PrintingScreen() {
             receiptStateJson: JSON.stringify(receiptState),
           })
 
-          if (receiptId) {
+          if (receiptId && !isSenderCopy) {
             await markReceiptAsPrinted(receiptId)
           }
         } catch (err) {
