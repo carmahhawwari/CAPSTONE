@@ -66,6 +66,9 @@ export default function SignUp() {
               id: user.id,
               username,
               display_name: fullName,
+              first_name: firstName || null,
+              last_name: lastName || null,
+              phone: phone || null,
             })
         }
       }

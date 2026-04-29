@@ -8,6 +8,9 @@ interface ProfileData {
   username: string | null
   email: string | null
   class_year: string | null
+  first_name: string | null
+  last_name: string | null
+  phone: string | null
 }
 
 export default function Profile() {
@@ -16,7 +19,7 @@ export default function Profile() {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({ display_name: '', class_year: '' })
+  const [formData, setFormData] = useState({ display_name: '', class_year: '', first_name: '', last_name: '', phone: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -30,7 +33,7 @@ export default function Profile() {
       if (supabase) {
         const { data } = await supabase
           .from('profiles')
-          .select('display_name, username')
+          .select('display_name, username, first_name, last_name, phone')
           .eq('id', user.id)
           .single()
 
@@ -39,11 +42,17 @@ export default function Profile() {
           username: data?.username ?? null,
           email: user.email ?? null,
           class_year: null,
+          first_name: data?.first_name ?? null,
+          last_name: data?.last_name ?? null,
+          phone: data?.phone ?? null,
         }
         setProfile(newProfile)
         setFormData({
           display_name: newProfile.display_name || '',
           class_year: '',
+          first_name: newProfile.first_name || '',
+          last_name: newProfile.last_name || '',
+          phone: newProfile.phone || '',
         })
       } else {
         const newProfile = {
@@ -51,11 +60,17 @@ export default function Profile() {
           username: null,
           email: user.email ?? null,
           class_year: null,
+          first_name: null,
+          last_name: null,
+          phone: null,
         }
         setProfile(newProfile)
         setFormData({
           display_name: newProfile.display_name || '',
           class_year: '',
+          first_name: '',
+          last_name: '',
+          phone: '',
         })
       }
       setLoading(false)
@@ -75,6 +90,9 @@ export default function Profile() {
         .from('profiles')
         .update({
           display_name: formData.display_name || null,
+          first_name: formData.first_name || null,
+          last_name: formData.last_name || null,
+          phone: formData.phone || null,
         })
         .eq('id', user.id)
 
@@ -85,6 +103,9 @@ export default function Profile() {
           ? {
               ...p,
               display_name: formData.display_name || null,
+              first_name: formData.first_name || null,
+              last_name: formData.last_name || null,
+              phone: formData.phone || null,
             }
           : null
       )
@@ -135,6 +156,27 @@ export default function Profile() {
               </div>
 
               <div className="flex flex-col gap-3">
+                <label className="text-callout text-text-secondary">First Name</label>
+                <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
+                  {profile.first_name || 'Not set'}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-callout text-text-secondary">Last Name</label>
+                <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
+                  {profile.last_name || 'Not set'}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-callout text-text-secondary">Phone</label>
+                <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
+                  {profile.phone || 'Not set'}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
                 <label className="text-callout text-text-secondary">Class Year</label>
                 <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
                   {profile.class_year || 'Not set'}
@@ -178,6 +220,39 @@ export default function Profile() {
               </div>
 
               <div className="flex flex-col gap-3">
+                <label className="text-callout text-text-secondary">First Name</label>
+                <input
+                  type="text"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData((f) => ({ ...f, first_name: e.target.value }))}
+                  placeholder="First name"
+                  className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3 focus:outline-none focus:border-fill-primary"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-callout text-text-secondary">Last Name</label>
+                <input
+                  type="text"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData((f) => ({ ...f, last_name: e.target.value }))}
+                  placeholder="Last name"
+                  className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3 focus:outline-none focus:border-fill-primary"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-callout text-text-secondary">Phone</label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData((f) => ({ ...f, phone: e.target.value }))}
+                  placeholder="Phone number"
+                  className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3 focus:outline-none focus:border-fill-primary"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
                 <label className="text-callout text-text-secondary">Class Year</label>
                 <select
                   value={formData.class_year}
@@ -208,6 +283,9 @@ export default function Profile() {
                     setFormData({
                       display_name: profile.display_name || '',
                       class_year: profile.class_year || '',
+                      first_name: profile.first_name || '',
+                      last_name: profile.last_name || '',
+                      phone: profile.phone || '',
                     })
                     setError('')
                   }}
