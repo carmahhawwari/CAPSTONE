@@ -13,7 +13,8 @@ export default function ReceiptSent() {
 
   const handlePrint = () => {
     if (printPath && printState) {
-      navigate(printPath, { state: printState })
+      const pathWithSenderFlag = `${printPath}&senderCopy=true`
+      navigate(pathWithSenderFlag, { state: printState })
     } else {
       navigate('/home')
     }
