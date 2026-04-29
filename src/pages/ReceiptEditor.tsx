@@ -6,7 +6,6 @@ import ImageBlock from '@/components/canvas/ImageBlock'
 import StickerBlock from '@/components/canvas/StickerBlock'
 import BlockToolbar from '@/components/canvas/BlockToolbar'
 import StickerPicker from '@/components/canvas/StickerPicker'
-import GiphyStickerPicker from '@/components/canvas/GiphyStickerPicker'
 import FontStylePicker from '@/components/canvas/FontStylePicker'
 import FontSizeSlider from '@/components/canvas/FontSizeSlider'
 import FontWeightSlider from '@/components/canvas/FontWeightSlider'
@@ -19,7 +18,7 @@ import { saveReceipt } from '@/lib/receipts'
 import { supabase } from '@/lib/supabase'
 import { renderToPrintBuffer } from '@/lib/escpos'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Block, TextStyle, CornerSticker, Signature } from '@/types/canvas'
+import type { Block, TextStyle, Signature } from '@/types/canvas'
 import type { FriendProfile } from '@/types/app'
 import { newBlockId, STYLE_LABELS } from '@/types/canvas'
 import headerLogoSvg from '@/assets/icons/header-logo.svg'
@@ -34,21 +33,6 @@ const PROMPTS = [
   'Something that made me smile today was...',
   'Something I want to remember from this week is...',
 ]
-
-const DEFAULT_CORNER_STICKER_ROTATION = 0
-const DEFAULT_CORNER_STICKER_SCALE = 1.1
-const MIN_CORNER_STICKER_SCALE = 0.5
-const MAX_CORNER_STICKER_SCALE = 2.5
-
-function normalizeCornerSticker(sticker: CornerSticker): CornerSticker {
-  return {
-    ...sticker,
-    rotation: sticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION,
-    scale: sticker.scale ?? DEFAULT_CORNER_STICKER_SCALE,
-    offsetX: sticker.offsetX ?? 0,
-    offsetY: sticker.offsetY ?? 0,
-  }
-}
 
 interface ReceiptEditorProps {
   onboarding?: boolean
@@ -81,10 +65,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const [selectedFriendId, setSelectedFriendId] = useState('')
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null)
-  const [cornerSticker, setCornerSticker] = useState<CornerSticker | null>(null)
   const [recipientEmail, setRecipientEmail] = useState<string | null>(null)
-  const [showGiphyPicker, setShowGiphyPicker] = useState(false)
-  const [stickerActive, setStickerActive] = useState(false)
   const [signature, setSignature] = useState<Signature>(() => {
     if (onboarding) {
       const draftSignature = loadDraft().content?.signature
@@ -256,25 +237,11 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       content: {
         blocks,
         prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
-        cornerSticker: cornerSticker ?? undefined,
         signature,
         headerVariant,
       },
     })
     navigate('/onboard/deliver')
-  }
-
-  const updateCornerSticker = (updates: Partial<CornerSticker> | ((current: CornerSticker) => Partial<CornerSticker>)) => {
-    setCornerSticker((current) => {
-      if (!current) return current
-      const nextUpdates = typeof updates === 'function' ? updates(current) : updates
-      return normalizeCornerSticker({ ...current, ...nextUpdates })
-    })
-  }
-
-  const handleSelectCornerSticker = (sticker: CornerSticker) => {
-    setCornerSticker(normalizeCornerSticker(sticker))
-    setStickerActive(true)
   }
 
   const updateSignature = (updates: Partial<Signature> | ((current: Signature) => Partial<Signature>)) => {
@@ -295,7 +262,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
   const getReceiptState = () => ({
     blocks,
     prompt: currentPrompt === 'No prompt' ? '' : currentPrompt,
-    cornerSticker: cornerSticker ?? undefined,
     signature,
     headerVariant,
     currentPrompt,
@@ -623,7 +589,6 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
                   draggable
                   onClick={() => {
                     setActiveBlockId(block.id)
-                    setStickerActive(false)
                   }}
                   onDragStart={() => handleDragStart(block.id)}
                   onDragOver={handleDragOver}
@@ -682,59 +647,24 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
             )}
           </div>
 
-          {/* Bottom row: Signature (left) + Sticker (right) */}
-          <div className="mt-8 pt-4 border-t border-dashed border-gray-200 flex gap-6">
-            {/* Left: Signature */}
-            <div className="flex-1">
-              <div
-                ref={signatureAreaRef}
-                className="py-2"
-              >
-                <input
-                  type="text"
-                  value={signature.text}
-                  onChange={(e) => updateSignature({ text: e.target.value })}
-                  placeholder="Love, [your name]"
-                  className="w-full focus:outline-none border-0 bg-transparent px-0 py-1 text-sm italic"
-                  style={{
-                    fontFamily: 'Georgia, serif',
-                    fontSize: '14px',
-                    color: '#4b5563',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Right: GIPHY Sticker */}
-            <div className="w-32 flex-shrink-0">
-              {cornerSticker ? (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCornerSticker(null)
-                      setStickerActive(false)
-                    }}
-                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center hover:bg-red-600 transition-colors z-10"
-                    aria-label="Remove sticker"
-                  >
-                    ×
-                  </button>
-                  <img
-                    src={cornerSticker.ditheredDataUrl || cornerSticker.fullUrl}
-                    alt="Sticker"
-                    className="w-full h-auto object-contain"
-                    style={{ filter: cornerSticker.ditheredDataUrl ? 'none' : 'grayscale(100%)' }}
-                  />
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowGiphyPicker(true)}
-                  className="w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-500 hover:border-gray-400 transition-all text-2xl"
-                >
-                  +
-                </button>
-              )}
+          {/* Bottom row: Signature */}
+          <div className="mt-8 pt-4 border-t border-dashed border-gray-200">
+            <div
+              ref={signatureAreaRef}
+              className="py-2"
+            >
+              <input
+                type="text"
+                value={signature.text}
+                onChange={(e) => updateSignature({ text: e.target.value })}
+                placeholder="Love, [your name]"
+                className="w-full focus:outline-none border-0 bg-transparent px-0 py-1 text-sm italic"
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '14px',
+                  color: '#4b5563',
+                }}
+              />
             </div>
           </div>
         </div>
@@ -856,84 +786,11 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
           </details>
         )}
 
-        {/* Corner Sticker Control Panel */}
-        {cornerSticker && stickerActive && (
-          <div className="mt-4 bg-gray-50 rounded-lg p-4 space-y-4 border border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-700">Adjust sticker</h3>
-
-            {/* Rotation Slider */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-medium text-gray-600">Rotation</label>
-                <span className="text-xs text-gray-500">{cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}°</span>
-              </div>
-              <input
-                type="range"
-                min="-180"
-                max="180"
-                value={cornerSticker.rotation ?? DEFAULT_CORNER_STICKER_ROTATION}
-                onChange={e => updateCornerSticker({ rotation: parseFloat(e.target.value) })}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
-              />
-            </div>
-
-            {/* Scale Slider */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-medium text-gray-600">Scale</label>
-                <span className="text-xs text-gray-500">{(cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE).toFixed(1)}×</span>
-              </div>
-              <input
-                type="range"
-                min={MIN_CORNER_STICKER_SCALE}
-                max={MAX_CORNER_STICKER_SCALE}
-                step="0.1"
-                value={cornerSticker.scale ?? DEFAULT_CORNER_STICKER_SCALE}
-                onChange={e => updateCornerSticker({ scale: parseFloat(e.target.value) })}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
-              />
-            </div>
-
-            <p className="text-xs text-gray-500">
-              Adjust sticker rotation and scale using the sliders above.
-            </p>
-
-            {/* Reset Button */}
-            <button
-              onClick={() => updateCornerSticker({
-                rotation: DEFAULT_CORNER_STICKER_ROTATION,
-                scale: DEFAULT_CORNER_STICKER_SCALE,
-                offsetX: 0,
-                offsetY: 0,
-              })}
-              className="w-full px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Reset to default
-            </button>
-
-            {/* Close Panel */}
-            <button
-              onClick={() => setStickerActive(false)}
-              className="w-full px-3 py-2 text-xs font-medium text-white bg-fill-primary rounded-lg hover:opacity-80 transition-colors"
-            >
-              Done
-            </button>
-          </div>
-        )}
-
         {/* Sticker Picker Modal */}
         {showStickerPicker && (
           <StickerPicker
             onSelect={handleAddSticker}
             onClose={() => setShowStickerPicker(false)}
-          />
-        )}
-
-        {/* GIPHY Sticker Picker Modal */}
-        {showGiphyPicker && (
-          <GiphyStickerPicker
-            onSelect={handleSelectCornerSticker}
-            onClose={() => setShowGiphyPicker(false)}
           />
         )}
 
