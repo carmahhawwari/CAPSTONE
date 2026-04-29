@@ -33,14 +33,14 @@ export default function Profile() {
       if (supabase) {
         const { data } = await supabase
           .from('profiles')
-          .select('display_name, username, first_name, last_name, phone')
+          .select('display_name, username, email, first_name, last_name, phone')
           .eq('id', user.id)
           .single()
 
         const newProfile = {
           display_name: data?.display_name ?? null,
           username: data?.username ?? null,
-          email: user.email ?? null,
+          email: data?.email ?? user.email ?? null,
           class_year: null,
           first_name: data?.first_name ?? null,
           last_name: data?.last_name ?? null,

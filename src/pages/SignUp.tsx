@@ -65,6 +65,7 @@ export default function SignUp() {
             .upsert({
               id: user.id,
               username,
+              email,
               display_name: fullName,
               first_name: firstName || null,
               last_name: lastName || null,
