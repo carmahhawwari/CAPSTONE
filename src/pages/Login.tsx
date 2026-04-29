@@ -78,6 +78,18 @@ export default function Login() {
             Forgot password?
           </Link>
         </form>
+
+        <div className="mt-10 text-center">
+          <p className="text-subheadline text-text-secondary">
+            Don't have an account?{' '}
+            <Link
+              to={`/signup${nextPath ? `?next=${encodeURIComponent(nextPath)}` : ''}`}
+              className="text-text-primary font-semibold underline"
+            >
+              Sign up
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )
