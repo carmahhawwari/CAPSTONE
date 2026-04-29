@@ -301,7 +301,9 @@ export async function markReceiptAsPrinted(receiptId: string): Promise<void> {
 }
 
 /**
- * Get count of unprinted receipts sent by the current user.
+ * Get count of unprinted receipts the current user has received from others.
+ * Powers the home-screen printer-tile badge, which should match the list shown
+ * in PrintingScreen (`getReceivedUnprintedReceipts`).
  */
 export async function getUnprintedReceiptCount(userEmail: string): Promise<number> {
   if (!supabase) return 0
@@ -310,7 +312,7 @@ export async function getUnprintedReceiptCount(userEmail: string): Promise<numbe
     const { count, error } = await supabase
       .from('delivered_receipts')
       .select('*', { count: 'exact', head: true })
-      .eq('sender_email', userEmail)
+      .eq('recipient_email', userEmail)
       .is('printed_at', null)
 
     if (error) {
