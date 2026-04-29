@@ -116,7 +116,7 @@ export async function checkNearestPrinter(): Promise<string | null> {
 export async function submitPrintJob({ receiptElement, recipientName, messageText, recipientId, recipientEmail, skipGeofence: _skipGeofence, printerId: specifiedPrinterId, cornerSticker, receiptStateJson, receiptImageBase64 }: SubmitPrintJobOptions): Promise<string> {
   // 1. Render receipt to ESC/POS binary
   const { buffer, imageBase64 } = receiptImageBase64
-    ? await renderBase64ToPrintBuffer(receiptImageBase64, { cornerSticker })
+    ? await renderBase64ToPrintBuffer(receiptImageBase64, cornerSticker ? { cornerSticker } : undefined)
     : await renderToPrintBuffer(receiptElement, { cornerSticker })
   const payload = bufferToBase64(buffer)
   console.log('[PrintJob] Received imageBase64:', imageBase64 ? imageBase64.substring(0, 50) + '...' : 'null')

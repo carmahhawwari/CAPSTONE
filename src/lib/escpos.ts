@@ -224,7 +224,7 @@ export async function renderToPrintBuffer(
 /**
  * Convert a base64 PNG image directly to ESC/POS buffer for re-printing.
  */
-export async function renderBase64ToPrintBuffer(base64Image: string): Promise<RenderToPrintResult> {
+export async function renderBase64ToPrintBuffer(base64Image: string, options?: { cornerSticker?: CornerStickerData }): Promise<RenderToPrintResult> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
@@ -240,8 +240,8 @@ export async function renderBase64ToPrintBuffer(base64Image: string): Promise<Re
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
         const mono = ditherImage(imageData, 'floyd-steinberg')
 
-        // Build ESC/POS buffer
-        const buffer = buildEscPosBuffer(mono, canvas.width, canvas.height)
+        // Build ESC/POS buffer with corner sticker if provided
+        const buffer = buildEscPosBuffer(mono, canvas.width, canvas.height, options?.cornerSticker)
 
         // Return both buffer and the original base64 image
         resolve({ buffer, imageBase64: base64Image })
