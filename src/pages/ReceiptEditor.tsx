@@ -71,8 +71,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       const draftSignature = loadDraft().content?.signature
       if (draftSignature) return draftSignature
     }
-    const sunetId = user?.email?.split('@')[0] || ''
-    return { text: sunetId ? `Love, ${sunetId}` : 'Love, ', style: 'inter' }
+    return { text: 'Love, ', style: 'inter' }
   })
   const [signatureActive, setSignatureActive] = useState(false)
   const [headerVariant, setHeaderVariant] = useState<'simple' | 'squids-checkers' | 'squids-v1' | 'none'>('simple')
@@ -110,6 +109,28 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     const nextIndex = (currentIndex + 1) % variants.length
     setHeaderVariant(variants[nextIndex])
   }
+
+  // Load user profile to get first name for signature
+  useEffect(() => {
+    if (user?.id && supabase) {
+      supabase
+        .from('profiles')
+        .select('first_name')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.first_name) {
+            setSignature((current) => ({
+              ...current,
+              text: `Love, ${data.first_name}`,
+            }))
+          }
+        })
+        .catch(() => {
+          // Ignore errors, use default
+        })
+    }
+  }, [user?.id])
 
   // For authenticated users: load friends
   useEffect(() => {
@@ -302,7 +323,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     if (blocks.length === 0 || !user?.email) return
     setError(null)
 
-    const senderName = await resolveSenderName()
+    const senderName = signature.text || 'Love'
 
     // Onboarding URL-param flow: email-only, no printing.
     if (recipientEmail) {
@@ -401,7 +422,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         return
       }
 
-      const senderName = await resolveSenderName()
+      const senderName = signature.text || 'Love'
 
       const receiptState = getReceiptState()
       const friendEmail = friend.profile.username ? `${friend.profile.username}@stanford.edu` : null
@@ -450,7 +471,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
       setShowFriendPicker(false)
       setFriendSearchQuery('')
 
-      const senderName = await resolveSenderName()
+      const senderName = signature.text || 'Love'
 
       const receiptState = getReceiptState()
       const email = `${sunet}@stanford.edu`
