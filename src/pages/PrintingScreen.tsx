@@ -361,7 +361,7 @@ export default function PrintingScreen() {
 
             {/* Current Prompt */}
             {receiptState.currentPrompt && receiptState.currentPrompt !== 'No prompt' && (
-              <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
+              <div style={{ fontSize: '20px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
                 {receiptState.currentPrompt}
               </div>
             )}

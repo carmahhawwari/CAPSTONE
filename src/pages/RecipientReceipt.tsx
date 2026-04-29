@@ -236,13 +236,9 @@ export default function RecipientReceipt() {
             <span>{dateStr}</span>
           </div>
 
-          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif" }}>
-            From: {receipt.sender_name}
-          </div>
-
           {/* Current Prompt */}
           {receipt.content.prompt && receipt.content.prompt !== 'No prompt' && (
-            <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
+            <div style={{ fontSize: '20px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
               {receipt.content.prompt}
             </div>
           )}
