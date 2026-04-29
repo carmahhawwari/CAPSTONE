@@ -21,7 +21,7 @@ export default function OnboardIntro() {
         </p>
 
         <Link
-          to="/onboard/recipient"
+          to="/signup?next=/onboard/recipient"
           className="bg-black text-white font-semibold rounded-md mt-8 w-full py-4 text-center block"
         >
           Start your first receipt

@@ -231,7 +231,7 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
     setDraggedBlockId(null)
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (blocks.length === 0) return
     saveDraft({
       content: {
@@ -241,7 +241,20 @@ export default function ReceiptEditor({ onboarding = false }: ReceiptEditorProps
         headerVariant,
       },
     })
-    navigate('/onboard/deliver')
+
+    // If in onboarding and already logged in, deliver the draft directly
+    if (onboarding && user) {
+      try {
+        const { deliverDraftAsEmail } = await import('@/lib/onboardingDraft')
+        const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'A friend'
+        await deliverDraftAsEmail(displayName)
+        navigate('/onboard/sent')
+      } catch (err) {
+        console.error('Failed to deliver draft:', err)
+      }
+    } else {
+      navigate('/onboard/deliver')
+    }
   }
 
   const updateSignature = (updates: Partial<Signature> | ((current: Signature) => Partial<Signature>)) => {
