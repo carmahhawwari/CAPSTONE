@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import { getReceiptsByFriend, getReceivedReceiptsByFriend, getReceiptsByCurrentUser, getReceivedReceiptsByCurrentUser } from '@/lib/receipts'
+import { submitBase64PrintJob } from '@/lib/printJob'
 import type { FriendProfile, Receipt } from '@/types/app'
 import type { Block, TextStyle } from '@/types/canvas'
 import { FONT_STYLES } from '@/types/canvas'
@@ -184,20 +185,50 @@ export default function LettersScreen() {
 
 function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
   const [showPreview, setShowPreview] = useState(false)
+  const [printing, setPrinting] = useState(false)
+  const [printError, setPrintError] = useState<string | null>(null)
+
+  const handleReprint = async () => {
+    if (!receipt.receiptImage) return
+    setPrinting(true)
+    setPrintError(null)
+    try {
+      await submitBase64PrintJob({
+        base64Image: receipt.receiptImage,
+        recipientName: receipt.to,
+        recipientEmail: receipt.friendId,
+        skipGeofence: false,
+      })
+    } catch (err) {
+      setPrintError(err instanceof Error ? err.message : 'Print failed')
+    } finally {
+      setPrinting(false)
+    }
+  }
 
   // Show preview mode: display the raw base64 image
   if (showPreview && receipt.receiptImage) {
     return (
       <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
-        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary">
+        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary gap-2">
           <p className="text-mini text-text-tertiary">{receipt.date}</p>
-          <button
-            onClick={() => setShowPreview(false)}
-            className="text-xs text-fill-primary hover:underline"
-          >
-            Back to Rendered
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleReprint}
+              disabled={printing}
+              className="text-xs text-fill-primary hover:underline disabled:opacity-50"
+            >
+              {printing ? 'Printing…' : 'Reprint'}
+            </button>
+            <button
+              onClick={() => setShowPreview(false)}
+              className="text-xs text-fill-primary hover:underline"
+            >
+              Back to Rendered
+            </button>
+          </div>
         </div>
+        {printError && <p className="text-xs text-fill-red px-3 pt-2">{printError}</p>}
         <img
           src={receipt.receiptImage}
           alt={`Receipt to ${receipt.to}`}
@@ -208,19 +239,29 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
     )
   }
 
-  // If we have the receipt image, display it with preview button
+  // If we have the receipt image, display it with preview and reprint buttons
   if (receipt.receiptImage) {
     return (
       <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
-        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary">
+        <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary gap-2">
           <p className="text-mini text-text-tertiary">{receipt.date}</p>
-          <button
-            onClick={() => setShowPreview(true)}
-            className="text-xs text-fill-primary hover:underline"
-          >
-            Preview Base64
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleReprint}
+              disabled={printing}
+              className="text-xs text-fill-primary hover:underline disabled:opacity-50"
+            >
+              {printing ? 'Printing…' : 'Reprint'}
+            </button>
+            <button
+              onClick={() => setShowPreview(true)}
+              className="text-xs text-fill-primary hover:underline"
+            >
+              Preview Base64
+            </button>
+          </div>
         </div>
+        {printError && <p className="text-xs text-fill-red px-3 pt-2">{printError}</p>}
         <img
           src={receipt.receiptImage}
           alt={`Receipt to ${receipt.to}`}
