@@ -216,10 +216,8 @@ export default function RecipientReceipt() {
           position: 'absolute',
           left: '-9999px',
           top: 0,
-          width: 0,
-          height: 0,
-          opacity: 0,
-          overflow: 'hidden',
+          visibility: 'hidden',
+          pointerEvents: 'none',
         }}
       >
         <div

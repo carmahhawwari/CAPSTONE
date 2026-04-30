@@ -341,10 +341,10 @@ export default function PrintingScreen() {
 
       {/* Hidden receipt for rasterization */}
       {receiptState && (
-        <div className="absolute -left-[9999px]" style={{ width: 0, height: 0, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, visibility: 'hidden', pointerEvents: 'none' }}>
           <div
             ref={receiptRef}
-            className="bg-white overflow-hidden"
+            className="bg-white"
             style={{ fontFamily: 'Georgia, serif', width: '576px', padding: '16px 20px', backgroundColor: '#ffffff', color: '#222121', position: 'relative' }}
           >
             {/* Header */}
