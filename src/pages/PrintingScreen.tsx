@@ -360,7 +360,7 @@ export default function PrintingScreen() {
 
             {/* Recipient Bar */}
             <img src="/recipient-bar.png" alt="Recipient Bar" style={{ width: '100%', height: 'auto', marginBottom: '12px', display: 'block' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', marginTop: '8px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121', lineHeight: 1.5 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', marginTop: '8px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121', lineHeight: 1.8, alignItems: 'baseline' }}>
               <span>To: {recipientName}</span>
               <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
             </div>
