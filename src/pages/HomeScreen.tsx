@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import { getUnprintedReceiptCount } from '@/lib/receipts'
+import PageTransition from '@/components/PageTransition'
 import Avatar from '@/components/Avatar'
 import archiveImg from '@/assets/archive.png'
 import printerImg from '@/assets/printer.png'
+import { staggerContainer, staggerItem, slideUpVariants, slideUpTransition, durationNormal } from '@/lib/motion'
 import type { FriendProfile } from '@/types/app'
 
 export default function HomeScreen() {
@@ -72,7 +75,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg-base px-6 pt-8 pb-8">
+    <PageTransition className="flex min-h-screen flex-col bg-bg-base px-6 pt-8 pb-8">
       <header className="flex items-end justify-between">
         <h1 className="text-regular-semibold text-text-primary">Home</h1>
         <div className="flex flex-col gap-2">
@@ -91,8 +94,13 @@ export default function HomeScreen() {
         </div>
       </header>
 
-      <div className="mt-6 flex flex-col gap-3">
-        <div className="relative">
+      <motion.div
+        className="mt-6 flex flex-col gap-3"
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+      >
+        <motion.div className="relative" variants={staggerItem} transition={durationNormal}>
           <Tile label="Printer" onClick={handlePrintClick}>
             <PrinterPlaceholder />
           </Tile>
@@ -101,16 +109,33 @@ export default function HomeScreen() {
               {unprintedCount}
             </div>
           )}
-        </div>
-        <Tile label="Send" onClick={handleSendClick}>
-          <ArchivePlaceholder />
-        </Tile>
-      </div>
+        </motion.div>
+        <motion.div variants={staggerItem} transition={durationNormal}>
+          <Tile label="Send" onClick={handleSendClick}>
+            <ArchivePlaceholder />
+          </Tile>
+        </motion.div>
+      </motion.div>
 
       {/* Friend Selection Modal */}
+      <AnimatePresence>
       {showFriendPicker && (
-        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="w-full bg-white rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom max-h-[80vh] overflow-y-auto">
+        <motion.div
+          className="fixed inset-0 bg-black/50 flex items-end z-50"
+          variants={{ initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={{ duration: 0.2 }}
+        >
+          <motion.div
+            className="w-full bg-white rounded-t-2xl p-6 space-y-4 max-h-[80vh] overflow-y-auto"
+            variants={slideUpVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={slideUpTransition}
+          >
             <div>
               <h2 className="text-lg font-semibold text-black mb-4">Send to</h2>
               <div className="relative">
@@ -182,10 +207,11 @@ export default function HomeScreen() {
             >
               Cancel
             </button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
-    </div>
+      </AnimatePresence>
+    </PageTransition>
   )
 }
 

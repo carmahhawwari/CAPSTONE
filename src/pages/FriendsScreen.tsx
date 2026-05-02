@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import BottomNav from '@/components/BottomNav'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
+import PageTransition from '@/components/PageTransition'
 import type { FriendProfile } from '@/types/app'
 
 function MailIcon() {
@@ -47,7 +48,7 @@ export default function FriendsScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col pb-16">
+    <PageTransition className="min-h-screen bg-white flex flex-col pb-16">
       <div className="px-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-2 mb-8">
@@ -102,6 +103,6 @@ export default function FriendsScreen() {
       </div>
 
       <BottomNav />
-    </div>
+    </PageTransition>
   )
 }

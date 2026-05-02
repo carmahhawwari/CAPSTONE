@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Splash from '@/components/Splash'
@@ -28,6 +29,43 @@ import ShareRecipient from '@/pages/ShareRecipient'
 
 const SPLASH_SEEN_KEY = 'inklings.splashSeen'
 
+function AnimatedRoutes() {
+  const location = useLocation()
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<OnboardIntro />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/find-friends" element={<FindInklings />} />
+        <Route path="/home" element={<ProtectedRoute><HomeScreen /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/friends" element={<ProtectedRoute><FriendsScreen /></ProtectedRoute>} />
+        <Route path="/friends/:id" element={<ProtectedRoute><FriendDetailScreen /></ProtectedRoute>} />
+        <Route path="/archive" element={<ProtectedRoute><LettersScreen /></ProtectedRoute>} />
+        <Route path="/letters" element={<ProtectedRoute><LettersScreen /></ProtectedRoute>} />
+        <Route path="/compose" element={<ProtectedRoute><ReceiptEditor /></ProtectedRoute>} />
+        <Route path="/receipt-sent" element={<ProtectedRoute><ReceiptSent /></ProtectedRoute>} />
+        <Route path="/prints" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><AdminScreen /></ProtectedRoute>} />
+        <Route path="/test-print" element={<TestPrintScreen />} />
+        <Route path="/onboard" element={<OnboardIntro />} />
+        <Route path="*" element={<OnboardIntro />} />
+        <Route path="/onboard/recipient" element={<OnboardRecipient />} />
+        <Route path="/onboard/compose" element={<OnboardCompose />} />
+        <Route path="/onboard/deliver" element={<SignUp />} />
+        <Route path="/onboard/sent" element={<OnboardSent />} />
+        <Route path="/onboard/verify-email" element={<ProtectedRoute><VerifyEmail /></ProtectedRoute>} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/r/:id" element={<RecipientReceipt />} />
+        <Route path="/share/recipient" element={<ProtectedRoute><ShareRecipient /></ProtectedRoute>} />
+      </Routes>
+    </AnimatePresence>
+  )
+}
+
 function App() {
   const [showSplash, setShowSplash] = useState(
     () => typeof window !== 'undefined' && sessionStorage.getItem(SPLASH_SEEN_KEY) !== '1',
@@ -44,34 +82,7 @@ function App() {
         <div className="md:w-[max(24rem,35vw)]">
           {showSplash && <Splash onComplete={handleSplashComplete} />}
           <AuthProvider>
-            <Routes>
-          <Route path="/" element={<OnboardIntro />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/find-friends" element={<FindInklings />} />
-          <Route path="/home" element={<ProtectedRoute><HomeScreen /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/friends" element={<ProtectedRoute><FriendsScreen /></ProtectedRoute>} />
-          <Route path="/friends/:id" element={<ProtectedRoute><FriendDetailScreen /></ProtectedRoute>} />
-          <Route path="/archive" element={<ProtectedRoute><LettersScreen /></ProtectedRoute>} />
-          <Route path="/letters" element={<ProtectedRoute><LettersScreen /></ProtectedRoute>} />
-          <Route path="/compose" element={<ProtectedRoute><ReceiptEditor /></ProtectedRoute>} />
-          <Route path="/receipt-sent" element={<ProtectedRoute><ReceiptSent /></ProtectedRoute>} />
-          <Route path="/prints" element={<ProtectedRoute><PrintingScreen /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute><AdminScreen /></ProtectedRoute>} />
-          <Route path="/test-print" element={<TestPrintScreen />} />
-          <Route path="/onboard" element={<OnboardIntro />} />
-          <Route path="*" element={<OnboardIntro />} />
-          <Route path="/onboard/recipient" element={<OnboardRecipient />} />
-          <Route path="/onboard/compose" element={<OnboardCompose />} />
-          <Route path="/onboard/deliver" element={<SignUp />} />
-          <Route path="/onboard/sent" element={<OnboardSent />} />
-          <Route path="/onboard/verify-email" element={<ProtectedRoute><VerifyEmail /></ProtectedRoute>} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/r/:id" element={<RecipientReceipt />} />
-          <Route path="/share/recipient" element={<ProtectedRoute><ShareRecipient /></ProtectedRoute>} />
-            </Routes>
+            <AnimatedRoutes />
           </AuthProvider>
         </div>
       </div>

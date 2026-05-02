@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
+import PageTransition from '@/components/PageTransition'
 
 interface ProfileData {
   first_name: string | null
@@ -119,7 +120,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg-base px-6 pt-12 pb-8">
+    <PageTransition className="flex min-h-screen flex-col bg-bg-base px-6 pt-12 pb-8">
       <header className="flex items-end justify-between">
         <h1 className="text-regular-semibold text-text-primary">Profile</h1>
         <div className="flex flex-col gap-3">
@@ -243,7 +244,7 @@ export default function Profile() {
       <div className="mt-12 text-xs text-text-tertiary text-center">
         Deployed: {import.meta.env.VITE_DEPLOYMENT_TIME || 'Development'}
       </div>
-    </div>
+    </PageTransition>
   )
 }
 

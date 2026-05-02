@@ -7,6 +7,7 @@ import printerImg from '@/assets/printer.png'
 import wifiSymbol from '@/assets/wifi-symbol.svg'
 import { submitPrintJob, checkNearestPrinter } from '@/lib/printJob'
 import { markReceiptAsPrinted } from '@/lib/receipts'
+import PageTransition from '@/components/PageTransition'
 import type { FriendProfile, Receipt } from '@/types/app'
 import ReceiptBodyRenderer from '@/components/ReceiptBodyRenderer'
 
@@ -160,7 +161,7 @@ export default function PrintingScreen() {
     : recipientEmail?.split('@')[0] || 'Unknown'
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
+    <PageTransition className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
       {/* Receipt Selection State */}
       {state === 'select' && !isLoading && (
         <div className="flex flex-col gap-4 w-full max-w-sm">
@@ -366,6 +367,6 @@ export default function PrintingScreen() {
           </div>
         </div>
       )}
-    </div>
+    </PageTransition>
   )
 }

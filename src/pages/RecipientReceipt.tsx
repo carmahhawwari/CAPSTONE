@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { submitPrintJob } from '@/lib/printJob'
+import PageTransition from '@/components/PageTransition'
 import type { Block } from '@/types/canvas'
 import ReceiptBodyRenderer from '@/components/ReceiptBodyRenderer'
 
@@ -172,7 +173,7 @@ export default function RecipientReceipt() {
   })
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
+    <PageTransition className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -248,7 +249,7 @@ export default function RecipientReceipt() {
           />
         </div>
       </div>
-    </div>
+    </PageTransition>
   )
 }
 

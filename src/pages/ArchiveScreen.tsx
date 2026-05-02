@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import { getReceiptsByFriend, getReceivedReceiptsByFriend, getReceiptsByCurrentUser, getReceivedReceiptsByCurrentUser } from '@/lib/receipts'
 import { submitBase64PrintJob } from '@/lib/printJob'
+import PageTransition from '@/components/PageTransition'
 import type { FriendProfile, Receipt } from '@/types/app'
 import ReceiptBodyRenderer from '@/components/ReceiptBodyRenderer'
 
@@ -69,7 +70,7 @@ export default function LettersScreen() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg-base">
+    <PageTransition className="flex min-h-screen flex-col bg-bg-base">
       <div className="sticky top-0 z-10">
         <header className="bg-bg-base relative flex items-start justify-between gap-4 px-6 pt-8 pb-4">
           <div className="flex min-w-0 flex-1 flex-col gap-4">
@@ -178,7 +179,7 @@ export default function LettersScreen() {
           )}
         </div>
       </div>
-    </div>
+    </PageTransition>
   )
 }
 
