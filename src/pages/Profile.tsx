@@ -4,10 +4,17 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 
 interface ProfileData {
+  first_name: string | null
+  last_name: string | null
   display_name: string | null
   username: string | null
   email: string | null
-  class_year: string | null
+}
+
+function splitDisplayName(display_name: string | null): { first: string; last: string } {
+  if (!display_name) return { first: '', last: '' }
+  const parts = display_name.trim().split(/\s+/)
+  return { first: parts[0] || '', last: parts.slice(1).join(' ') }
 }
 
 export default function Profile() {
@@ -16,7 +23,7 @@ export default function Profile() {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({ display_name: '', class_year: '' })
+  const [formData, setFormData] = useState({ first_name: '', last_name: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -34,29 +41,27 @@ export default function Profile() {
           .eq('id', user.id)
           .single()
 
-        const newProfile = {
+        const { first, last } = splitDisplayName(data?.display_name ?? null)
+        const newProfile: ProfileData = {
+          first_name: first || null,
+          last_name: last || null,
           display_name: data?.display_name ?? null,
           username: data?.username ?? null,
           email: user.email ?? null,
-          class_year: null,
         }
         setProfile(newProfile)
-        setFormData({
-          display_name: newProfile.display_name || '',
-          class_year: '',
-        })
+        setFormData({ first_name: first, last_name: last })
       } else {
-        const newProfile = {
-          display_name: user.email?.split('@')[0] ?? null,
+        const fallbackName = user.email?.split('@')[0] ?? ''
+        const newProfile: ProfileData = {
+          first_name: fallbackName || null,
+          last_name: null,
+          display_name: fallbackName || null,
           username: null,
           email: user.email ?? null,
-          class_year: null,
         }
         setProfile(newProfile)
-        setFormData({
-          display_name: newProfile.display_name || '',
-          class_year: '',
-        })
+        setFormData({ first_name: fallbackName, last_name: '' })
       }
       setLoading(false)
     }
@@ -71,11 +76,13 @@ export default function Profile() {
     setError('')
 
     try {
+      const displayName = [formData.first_name.trim(), formData.last_name.trim()]
+        .filter(Boolean)
+        .join(' ') || null
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          display_name: formData.display_name || null,
-        })
+        .update({ display_name: displayName })
         .eq('id', user.id)
 
       if (updateError) throw updateError
@@ -84,7 +91,9 @@ export default function Profile() {
         p
           ? {
               ...p,
-              display_name: formData.display_name || null,
+              first_name: formData.first_name.trim() || null,
+              last_name: formData.last_name.trim() || null,
+              display_name: displayName,
             }
           : null
       )
@@ -128,16 +137,16 @@ export default function Profile() {
           {!isEditing ? (
             <>
               <div className="flex flex-col gap-3">
-                <label className="text-callout text-text-secondary">Name</label>
+                <label className="text-callout text-text-secondary">First Name</label>
                 <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
-                  {profile.display_name || 'No name set'}
+                  {profile.first_name || 'Not set'}
                 </div>
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-callout text-text-secondary">Class Year</label>
+                <label className="text-callout text-text-secondary">Last Name</label>
                 <div className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3">
-                  {profile.class_year || 'Not set'}
+                  {profile.last_name || 'Not set'}
                 </div>
               </div>
 
@@ -167,29 +176,32 @@ export default function Profile() {
           ) : (
             <>
               <div className="flex flex-col gap-3">
-                <label className="text-callout text-text-secondary">Name</label>
+                <label className="text-callout text-text-secondary">First Name</label>
                 <input
                   type="text"
-                  value={formData.display_name}
-                  onChange={(e) => setFormData((f) => ({ ...f, display_name: e.target.value }))}
-                  placeholder="Your name"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData((f) => ({ ...f, first_name: e.target.value }))}
+                  placeholder="First name"
                   className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3 focus:outline-none focus:border-fill-primary"
                 />
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-callout text-text-secondary">Class Year</label>
-                <select
-                  value={formData.class_year}
-                  onChange={(e) => setFormData((f) => ({ ...f, class_year: e.target.value }))}
+                <label className="text-callout text-text-secondary">Last Name</label>
+                <input
+                  type="text"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData((f) => ({ ...f, last_name: e.target.value }))}
+                  placeholder="Last name"
                   className="text-body text-text-primary border-fill-tertiary bg-bg-base rounded-md w-full border px-4 py-3 focus:outline-none focus:border-fill-primary"
-                >
-                  <option value="">Select a year</option>
-                  <option value="2025">2025</option>
-                  <option value="2026">2026</option>
-                  <option value="2027">2027</option>
-                  <option value="2028">2028</option>
-                </select>
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-callout text-text-secondary">Email</label>
+                <div className="text-body text-text-tertiary border-fill-tertiary bg-bg-secondary rounded-md w-full border px-4 py-3">
+                  {profile.email}
+                </div>
               </div>
 
               {error && <p className="text-red-600 text-sm">{error}</p>}
@@ -206,8 +218,8 @@ export default function Profile() {
                   onClick={() => {
                     setIsEditing(false)
                     setFormData({
-                      display_name: profile.display_name || '',
-                      class_year: profile.class_year || '',
+                      first_name: profile.first_name || '',
+                      last_name: profile.last_name || '',
                     })
                     setError('')
                   }}

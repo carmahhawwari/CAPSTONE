@@ -8,8 +8,7 @@ import wifiSymbol from '@/assets/wifi-symbol.svg'
 import { submitPrintJob, checkNearestPrinter } from '@/lib/printJob'
 import { markReceiptAsPrinted } from '@/lib/receipts'
 import type { FriendProfile, Receipt } from '@/types/app'
-import type { Block, TextStyle } from '@/types/canvas'
-import { FONT_STYLES } from '@/types/canvas'
+import ReceiptBodyRenderer from '@/components/ReceiptBodyRenderer'
 
 type PrintState = 'select' | 'confirm' | 'locating' | 'no-location' | 'no-printer' | 'printing' | 'done' | 'failed'
 
@@ -359,58 +358,11 @@ export default function PrintingScreen() {
               <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
             </div>
 
-            {/* Current Prompt */}
-            {receiptState.currentPrompt && receiptState.currentPrompt !== 'No prompt' && (
-              <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
-                {receiptState.currentPrompt}
-              </div>
-            )}
-
-            {/* Render blocks */}
-            <div style={{ marginBottom: '16px' }}>
-              {receiptState.blocks?.map((block: Block) => (
-                <div key={block.id} style={{ marginBottom: '8px' }}>
-                  {block.type === 'text' && (
-                    <div
-                      style={{
-                        ...FONT_STYLES[block.style as TextStyle],
-                        fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1)}px`,
-                        fontWeight: block.fontWeight ?? FONT_STYLES[block.style as TextStyle].fontWeight,
-                        fontStyle: block.isItalic ? 'italic' : 'normal',
-                        textDecoration: block.isBold ? 'underline' : 'none',
-                        color: '#1f2937',
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {block.content}
-                    </div>
-                  )}
-                  {block.type === 'image' && (
-                    <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '8px' }} />
-                  )}
-                  {block.type === 'sticker' && (
-                    <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px' }}>[sticker]</div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Signature */}
-            {receiptState.signature && receiptState.signature.text && (
-              <div
-                style={{
-                  fontFamily: "'Inter Variable', sans-serif",
-                  fontSize: `${14 * (receiptState.signature.scale ?? 1)}px`,
-                  color: '#4b5563',
-                  fontStyle: 'italic',
-                  marginLeft: `${receiptState.signature.offsetX ?? 0}px`,
-                  marginTop: `${receiptState.signature.offsetY ?? 0}px`,
-                  lineHeight: 1.4,
-                }}
-              >
-                {receiptState.signature.text}
-              </div>
-            )}
+            <ReceiptBodyRenderer
+              blocks={receiptState.blocks ?? []}
+              prompt={receiptState.currentPrompt}
+              signature={receiptState.signature}
+            />
           </div>
         </div>
       )}
