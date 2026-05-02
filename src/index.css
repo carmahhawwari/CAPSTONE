@@ -1,4 +1,8 @@
-/* Tailwind CSS imports */
+/* ───────────────────────────────────────────────────────────────
+   Inklings Design System
+   Base: 4pt spacing · iOS-inspired type scale · Printvetica brand
+   ─────────────────────────────────────────────────────────────── */
+
 @import 'tailwindcss';
 @import '@toolwind/anchors';
 
@@ -6,6 +10,8 @@
 @plugin '@tailwindcss/typography';
 
 @custom-variant dark (&:is(.dark *));
+
+/* ── Brand Typeface ─────────────────────────────────────────── */
 
 @font-face {
   font-family: 'Printvetica';
@@ -16,6 +22,9 @@
 }
 
 @theme {
+
+  /* ── Font Stacks ────────────────────────────────────────── */
+
   --font-primary:
     'Printvetica', 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     sans-serif;
@@ -25,6 +34,8 @@
   --font-printvetica: 'Printvetica', 'Inter Variable', sans-serif;
   --font-inter: 'Inter Variable', sans-serif;
   --font-mono: var(--font-geist-mono);
+
+  /* ── Type Scale (iOS-inspired) ─────────────────────────── */
 
   --text-regular-semibold: 34px;
   --text-regular-semibold--line-height: 1.15;
@@ -66,12 +77,31 @@
   --text-caption-2--line-height: 1.35;
   --text-caption-2--font-weight: 400;
 
+  /* ── 4pt Spacing Scale ─────────────────────────────────── */
+
+  --spacing-0: 0px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+
+  /* ── Backgrounds ───────────────────────────────────────── */
+
   --color-bg-base: #fdfdfd;
   --color-bg-primary: #ffffff;
   --color-bg-secondary: #fafafa;
   --color-bg-tertiary: #f5f5f5;
   --color-bg-selected-1: rgba(0, 0, 0, 0.1);
   --color-bg-selected-2: rgba(0, 0, 0, 0.02);
+
+  /* ── Fills / Interactive ───────────────────────────────── */
 
   --color-fill-primary: #000000;
   --color-fill-secondary: #969696;
@@ -86,14 +116,20 @@
 
   --color-control-selected: #f1f1f1;
 
+  /* ── Brand Accent ──────────────────────────────────────── */
+
   --color-accent-ink: #8c0017;
   --color-accent-ink-50: rgba(140, 0, 23, 0.5);
+
+  /* ── Text ──────────────────────────────────────────────── */
 
   --color-text-primary: #000000;
   --color-text-secondary: #787878;
   --color-text-tertiary: #969696;
   --color-text-quaternary: #b4b4b4;
   --color-text-inverse: #ffffff;
+
+  /* ── Shadows ───────────────────────────────────────────── */
 
   --color-shadow-light: rgba(34, 33, 33, 0.02);
   --color-shadow-strong: rgba(34, 33, 33, 0.05);
@@ -103,9 +139,15 @@
     0 0 100px 3px #f5f5f5, 0 0 0 1px #f5f5f5, 0 1px 2px 0 rgba(0, 0, 0, 0.1),
     0 2px 4px 0 rgba(0, 0, 0, 0.1);
 
+  /* ── Radii ─────────────────────────────────────────────── */
+
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ── Animations ────────────────────────────────────────── */
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -113,62 +155,33 @@
   --animate-collapsible-up: collapsible-up 0.2s ease-out;
   --animate-fade-in-no-translate: fade-in-no-translate 0.2s ease-out;
 
+  /* ── Breakpoints ───────────────────────────────────────── */
+
   --breakpoint-3xl: 120rem;
 
   @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
   }
   @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
   }
   @keyframes collapsible-down {
-    from {
-      opacity: 0;
-      height: 0;
-    }
-    to {
-      opacity: 1;
-      height: var(--radix-collapsible-content-height);
-    }
+    from { opacity: 0; height: 0; }
+    to { opacity: 1; height: var(--radix-collapsible-content-height); }
   }
   @keyframes collapsible-up {
-    from {
-      opacity: 1;
-      height: var(--radix-collapsible-content-height);
-    }
-    to {
-      opacity: 0;
-      height: 0;
-    }
+    from { opacity: 1; height: var(--radix-collapsible-content-height); }
+    to { opacity: 0; height: 0; }
   }
   @keyframes fade-in-no-translate {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
   @keyframes loading-squares {
-    0%,
-    100% {
-      transform: scale(0.8);
-      opacity: 0.5;
-    }
-    50% {
-      transform: scale(1.2);
-      opacity: 1;
-    }
+    0%, 100% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 1; }
   }
 }
 

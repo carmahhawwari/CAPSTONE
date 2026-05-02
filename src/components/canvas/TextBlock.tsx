@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect } from 'react'
 import type { TextStyle } from '@/types/canvas'
 import { FONT_STYLES } from '@/types/canvas'
 
@@ -16,13 +16,6 @@ interface TextBlockProps {
   onDelete: () => void
 }
 
-function renderMarkdown(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br />')
-}
-
 export default function TextBlock({
   content,
   style,
@@ -36,11 +29,10 @@ export default function TextBlock({
   onFocus,
   onDelete,
 }: TextBlockProps) {
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLTextAreaElement>(null)
   let fontConfig = FONT_STYLES[style]
   const adjustedFontSize = fontConfig.fontSize * fontSizeMultiplier
 
-  // Override fontFamily for redaction based on level
   if (style === 'redaction') {
     fontConfig = {
       ...fontConfig,
@@ -48,7 +40,6 @@ export default function TextBlock({
     }
   }
 
-  // Override fontWeight if provided
   if (fontWeight !== undefined) {
     fontConfig = {
       ...fontConfig,
@@ -56,7 +47,6 @@ export default function TextBlock({
     }
   }
 
-  // Override fontWeight for bold (used by tsuchinoko)
   if (isBold) {
     fontConfig = {
       ...fontConfig,
@@ -64,49 +54,24 @@ export default function TextBlock({
     }
   }
 
-  const syncContent = useCallback(() => {
-    if (!ref.current) return
-    const text = ref.current.innerText
-    if (text !== content) {
-      onContentChange(text)
-    }
-  }, [content, onContentChange])
-
+  // Auto-resize textarea to fit content
   useEffect(() => {
-    if (!ref.current) return
-    const rendered = renderMarkdown(content)
-    if (ref.current.innerHTML !== rendered) {
-      const sel = window.getSelection()
-      const hadFocus = document.activeElement === ref.current
-      const offset = sel && hadFocus ? sel.focusOffset : null
-      ref.current.innerHTML = rendered
-      if (hadFocus && offset !== null) {
-        try {
-          const range = document.createRange()
-          const node = ref.current.lastChild ?? ref.current
-          range.setStart(node, Math.min(offset, (node.textContent?.length ?? 0)))
-          range.collapse(true)
-          sel?.removeAllRanges()
-          sel?.addRange(range)
-        } catch {
-          // ignore range errors
-        }
-      }
-    }
-  }, [content])
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [content, adjustedFontSize, fontConfig.fontFamily, fontConfig.lineHeight])
 
   return (
     <div className={`group relative ${isActive ? 'ring-1 ring-fill-tertiary ring-offset-1 rounded' : ''}`}>
-      <div
+      <textarea
         ref={ref}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={syncContent}
+        value={content}
+        onChange={(e) => onContentChange(e.target.value)}
         onFocus={onFocus}
-        onBlur={syncContent}
-        data-placeholder="Type something..."
-        data-font-weight={fontConfig.fontWeight}
-        className="w-full outline-none min-h-[1.5em] empty:before:content-[attr(data-placeholder)] empty:before:text-gray-300 empty:before:[font-family:inherit]"
+        placeholder="Type something..."
+        rows={1}
+        className="w-full outline-none resize-none bg-transparent border-0 p-0 placeholder:text-gray-300"
         style={{
           fontFamily: fontConfig.fontFamily,
           fontSize: adjustedFontSize,
@@ -115,6 +80,7 @@ export default function TextBlock({
           lineHeight: fontConfig.lineHeight,
           textTransform: fontConfig.textTransform ?? 'none',
           color: '#000',
+          overflow: 'hidden',
         }}
       />
       {isActive && (

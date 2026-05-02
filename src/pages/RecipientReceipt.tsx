@@ -4,8 +4,9 @@ import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { submitPrintJob } from '@/lib/printJob'
-import type { Block, TextStyle } from '@/types/canvas'
-import { FONT_STYLES } from '@/types/canvas'
+import PageTransition from '@/components/PageTransition'
+import type { Block } from '@/types/canvas'
+import ReceiptBodyRenderer from '@/components/ReceiptBodyRenderer'
 
 type DeliveredReceipt = {
   id: string
@@ -172,7 +173,7 @@ export default function RecipientReceipt() {
   })
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
+    <PageTransition className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -240,50 +241,15 @@ export default function RecipientReceipt() {
             From: {receipt.sender_name}
           </div>
 
-          {/* Current Prompt */}
-          {receipt.content.prompt && receipt.content.prompt !== 'No prompt' && (
-            <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginBottom: '16px', lineHeight: 1.5 }}>
-              {receipt.content.prompt}
-            </div>
-          )}
-
-          {/* Render blocks */}
-          <div style={{ marginBottom: '16px' }}>
-            {receipt.content.blocks.map((block: Block, i: number) => (
-              <div key={i} style={{ marginBottom: '8px' }}>
-                {block.type === 'text' && (
-                  <div
-                    style={{
-                      ...FONT_STYLES[block.style as TextStyle],
-                      fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1) * 2.5}px`,
-                      fontWeight: block.fontWeight ?? FONT_STYLES[block.style as TextStyle].fontWeight,
-                      fontStyle: block.isItalic ? 'italic' : 'normal',
-                      textDecoration: block.isBold ? 'underline' : 'none',
-                      color: '#1f2937',
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {block.content}
-                  </div>
-                )}
-                {block.type === 'image' && (
-                  <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '8px' }} />
-                )}
-                {block.type === 'sticker' && (
-                  <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px' }}>[sticker]</div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div style={{ borderTop: '2px solid #000', padding: '16px', fontSize: '24px' }}>
-            Love,
-            <br />
-            {receipt.sender_name}
-          </div>
+          <ReceiptBodyRenderer
+            blocks={receipt.content.blocks}
+            prompt={receipt.content.prompt}
+            signature={(receipt.content as any).signature}
+            senderName={receipt.sender_name}
+          />
         </div>
       </div>
-    </div>
+    </PageTransition>
   )
 }
 

@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import PageTransition from '@/components/PageTransition'
 
 interface ReceiptSentState {
   printPath?: string
@@ -24,7 +25,7 @@ export default function ReceiptSent() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
+    <PageTransition className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
       <div className="w-full max-w-sm text-center">
         <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">sent</p>
         <h1 className="text-regular-semibold text-text-primary mt-3">
@@ -54,6 +55,6 @@ export default function ReceiptSent() {
           Done
         </button>
       </div>
-    </div>
+    </PageTransition>
   )
 }

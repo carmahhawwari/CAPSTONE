@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import PageTransition from '@/components/PageTransition'
 
 export default function Login() {
   const { signIn } = useAuth()
@@ -30,7 +31,7 @@ export default function Login() {
     'font-inter text-mini text-text-primary placeholder:text-text-tertiary border-fill-tertiary bg-bg-tertiary rounded-md w-full border px-4 py-4 focus:outline-none focus:border-fill-primary'
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
+    <PageTransition className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
       <div className="w-full max-w-sm">
         <h1 className="text-regular-semibold text-text-primary">Log in</h1>
         <p className="text-subheadline text-text-secondary mt-2">
@@ -79,6 +80,6 @@ export default function Login() {
           </Link>
         </form>
       </div>
-    </div>
+    </PageTransition>
   )
 }

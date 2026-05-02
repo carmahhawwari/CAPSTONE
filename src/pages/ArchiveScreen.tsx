@@ -4,9 +4,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import { getReceiptsByFriend, getReceivedReceiptsByFriend, getReceiptsByCurrentUser, getReceivedReceiptsByCurrentUser } from '@/lib/receipts'
 import { submitBase64PrintJob } from '@/lib/printJob'
+import PageTransition from '@/components/PageTransition'
 import type { FriendProfile, Receipt } from '@/types/app'
-import type { Block, TextStyle } from '@/types/canvas'
-import { FONT_STYLES } from '@/types/canvas'
+import ReceiptBodyRenderer from '@/components/ReceiptBodyRenderer'
 
 type TabType = 'sent' | 'received'
 
@@ -70,7 +70,7 @@ export default function LettersScreen() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg-base">
+    <PageTransition className="flex min-h-screen flex-col bg-bg-base">
       <div className="sticky top-0 z-10">
         <header className="bg-bg-base relative flex items-start justify-between gap-4 px-6 pt-8 pb-4">
           <div className="flex min-w-0 flex-1 flex-col gap-4">
@@ -179,7 +179,7 @@ export default function LettersScreen() {
           )}
         </div>
       </div>
-    </div>
+    </PageTransition>
   )
 }
 
@@ -277,58 +277,11 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
           <span>{receipt.date}</span>
         </div>
 
-        {/* Current Prompt */}
-        {receiptState.currentPrompt && receiptState.currentPrompt !== 'No prompt' && (
-          <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic', marginBottom: '12px', lineHeight: 1.5 }}>
-            {receiptState.currentPrompt}
-          </div>
-        )}
-
-        {/* Render blocks */}
-        <div style={{ marginBottom: '12px' }}>
-          {receiptState.blocks?.map((block: Block) => (
-            <div key={block.id} style={{ marginBottom: '6px' }}>
-              {block.type === 'text' && (
-                <div
-                  style={{
-                    ...FONT_STYLES[block.style as TextStyle],
-                    fontSize: `${FONT_STYLES[block.style as TextStyle].fontSize * (block.fontSizeMultiplier ?? 1)}px`,
-                    fontWeight: block.fontWeight ?? FONT_STYLES[block.style as TextStyle].fontWeight,
-                    fontStyle: block.isItalic ? 'italic' : 'normal',
-                    textDecoration: block.isBold ? 'underline' : 'none',
-                    color: '#1f2937',
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {block.content}
-                </div>
-              )}
-              {block.type === 'image' && (
-                <img src={block.dataUrl} alt="block" style={{ maxWidth: '100%', marginBottom: '6px', filter: 'grayscale(100%)' }} />
-              )}
-              {block.type === 'sticker' && (
-                <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>[sticker]</div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Signature */}
-        {receiptState.signature && receiptState.signature.text && (
-          <div
-            style={{
-              fontFamily: "'Inter Variable', sans-serif",
-              fontSize: `${11 * (receiptState.signature.scale ?? 1)}px`,
-              color: '#4b5563',
-              fontStyle: 'italic',
-              marginLeft: `${receiptState.signature.offsetX ?? 0}px`,
-              marginTop: `${receiptState.signature.offsetY ?? 0}px`,
-              lineHeight: 1.4,
-            }}
-          >
-            {receiptState.signature.text}
-          </div>
-        )}
+        <ReceiptBodyRenderer
+          blocks={receiptState.blocks ?? []}
+          prompt={receiptState.currentPrompt}
+          signature={receiptState.signature}
+        />
       </div>
     </div>
   )
