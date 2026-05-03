@@ -103,7 +103,7 @@
 
   /* ── Fills / Interactive ───────────────────────────────── */
 
-  --color-fill-primary: #000000;
+  --color-fill-primary: #E8395A;
   --color-fill-secondary: #969696;
   --color-fill-tertiary: #d4d4d8;
   --color-fill-quaternary: #e8e8e8;
@@ -118,8 +118,8 @@
 
   /* ── Brand Accent ──────────────────────────────────────── */
 
-  --color-accent-ink: #8c0017;
-  --color-accent-ink-50: rgba(140, 0, 23, 0.5);
+  --color-accent-ink: #E8395A;
+  --color-accent-ink-50: rgba(232, 57, 90, 0.5);
 
   /* ── Text ──────────────────────────────────────────────── */
 

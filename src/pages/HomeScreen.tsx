@@ -141,10 +141,11 @@ export default function HomeScreen() {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search friends or enter SUNet ID..."
+                  placeholder="Search friends or SUNet ID"
                   value={friendSearchQuery}
                   onChange={(e) => setFriendSearchQuery(e.target.value.toLowerCase())}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-fill-primary mb-4 pr-32"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-fill-primary mb-4"
+                  style={{ paddingRight: friendSearchQuery ? '8.5rem' : '1rem' }}
                   autoFocus
                 />
                 {friendSearchQuery && !friendSearchQuery.includes(' ') && (
@@ -229,7 +230,7 @@ function IconButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="border-fill-primary flex h-11 w-11 items-center justify-center rounded-full border-2"
+      className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300 transition-colors"
     >
       {children}
     </button>

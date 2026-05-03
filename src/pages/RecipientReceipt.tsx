@@ -142,7 +142,7 @@ export default function RecipientReceipt() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
         <div className="w-full max-w-sm text-center">
-          <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">📬 you've got mail</p>
+          <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">you've got mail</p>
           <h1 className="text-regular-semibold text-text-primary mt-3">
             {receipt.sender_name} sent you a message
           </h1>
@@ -151,7 +151,7 @@ export default function RecipientReceipt() {
           </p>
           <Link
             to={`/signup?next=${encodeURIComponent(`/r/${receipt.id}`)}`}
-            className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 block w-full py-4"
+            className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-8 block w-full py-3"
           >
             Click to continue
           </Link>
@@ -180,7 +180,7 @@ export default function RecipientReceipt() {
         transition={{ duration: 0.25, ease: 'easeOut' }}
         className="w-full max-w-sm text-center"
       >
-        <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">📬 you've got mail</p>
+        <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">you've got mail</p>
         <h1 className="text-regular-semibold text-text-primary mt-3 leading-tight">
           Print your Inkling from {receipt.sender_name}
         </h1>
@@ -194,7 +194,7 @@ export default function RecipientReceipt() {
           type="button"
           onClick={handlePrint}
           disabled={printing || printed}
-          className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 w-full py-4 disabled:opacity-50"
+          className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-8 w-full py-3 disabled:opacity-50"
         >
           {printed ? 'Printed' : printing ? 'Printing…' : 'Print on the Inklings printer'}
         </button>

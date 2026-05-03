@@ -124,13 +124,6 @@ export default function LettersScreen() {
             </IconButton>
           </div>
 
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-0 right-0 top-full h-6"
-            style={{
-              background: 'linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0))',
-            }}
-          />
         </header>
       </div>
 
@@ -301,7 +294,7 @@ function IconButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="border-fill-primary flex h-11 w-11 items-center justify-center rounded-full border-2 text-text-primary"
+      className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300 transition-colors"
     >
       {children}
     </button>

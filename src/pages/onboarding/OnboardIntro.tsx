@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import PageTransition from '@/components/PageTransition'
 
 export default function OnboardIntro() {
   const navigate = useNavigate()
@@ -13,7 +14,7 @@ export default function OnboardIntro() {
   }, [user, loading, navigate])
 
   return (
-    <div className="flex min-h-screen flex-col bg-white px-6">
+    <PageTransition className="flex min-h-screen flex-col bg-white px-6">
       <div className="flex flex-1 flex-col justify-center">
         <h1 className="text-4xl font-bold text-black">Inklings</h1>
         <p className="text-lg text-gray-700 mt-2">
@@ -21,10 +22,10 @@ export default function OnboardIntro() {
         </p>
 
         <Link
-          to="/onboard/recipient"
-          className="bg-black text-white font-semibold rounded-md mt-8 w-full py-4 text-center block"
+          to="/signup"
+          className="bg-black text-white font-semibold rounded-lg mt-8 w-full py-3 text-center block"
         >
-          Start your first receipt
+          Get Started
         </Link>
 
         <Link
@@ -34,6 +35,6 @@ export default function OnboardIntro() {
           I already have an account
         </Link>
       </div>
-    </div>
+    </PageTransition>
   )
 }

@@ -1,32 +1,8 @@
 import { useState } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { clearDraft, loadDraft } from '@/lib/onboardingDraft'
-
-async function deliverDraftAsEmail(senderName: string): Promise<void> {
-  if (!supabase) return
-  const draft = loadDraft()
-  if (!draft.recipient?.name || !draft.content) return
-
-  const recipientEmail = `${draft.recipient.name}@stanford.edu`
-
-  try {
-    const { data, error } = await supabase.functions.invoke('send-recipt-email', {
-      body: {
-        recipientEmail,
-        senderName,
-        content: draft.content,
-      },
-    })
-    if (error) throw error
-    if (data?.error) throw new Error(data.error)
-    clearDraft()
-  } catch (err) {
-    // Don't block signup if delivery fails — log for the dev console.
-    console.warn('Receipt email delivery failed:', err)
-  }
-}
+import PageTransition from '@/components/PageTransition'
 
 export default function SignUp() {
   const { signUp } = useAuth()
@@ -38,10 +14,8 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
-  const location = useLocation()
   const [searchParams] = useSearchParams()
   const nextPath = searchParams.get('next')
-  const isOnboardingDeliver = location.pathname.startsWith('/onboard/deliver')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,11 +25,8 @@ export default function SignUp() {
     const fullName = `${firstName} ${lastName}`.trim()
 
     try {
-      // Sign up with email/password — pass display_name so it's available in
-      // user_metadata immediately, even before email confirmation.
       await signUp(email, password, fullName)
 
-      // If Supabase is configured, create/update profile with name
       if (supabase) {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
@@ -70,17 +41,10 @@ export default function SignUp() {
         }
       }
 
-      // If this signup is part of the onboarding flow, fire the receipt email.
-      if (isOnboardingDeliver) {
-        await deliverDraftAsEmail(fullName || 'A friend')
-      }
-
       if (nextPath) {
         navigate(nextPath)
-      } else if (isOnboardingDeliver) {
-        navigate('/onboard/sent')
       } else {
-        navigate('/home')
+        navigate('/onboard/compose')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed')
@@ -91,7 +55,7 @@ export default function SignUp() {
   const inputClass = 'w-full px-4 py-4 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fill-primary'
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
+    <PageTransition className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
       <div className="w-full max-w-sm">
         <h1 className="text-regular-semibold text-text-primary">
           Create your account
@@ -157,7 +121,7 @@ export default function SignUp() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-2 mt-4 bg-fill-primary text-white rounded-md font-medium hover:opacity-80 disabled:opacity-50"
+            className="w-full px-4 py-3 mt-4 bg-fill-primary text-white rounded-lg font-medium hover:opacity-80 disabled:opacity-50"
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
@@ -174,6 +138,6 @@ export default function SignUp() {
           </button>
         </p>
       </div>
-    </div>
+    </PageTransition>
   )
 }

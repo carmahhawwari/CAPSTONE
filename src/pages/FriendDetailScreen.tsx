@@ -64,7 +64,7 @@ export default function FriendDetailScreen() {
     <div className="min-h-screen bg-white flex flex-col pb-16">
       {/* Top bar */}
       <div className="flex items-center gap-2 px-4 pt-6 pb-4">
-        <button onClick={() => navigate('/friends')} className="p-1 rounded-lg active:bg-gray-100">
+        <button onClick={() => navigate('/friends')} className="w-11 h-11 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300 transition-colors">
           <BackIcon />
         </button>
       </div>

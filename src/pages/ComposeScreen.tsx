@@ -103,7 +103,7 @@ export default function ComposeScreen() {
         <button
           onClick={handleSend}
           disabled={!selectedFriendId || !message.trim() || sending}
-          className="mt-6 w-full py-3.5 rounded-xl bg-fill-primary text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:bg-fill-primary transition-colors"
+          className="mt-6 w-full py-3 rounded-lg bg-fill-primary text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
         >
           {sending ? 'Sending...' : 'Send'}
         </button>

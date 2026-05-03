@@ -35,35 +35,41 @@ export default function Profile() {
     }
 
     const loadProfile = async () => {
+      let displayName: string | null = null
+      let username: string | null = null
+
       if (supabase) {
         const { data } = await supabase
           .from('profiles')
           .select('display_name, username')
           .eq('id', user.id)
-          .single()
+          .maybeSingle()
 
-        const { first, last } = splitDisplayName(data?.display_name ?? null)
-        const newProfile: ProfileData = {
-          first_name: first || null,
-          last_name: last || null,
-          display_name: data?.display_name ?? null,
-          username: data?.username ?? null,
-          email: user.email ?? null,
-        }
-        setProfile(newProfile)
-        setFormData({ first_name: first, last_name: last })
-      } else {
-        const fallbackName = user.email?.split('@')[0] ?? ''
-        const newProfile: ProfileData = {
-          first_name: fallbackName || null,
-          last_name: null,
-          display_name: fallbackName || null,
-          username: null,
-          email: user.email ?? null,
-        }
-        setProfile(newProfile)
-        setFormData({ first_name: fallbackName, last_name: '' })
+        displayName = data?.display_name ?? null
+        username = data?.username ?? null
       }
+
+      // Fall back to user_metadata if profile row is missing or has no display_name
+      if (!displayName) {
+        displayName = (user.user_metadata?.display_name as string) ?? null
+      }
+      if (!displayName) {
+        displayName = (user.user_metadata?.full_name as string) ?? null
+      }
+      if (!username) {
+        username = user.email?.split('@')[0] ?? null
+      }
+
+      const { first, last } = splitDisplayName(displayName)
+      const newProfile: ProfileData = {
+        first_name: first || null,
+        last_name: last || null,
+        display_name: displayName,
+        username,
+        email: user.email ?? null,
+      }
+      setProfile(newProfile)
+      setFormData({ first_name: first, last_name: last })
       setLoading(false)
     }
 
@@ -211,7 +217,7 @@ export default function Profile() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="text-callout text-text-inverse bg-fill-primary rounded-md flex-1 py-3 disabled:opacity-50"
+                  className="text-callout text-text-inverse bg-fill-primary rounded-lg flex-1 py-3 disabled:opacity-50"
                 >
                   {saving ? 'Saving...' : 'Save'}
                 </button>
@@ -224,7 +230,7 @@ export default function Profile() {
                     })
                     setError('')
                   }}
-                  className="text-callout text-text-primary border-fill-tertiary rounded-md flex-1 border py-3 hover:bg-bg-secondary"
+                  className="text-callout text-text-primary border-fill-tertiary rounded-lg flex-1 border py-3 hover:bg-bg-secondary"
                 >
                   Cancel
                 </button>
@@ -236,7 +242,7 @@ export default function Profile() {
 
       <button
         onClick={handleSignOut}
-        className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 w-full py-4"
+        className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-8 w-full py-3"
       >
         Sign Out
       </button>
@@ -262,7 +268,7 @@ function IconButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="border-fill-primary flex h-11 w-11 items-center justify-center rounded-full border-2"
+      className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300 transition-colors"
     >
       {children}
     </button>

@@ -4,7 +4,7 @@ export default function OnboardSent() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
       <div className="w-full max-w-sm text-center">
-        <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">📬 sent</p>
+        <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">sent</p>
         <h1 className="text-regular-semibold text-text-primary mt-3">
           Your Inkling was sent!
         </h1>
@@ -14,7 +14,7 @@ export default function OnboardSent() {
 
         <Link
           to="/home"
-          className="text-headline text-text-inverse bg-fill-primary rounded-md mt-10 block w-full py-4"
+          className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-10 block w-full py-3"
         >
           Done
         </Link>
