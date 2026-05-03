@@ -35,7 +35,7 @@ export default function ReceiptEditor() {
   })
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null)
   const [showStickerPicker, setShowStickerPicker] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, _setError] = useState<string | null>(null)
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null)
   const [signature, setSignature] = useState<Signature>(() => {
     const draftSignature = loadDraft().content?.signature
@@ -95,10 +95,6 @@ export default function ReceiptEditor() {
     }
     setBlocks([...blocks, newBlock])
     setActiveBlockId(newBlock.id)
-  }
-
-  const addStickerBlock = () => {
-    setShowStickerPicker(true)
   }
 
   const handleAddSticker = (stickerId: string) => {

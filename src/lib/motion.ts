@@ -21,17 +21,17 @@ export const springSnappy: Transition = {
 
 export const durationFast: Transition = {
   duration: 0.2,
-  ease: easeOut as unknown as number[],
+  ease: easeOut as unknown as [number, number, number, number],
 }
 
 export const durationNormal: Transition = {
   duration: 0.3,
-  ease: easeOut as unknown as number[],
+  ease: easeOut as unknown as [number, number, number, number],
 }
 
 export const durationSlow: Transition = {
   duration: 0.5,
-  ease: easeOut as unknown as number[],
+  ease: easeOut as unknown as [number, number, number, number],
 }
 
 /* ── Page transition variants ─────────────────────────────── */
@@ -44,7 +44,7 @@ export const pageVariants: Variants = {
 
 export const pageTransition: Transition = {
   duration: 0.25,
-  ease: easeOut as unknown as number[],
+  ease: easeOut as unknown as [number, number, number, number],
 }
 
 /* ── Fade variants ────────────────────────────────────────── */
