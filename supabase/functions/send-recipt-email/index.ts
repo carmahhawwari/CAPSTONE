@@ -104,7 +104,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const html = `<!doctype html>
 <html><body style="margin:0;padding:48px 16px;background:#ffffff;font-family:${fontStack};color:#000000;">
   <div style="max-width:420px;margin:0 auto;background:#ffffff;border:1px solid #d4d4d8;padding:32px 24px;text-align:center;font-family:${fontStack};">
-    <img src="${logoUrl}" alt="Inklings" width="80" height="80" style="display:block;margin:0 auto 20px;width:80px;height:80px;" />
+    <img src="${logoUrl}" alt="Inklings" width="80" height="80" border="0" style="display:block;margin:0 auto 20px;width:80px;height:80px;border:0;" />
     <p style="margin:0 0 12px;font-size:12px;color:#787878;letter-spacing:0.2em;text-transform:uppercase;font-family:${fontStack};">you've got mail</p>
     <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;font-weight:600;color:#000000;font-family:${fontStack};">${escapeHtml(senderName)} sent you an Inkling</h1>
     <p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#000000;font-family:${fontStack};">Inklings is a new campus messaging system designed to spread love.</p>
