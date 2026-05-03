@@ -41,7 +41,7 @@ export default function ReceiptSent() {
           <button
             type="button"
             onClick={handlePrint}
-            className="text-headline text-text-inverse bg-fill-primary rounded-md mt-10 block w-full py-4"
+            className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-10 block w-full py-3"
           >
             Print a copy
           </button>

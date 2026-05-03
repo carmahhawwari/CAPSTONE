@@ -44,7 +44,7 @@ export default function ReceiptsToPrint() {
           <button
             type="button"
             onClick={handlePrint}
-            className="text-headline text-text-inverse bg-fill-primary rounded-md w-full py-4"
+            className="text-headline text-text-inverse bg-fill-primary rounded-lg w-full py-3"
           >
             Send to Printer
           </button>
@@ -68,7 +68,7 @@ function IconButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="border-fill-primary flex h-11 w-11 items-center justify-center rounded-full border-2"
+      className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300 transition-colors"
     >
       {children}
     </button>

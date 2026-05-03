@@ -51,12 +51,11 @@ function AnimatedRoutes() {
         <Route path="/admin" element={<ProtectedRoute><AdminScreen /></ProtectedRoute>} />
         <Route path="/test-print" element={<TestPrintScreen />} />
         <Route path="/onboard" element={<OnboardIntro />} />
-        <Route path="*" element={<OnboardIntro />} />
-        <Route path="/onboard/recipient" element={<OnboardRecipient />} />
-        <Route path="/onboard/compose" element={<OnboardCompose />} />
-        <Route path="/onboard/deliver" element={<SignUp />} />
+        <Route path="/onboard/compose" element={<ProtectedRoute><OnboardCompose /></ProtectedRoute>} />
+        <Route path="/onboard/recipient" element={<ProtectedRoute><OnboardRecipient /></ProtectedRoute>} />
         <Route path="/onboard/sent" element={<OnboardSent />} />
         <Route path="/onboard/verify-email" element={<ProtectedRoute><VerifyEmail /></ProtectedRoute>} />
+        <Route path="*" element={<OnboardIntro />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/r/:id" element={<RecipientReceipt />} />

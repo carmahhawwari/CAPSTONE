@@ -161,14 +161,25 @@ export default function PrintingScreen() {
     : recipientEmail?.split('@')[0] || 'Unknown'
 
   return (
-    <PageTransition className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
+    <PageTransition className="relative min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
+      {/* Back button — top left */}
+      <button
+        onClick={handleBack}
+        className="absolute top-6 left-6 w-11 h-11 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300 transition-colors"
+        aria-label="Back"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
       {/* Receipt Selection State */}
       {state === 'select' && !isLoading && (
-        <div className="flex flex-col gap-4 w-full max-w-sm">
-          <h2 className="text-xl font-bold text-black">Print Received Messages</h2>
+        <div className="flex flex-col items-center w-full max-w-sm">
+          <h2 className="text-xl font-bold text-black text-center mb-4">Print Received Messages</h2>
           {unprinted.length > 0 ? (
             <>
-              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-2 max-h-[60vh] overflow-y-auto w-full">
                 {unprinted.map((receipt) => (
                   <button
                     key={receipt.id}
@@ -194,13 +205,16 @@ export default function PrintingScreen() {
               </button>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center gap-4 py-8">
-              <p className="text-gray-600 text-center">No messages waiting to print</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-4">
+              <p className="text-gray-600 text-center mb-2">No messages waiting to print</p>
               <button
                 onClick={handleBack}
-                className="w-full px-6 py-2 text-gray-700 text-center font-medium hover:text-black"
+                className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300 transition-colors"
+                aria-label="Home"
               >
-                Back to Home
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 12L5 10M5 10L12 3L19 10M5 10V20C5 20.5523 5.44772 21 6 21H9M19 10L21 12M19 10V20C19 20.5523 18.5523 21 18 21H15M9 21C9.55228 21 10 20.5523 10 20V16C10 15.4477 10.4477 15 11 15H13C13.5523 15 14 15.4477 14 16V20C14 20.5523 14.4477 21 15 21M9 21H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
             </div>
           )}
@@ -218,7 +232,7 @@ export default function PrintingScreen() {
 
           <button
             onClick={handleConfirmPrint}
-            className="w-full px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800"
+            className="w-full px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 active:opacity-80 transition-opacity"
           >
             Confirm Printing
           </button>
@@ -290,7 +304,7 @@ export default function PrintingScreen() {
 
           <button
             onClick={handleBack}
-            className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800"
+            className="px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 active:opacity-80 transition-opacity"
           >
             Back to Home
           </button>
@@ -317,7 +331,7 @@ export default function PrintingScreen() {
 
           <button
             onClick={handleBack}
-            className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800"
+            className="px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 active:opacity-80 transition-opacity"
           >
             Back to Home
           </button>

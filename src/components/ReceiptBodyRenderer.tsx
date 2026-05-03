@@ -6,7 +6,6 @@ export interface ReceiptBodyProps {
   prompt?: string
   signature?: Signature | null
   senderName?: string
-  /** Scale factor applied uniformly to all block font sizes (default 1) */
   scale?: number
 }
 
@@ -19,28 +18,12 @@ export interface ReceiptBodyProps {
  */
 export default function ReceiptBodyRenderer({
   blocks,
-  prompt,
   signature,
   senderName,
   scale = 1,
 }: ReceiptBodyProps) {
   return (
     <>
-      {/* Prompt */}
-      {prompt && prompt !== 'No prompt' && (
-        <div
-          style={{
-            fontSize: `${12 * scale}px`,
-            color: '#6b7280',
-            fontStyle: 'italic',
-            marginBottom: `${16 * scale}px`,
-            lineHeight: 1.5,
-          }}
-        >
-          {prompt}
-        </div>
-      )}
-
       {/* Blocks */}
       <div style={{ marginBottom: `${16 * scale}px` }}>
         {blocks.map((block: Block, i: number) => (
