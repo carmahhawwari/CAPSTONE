@@ -8,7 +8,13 @@ import PageTransition from '@/components/PageTransition'
 export default function OnboardRecipient() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [sunet, setSunet] = useState(() => loadDraft().recipient?.name ?? '')
+  const draft = loadDraft()
+  const existingEmail = draft.recipient?.phone || ''
+  const hasPrefilled = existingEmail.includes('@')
+  const [sunet, setSunet] = useState(() => {
+    if (hasPrefilled) return existingEmail.split('@')[0]
+    return draft.recipient?.name ?? ''
+  })
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
@@ -19,17 +25,17 @@ export default function OnboardRecipient() {
     setSending(true)
     setError('')
 
-    saveDraft({ recipient: { name: sunet.trim().toLowerCase(), phone: '' } })
+    const recipientEmail = hasPrefilled ? existingEmail : `${sunet.trim().toLowerCase()}@stanford.edu`
+    saveDraft({ recipient: { name: sunet.trim().toLowerCase(), phone: recipientEmail } })
 
-    const draft = loadDraft()
-    if (!draft.content) {
+    const currentDraft = loadDraft()
+    if (!currentDraft.content) {
       setError('No receipt content found. Please go back and compose your message.')
       setSending(false)
       return
     }
 
     try {
-      const recipientEmail = `${sunet.trim().toLowerCase()}@stanford.edu`
       const senderName = user?.user_metadata?.display_name || 'A friend'
 
       if (supabase) {
@@ -37,7 +43,7 @@ export default function OnboardRecipient() {
           body: {
             recipientEmail,
             senderName,
-            content: draft.content,
+            content: currentDraft.content,
           },
         })
         if (invokeErr) throw invokeErr

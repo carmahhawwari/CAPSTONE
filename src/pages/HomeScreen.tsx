@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFriends } from '@/lib/friends'
 import { getUnprintedReceiptCount } from '@/lib/receipts'
+import { saveDraft, clearDraft } from '@/lib/onboardingDraft'
 import PageTransition from '@/components/PageTransition'
 import Avatar from '@/components/Avatar'
 import archiveImg from '@/assets/archive.png'
@@ -47,13 +48,20 @@ export default function HomeScreen() {
   const handleSelectFriend = (friendId: string) => {
     setShowFriendPicker(false)
     setFriendSearchQuery('')
-    navigate(`/compose?to=${friendId}`)
+    const friend = friends.find(f => f.profile.id === friendId)
+    const friendName = friend?.profile.display_name || friend?.profile.username || ''
+    clearDraft()
+    saveDraft({ recipient: { name: friendName, phone: '' } })
+    navigate('/compose')
   }
 
   const handleSelectEmail = (email: string) => {
     setShowFriendPicker(false)
     setFriendSearchQuery('')
-    navigate(`/compose?email=${encodeURIComponent(email)}`)
+    const name = email.split('@')[0]
+    clearDraft()
+    saveDraft({ recipient: { name, phone: email } })
+    navigate('/compose')
   }
 
   const isSunetId = (id: string) => {

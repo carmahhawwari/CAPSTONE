@@ -73,7 +73,7 @@ export default function ReceiptEditor() {
   }, [signatureActive])
 
   const [recipientDisplayName, setRecipientDisplayName] = useState(() => {
-    return draft.recipient?.name ?? ''
+    return draft.recipient?.name || ''
   })
 
   const addTextBlock = () => {
@@ -148,6 +148,7 @@ export default function ReceiptEditor() {
 
   const handleContinue = () => {
     if (blocks.length === 0) return
+    const currentDraft = loadDraft()
     saveDraft({
       content: {
         blocks,
@@ -155,6 +156,9 @@ export default function ReceiptEditor() {
         signature,
         headerVariant,
       },
+      recipient: currentDraft.recipient
+        ? { ...currentDraft.recipient, name: recipientDisplayName || currentDraft.recipient.name }
+        : recipientDisplayName ? { name: recipientDisplayName, phone: '' } : null,
     })
     navigate('/onboard/recipient')
   }
