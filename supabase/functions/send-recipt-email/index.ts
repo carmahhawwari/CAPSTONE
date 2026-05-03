@@ -100,7 +100,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const text = `${senderName} sent you an Inkling.\n\nInklings is a new campus messaging system designed to spread love.\n\nHead to oncall and find the Inklings printer (by drink pick up section next to photobooth) before pressing the button below to print your message.\n\nPrint it here: ${link}\n\n— Inklings`
 
   const fontStack = `'Printvetica', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif`
-  const logoUrl = 'https://inklings.thecupidproject.org/inklings-logo.png'
+  const logoUrl = 'https://inklings.thecupidproject.org/logo.png'
   const html = `<!doctype html>
 <html><body style="margin:0;padding:48px 16px;background:#ffffff;font-family:${fontStack};color:#000000;">
   <div style="max-width:420px;margin:0 auto;background:#ffffff;border:1px solid #d4d4d8;padding:32px 24px;text-align:center;font-family:${fontStack};">
