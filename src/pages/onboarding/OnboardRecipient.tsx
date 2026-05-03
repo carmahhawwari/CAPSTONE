@@ -8,13 +8,7 @@ import PageTransition from '@/components/PageTransition'
 export default function OnboardRecipient() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const draft = loadDraft()
-  const existingEmail = draft.recipient?.phone || ''
-  const hasPrefilled = existingEmail.includes('@')
-  const [sunet, setSunet] = useState(() => {
-    if (hasPrefilled) return existingEmail.split('@')[0]
-    return draft.recipient?.name ?? ''
-  })
+  const [sunet, setSunet] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
@@ -25,7 +19,7 @@ export default function OnboardRecipient() {
     setSending(true)
     setError('')
 
-    const recipientEmail = hasPrefilled ? existingEmail : `${sunet.trim().toLowerCase()}@stanford.edu`
+    const recipientEmail = `${sunet.trim().toLowerCase()}@stanford.edu`
     saveDraft({ recipient: { name: sunet.trim().toLowerCase(), phone: recipientEmail } })
 
     const currentDraft = loadDraft()
