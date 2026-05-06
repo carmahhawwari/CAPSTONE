@@ -30,7 +30,25 @@ export default function OnboardRecipient() {
     }
 
     try {
-      const senderName = user?.user_metadata?.display_name || 'A friend'
+      let senderName = user?.user_metadata?.display_name || user?.email || 'A friend'
+
+      if (supabase && user?.id) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('display_name, username')
+            .eq('id', user.id)
+            .single()
+
+          if (profile?.display_name) {
+            senderName = profile.display_name
+          } else if (profile?.username) {
+            senderName = profile.username
+          }
+        } catch (e) {
+          console.log('Could not fetch sender display name, falling back to:', senderName)
+        }
+      }
 
       if (supabase) {
         const { error: invokeErr } = await supabase.functions.invoke('send-recipt-email', {
