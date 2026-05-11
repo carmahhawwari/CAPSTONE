@@ -13,10 +13,10 @@ export default function ReceiptSent() {
   const { printPath, printState, recipientLabel } = (location.state as ReceiptSentState | null) ?? {}
 
   const handlePrint = () => {
-    if (printPath) {
-      navigate(printPath, { replace: true, state: printState })
+    if (printPath && printState) {
+      navigate(printPath, { state: printState })
     } else {
-      navigate('/home', { replace: true })
+      navigate('/home')
     }
   }
 
@@ -41,7 +41,7 @@ export default function ReceiptSent() {
           <button
             type="button"
             onClick={handlePrint}
-            className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-10 block w-full py-3"
+            className="text-headline text-text-inverse bg-fill-primary rounded-md mt-10 flex w-full h-14 items-center justify-center"
           >
             Print a copy
           </button>

@@ -11,7 +11,7 @@ export default function Landing() {
 
         <Link
           to="/onboard"
-          className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-8 w-full py-3 text-center"
+          className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 flex w-full h-14 items-center justify-center"
         >
           Get started
         </Link>

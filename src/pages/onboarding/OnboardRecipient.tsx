@@ -1,55 +1,22 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft'
-import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
+import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
 import PageTransition from '@/components/PageTransition'
 
 export default function OnboardRecipient() {
   const navigate = useNavigate()
-  const { user } = useAuth()
-  const [sunet, setSunet] = useState(() => loadDraft().recipient?.name ?? '')
-  const [sending, setSending] = useState(false)
+  const [sunet, setSunet] = useState('')
   const [error, setError] = useState('')
 
-  const handleSend = async (e: React.FormEvent) => {
+  const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     if (!sunet.trim()) return
 
-    setSending(true)
-    setError('')
+    const recipientEmail = `${sunet.trim().toLowerCase()}@stanford.edu`
+    saveDraft({ recipient: { name: sunet.trim().toLowerCase(), phone: recipientEmail } })
 
-    saveDraft({ recipient: { name: sunet.trim().toLowerCase(), phone: '' } })
-
-    const draft = loadDraft()
-    if (!draft.content) {
-      setError('No receipt content found. Please go back and compose your message.')
-      setSending(false)
-      return
-    }
-
-    try {
-      const recipientEmail = `${sunet.trim().toLowerCase()}@stanford.edu`
-      const senderName = user?.user_metadata?.display_name || 'A friend'
-
-      if (supabase) {
-        const { error: invokeErr } = await supabase.functions.invoke('send-recipt-email', {
-          body: {
-            recipientEmail,
-            senderName,
-            content: draft.content,
-          },
-        })
-        if (invokeErr) throw invokeErr
-      }
-
-      clearDraft()
-      navigate('/onboard/sent')
-    } catch (err) {
-      console.warn('Send failed:', err)
-      setError(err instanceof Error ? err.message : 'Failed to send. Please try again.')
-      setSending(false)
-    }
+    // Navigate to receipt editor with recipient pre-selected
+    navigate(`/compose?email=${encodeURIComponent(recipientEmail)}`)
   }
 
   return (
@@ -75,7 +42,6 @@ export default function OnboardRecipient() {
               placeholder="Enter SUNet ID"
               className="w-full px-4 py-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black pr-32"
               autoFocus
-              disabled={sending}
             />
             <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
               @stanford.edu
@@ -84,10 +50,9 @@ export default function OnboardRecipient() {
 
           <button
             type="submit"
-            disabled={sending}
-            className="bg-black text-white font-semibold rounded-lg mt-8 w-full py-3 disabled:opacity-50"
+            className="bg-black text-white font-semibold rounded-md mt-8 flex w-full h-14 items-center justify-center disabled:opacity-50"
           >
-            {sending ? 'Sending...' : 'Send Inkling'}
+            Continue to compose
           </button>
         </form>
       </div>

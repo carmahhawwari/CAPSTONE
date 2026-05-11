@@ -104,7 +104,7 @@ export default function ImageBlock({
         <img
           src={displayUrl}
           alt=""
-          className="w-full h-auto max-h-[400px] object-cover rounded"
+          className="w-full h-auto rounded"
         />
       )}
       {isActive && (

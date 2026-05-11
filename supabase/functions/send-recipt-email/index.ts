@@ -39,6 +39,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     content?: unknown
     message?: string
     receiptId?: string
+    receiptImage?: string
   }
   try {
     body = await req.json()
@@ -46,8 +47,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: 'Invalid JSON body' }, 400)
   }
 
-  const { recipientEmail, senderName, receiptId: providedReceiptId } = body
+  const { recipientEmail, senderName, receiptId: providedReceiptId, receiptImage } = body
   const content = body.content ?? { blocks: [], prompt: '', legacyMessage: body.message ?? '' }
+  console.log('[send-recipt-email] Received receiptImage length:', receiptImage?.length ?? 'undefined')
   if (!recipientEmail || !senderName) {
     return json({ error: 'recipientEmail and senderName are required' }, 400)
   }
@@ -78,8 +80,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
         sender_name: senderName,
         recipient_email: recipientEmail,
         content,
+        receipt_image: receiptImage ?? null,
       }),
     })
+    console.log('[send-recipt-email] Insert response status:', insertRes.status, 'ok:', insertRes.ok)
 
     if (!insertRes.ok) {
       const detail = await insertRes.text()
@@ -87,9 +91,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     const rows = await insertRes.json()
+    console.log('[send-recipt-email] Insert response:', rows)
     const insertedId = Array.isArray(rows) ? rows[0]?.id : rows?.id
     if (!insertedId) return json({ error: 'No receipt id returned from insert' }, 500)
     receiptId = insertedId
+
+    // Verify receipt was stored
+    if (Array.isArray(rows) && rows[0]) {
+      console.log('[send-recipt-email] Stored receipt_image length:', rows[0].receipt_image?.length ?? 'null')
+    }
   }
 
   const siteUrl = Deno.env.get('SITE_URL') ?? 'https://inklings.thecupidproject.org'
@@ -100,11 +110,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const text = `${senderName} sent you an Inkling.\n\nInklings is a new campus messaging system designed to spread love.\n\nHead to oncall and find the Inklings printer (by drink pick up section next to photobooth) before pressing the button below to print your message.\n\nPrint it here: ${link}\n\n— Inklings`
 
   const fontStack = `'Printvetica', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif`
-  const logoUrl = `${siteUrl}/inklings-logo.png`
+  const logoUrl = 'https://inklings.thecupidproject.org/logo.png'
   const html = `<!doctype html>
 <html><body style="margin:0;padding:48px 16px;background:#ffffff;font-family:${fontStack};color:#000000;">
   <div style="max-width:420px;margin:0 auto;background:#ffffff;border:1px solid #d4d4d8;padding:32px 24px;text-align:center;font-family:${fontStack};">
-    <img src="${logoUrl}" alt="Inklings" width="80" height="80" style="display:block;margin:0 auto 20px;width:80px;height:80px;" />
+    <img src="${logoUrl}" alt="Inklings" width="80" height="80" border="0" style="display:block;margin:0 auto 20px;width:80px;height:80px;border:0;" />
     <p style="margin:0 0 12px;font-size:12px;color:#787878;letter-spacing:0.2em;text-transform:uppercase;font-family:${fontStack};">you've got mail</p>
     <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;font-weight:600;color:#000000;font-family:${fontStack};">${escapeHtml(senderName)} sent you an Inkling</h1>
     <p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#000000;font-family:${fontStack};">Inklings is a new campus messaging system designed to spread love.</p>

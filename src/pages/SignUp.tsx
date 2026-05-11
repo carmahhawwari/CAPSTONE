@@ -121,7 +121,7 @@ export default function SignUp() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-3 mt-4 bg-fill-primary text-white rounded-lg font-medium hover:opacity-80 disabled:opacity-50"
+            className="flex w-full h-14 items-center justify-center mt-4 bg-fill-primary text-white rounded-md font-medium hover:opacity-80 disabled:opacity-50"
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>

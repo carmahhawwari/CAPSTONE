@@ -23,7 +23,7 @@ export default function OnboardIntro() {
 
         <Link
           to="/signup"
-          className="bg-black text-white font-semibold rounded-lg mt-8 w-full py-3 text-center block"
+          className="bg-black text-white font-semibold rounded-md mt-8 flex w-full h-14 items-center justify-center"
         >
           Get Started
         </Link>

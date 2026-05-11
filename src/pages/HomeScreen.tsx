@@ -1,35 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
-import { getFriends } from '@/lib/friends'
 import { getUnprintedReceiptCount } from '@/lib/receipts'
+import { clearDraft } from '@/lib/onboardingDraft'
 import PageTransition from '@/components/PageTransition'
-import Avatar from '@/components/Avatar'
-import archiveImg from '@/assets/archive.png'
-import printerImg from '@/assets/printer.png'
-import { staggerContainer, staggerItem, slideUpVariants, slideUpTransition, durationNormal } from '@/lib/motion'
-import type { FriendProfile } from '@/types/app'
+import HomeCollage from '@/components/HomeCollage'
 
 export default function HomeScreen() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [showFriendPicker, setShowFriendPicker] = useState(false)
-  const [friendSearchQuery, setFriendSearchQuery] = useState('')
-  const [friends, setFriends] = useState<FriendProfile[]>([])
-  const [loading, setLoading] = useState(false)
   const [unprintedCount, setUnprintedCount] = useState(0)
-
-  useEffect(() => {
-    if (!user) return
-    const loadFriends = async () => {
-      setLoading(true)
-      const loadedFriends = await getFriends(user.id)
-      setFriends(loadedFriends)
-      setLoading(false)
-    }
-    loadFriends()
-  }, [user])
 
   useEffect(() => {
     if (!user?.email) return
@@ -41,178 +21,76 @@ export default function HomeScreen() {
   }, [user?.email])
 
   const handleSendClick = () => {
-    setShowFriendPicker(true)
+    clearDraft()
+    navigate('/onboard/recipient')
   }
-
-  const handleSelectFriend = (friendId: string) => {
-    setShowFriendPicker(false)
-    setFriendSearchQuery('')
-    navigate(`/compose?to=${friendId}`)
-  }
-
-  const handleSelectEmail = (email: string) => {
-    setShowFriendPicker(false)
-    setFriendSearchQuery('')
-    navigate(`/compose?email=${encodeURIComponent(email)}`)
-  }
-
-  const isSunetId = (id: string) => {
-    return /^[a-z0-9]+$/.test(id) && id.length > 0 && !friendSearchQuery.includes('@')
-  }
-
-  const sunetId = friendSearchQuery
-  const isSunetInputValid = isSunetId(sunetId)
-  const sunetEmail = isSunetInputValid ? `${sunetId}@stanford.edu` : null
-
-  const filteredFriends = friends.filter(f =>
-    (f.profile.display_name || f.profile.username || 'Friend')
-      .toLowerCase()
-      .includes(friendSearchQuery.toLowerCase())
-  )
 
   const handlePrintClick = () => {
     navigate('/prints')
   }
 
   return (
-    <PageTransition className="flex min-h-screen flex-col bg-bg-base px-6 pt-8 pb-8">
+    <PageTransition className="flex h-screen flex-col bg-bg-base px-6 pt-8 pb-8 overflow-hidden">
       <header className="flex items-end justify-between">
         <h1 className="text-regular-semibold text-text-primary">Home</h1>
         <div className="flex flex-col gap-2">
-          <IconButton
-            label="Profile"
-            onClick={() => navigate('/profile')}
-          >
+          <IconButton label="Profile" onClick={() => navigate('/profile')}>
             <ProfileIcon />
           </IconButton>
-          <IconButton
-            label="Letters"
-            onClick={() => navigate('/letters')}
-          >
+          <IconButton label="Letters" onClick={() => navigate('/letters')}>
             <ArchiveIcon />
           </IconButton>
         </div>
       </header>
 
-      <motion.div
-        className="mt-6 flex flex-col gap-3"
-        variants={staggerContainer}
-        initial="initial"
-        animate="animate"
-      >
-        <motion.div className="relative" variants={staggerItem} transition={durationNormal}>
-          <Tile label="Printer" onClick={handlePrintClick}>
-            <PrinterPlaceholder />
-          </Tile>
-          {unprintedCount > 0 && (
-            <div className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold">
-              {unprintedCount}
-            </div>
-          )}
-        </motion.div>
-        <motion.div variants={staggerItem} transition={durationNormal}>
-          <Tile label="Send" onClick={handleSendClick}>
-            <ArchivePlaceholder />
-          </Tile>
-        </motion.div>
-      </motion.div>
+      {/* Collage viewport */}
+      <div className="flex-1 my-6 flex items-center justify-center min-h-0">
+        <HomeCollage />
+      </div>
 
-      {/* Friend Selection Modal */}
-      <AnimatePresence>
-      {showFriendPicker && (
-        <motion.div
-          className="fixed inset-0 bg-black/50 flex items-end z-50"
-          variants={{ initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          transition={{ duration: 0.2 }}
-        >
-          <motion.div
-            className="w-full bg-white rounded-t-2xl p-6 space-y-4 max-h-[80vh] overflow-y-auto"
-            variants={slideUpVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={slideUpTransition}
-          >
-            <div>
-              <h2 className="text-lg font-semibold text-black mb-4">Send to</h2>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search friends or SUNet ID"
-                  value={friendSearchQuery}
-                  onChange={(e) => setFriendSearchQuery(e.target.value.toLowerCase())}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-fill-primary mb-4"
-                  style={{ paddingRight: friendSearchQuery ? '8.5rem' : '1rem' }}
-                  autoFocus
-                />
-                {friendSearchQuery && !friendSearchQuery.includes(' ') && (
-                  <span className="absolute right-4 top-2 text-gray-400 pointer-events-none text-base">@stanford.edu</span>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              {loading ? (
-                <p className="text-sm text-gray-500 text-center py-6">Loading friends...</p>
-              ) : (
-                <>
-                  {isSunetInputValid && sunetEmail && (
-                    <button
-                      onClick={() => handleSelectEmail(sunetEmail)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-secondary transition-colors text-left border border-fill-tertiary bg-bg-secondary"
-                    >
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-fill-tertiary flex items-center justify-center">
-                        <span className="text-sm font-semibold text-text-primary">@</span>
-                      </div>
-                      <div className="flex-1">
-                        <span className="text-sm font-medium text-black">{sunetEmail}</span>
-                        <p className="text-xs text-gray-500">New recipient</p>
-                      </div>
-                    </button>
-                  )}
-                  {filteredFriends.length === 0 && !isSunetInputValid ? (
-                    <p className="text-sm text-gray-500 text-center py-6">
-                      {friendSearchQuery ? 'No friends found' : 'Search friends or enter a SUNet ID'}
-                    </p>
-                  ) : (
-                    filteredFriends.map((f) => {
-                      const label = f.profile.display_name || f.profile.username || 'Friend'
-                      return (
-                        <button
-                          key={f.profile.id}
-                          onClick={() => handleSelectFriend(f.profile.id)}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                        >
-                          {f.profile.avatar_url ? (
-                            <img src={f.profile.avatar_url} alt="" width={40} height={40} className="rounded-full object-cover flex-shrink-0" style={{ width: 40, height: 40 }} />
-                          ) : (
-                            <div className="flex-shrink-0">
-                              <Avatar avatarId={1} size={40} />
-                            </div>
-                          )}
-                          <span className="text-sm font-medium text-black">{label}</span>
-                        </button>
-                      )
-                    })
-                  )}
-                </>
-              )}
-            </div>
-
-            <button
-              onClick={() => setShowFriendPicker(false)}
-              className="w-full py-3 rounded-lg border border-gray-300 bg-white text-black font-semibold text-sm active:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-          </motion.div>
-        </motion.div>
-      )}
-      </AnimatePresence>
+      {/* Stacked action buttons */}
+      <div className="flex flex-col gap-3">
+        <ActionButton label="Send" onClick={handleSendClick} variant="filled" />
+        <ActionButton
+          label="Print"
+          onClick={handlePrintClick}
+          badgeCount={unprintedCount}
+          variant="outlined"
+        />
+      </div>
     </PageTransition>
+  )
+}
+
+function ActionButton({
+  label,
+  onClick,
+  badgeCount = 0,
+  variant = 'filled',
+}: {
+  label: string
+  onClick: () => void
+  badgeCount?: number
+  variant?: 'filled' | 'outlined'
+}) {
+  const styles =
+    variant === 'filled'
+      ? 'bg-black text-white border border-black'
+      : 'bg-white text-black border border-black'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ fontFamily: 'var(--font-printvetica)' }}
+      className={`relative flex h-14 w-full items-center justify-center rounded-md text-base font-semibold active:opacity-80 transition-opacity ${styles}`}
+    >
+      <span>{label}</span>
+      {badgeCount > 0 && (
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-red-500 text-white rounded-full min-w-6 h-6 px-2 flex items-center justify-center text-xs font-semibold">
+          {badgeCount}
+        </span>
+      )}
+    </button>
   )
 }
 
@@ -231,27 +109,6 @@ function IconButton({
       onClick={onClick}
       aria-label={label}
       className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300 transition-colors"
-    >
-      {children}
-    </button>
-  )
-}
-
-function Tile({
-  children,
-  label,
-  onClick,
-}: {
-  children: React.ReactNode
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className="bg-bg-primary rounded-md flex aspect-[4/3] w-full items-center justify-center overflow-hidden active:opacity-70"
     >
       {children}
     </button>
@@ -296,24 +153,3 @@ function ArchiveIcon() {
     </svg>
   )
 }
-
-function PrinterPlaceholder() {
-  return (
-    <img
-      src={printerImg}
-      alt="Printer"
-      className="h-full w-full object-contain p-2"
-    />
-  )
-}
-
-function ArchivePlaceholder() {
-  return (
-    <img
-      src={archiveImg}
-      alt="Archive"
-      className="h-full w-full object-contain p-2"
-    />
-  )
-}
-
