@@ -60,6 +60,7 @@ export default function ReceiptEditor() {
   const headerVariant = 'simple' as const
   const receiptRef = useRef<HTMLDivElement>(null)
   const signatureAreaRef = useRef<HTMLDivElement>(null)
+  const recipientNameRef = useRef<HTMLDivElement>(null)
 
 
   // Handle deselecting signature with Escape key or outside click
@@ -87,6 +88,13 @@ export default function ReceiptEditor() {
   const [recipientDisplayName, setRecipientDisplayName] = useState(() => {
     return draft.recipient?.name || ''
   })
+
+  // Initialize contentEditable with recipient name
+  useEffect(() => {
+    if (recipientNameRef.current && !recipientNameRef.current.textContent) {
+      recipientNameRef.current.textContent = recipientDisplayName
+    }
+  }, [])
 
   const addTextBlock = () => {
     const newBlock: Block = {
@@ -408,14 +416,13 @@ export default function ReceiptEditor() {
             <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center', minWidth: 0 }}>
               <span style={{ lineHeight: '40px', display: 'inline-block', verticalAlign: 'top' }}>To:</span>
               <div
+                ref={recipientNameRef}
                 contentEditable
                 suppressContentEditableWarning
                 onInput={(e) => setRecipientDisplayName(e.currentTarget.textContent || '')}
                 className="bg-transparent outline-none flex-1 min-w-0"
                 style={{ fontFamily: "var(--font-printvetica)", fontSize: '32px', padding: 0, margin: 0, lineHeight: '40px', display: 'inline-block', verticalAlign: 'top', height: '40px', minWidth: '100px' }}
-              >
-                {recipientDisplayName}
-              </div>
+              />
             </div>
             <span style={{ whiteSpace: 'nowrap', marginLeft: '16px', lineHeight: '40px', display: 'inline' }}>
               {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
