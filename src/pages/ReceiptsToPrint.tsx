@@ -44,7 +44,7 @@ export default function ReceiptsToPrint() {
           <button
             type="button"
             onClick={handlePrint}
-            className="text-headline text-text-inverse bg-fill-primary rounded-lg w-full py-3"
+            className="text-headline text-text-inverse bg-fill-primary rounded-md flex w-full h-14 items-center justify-center"
           >
             Send to Printer
           </button>

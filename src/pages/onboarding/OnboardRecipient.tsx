@@ -4,6 +4,7 @@ import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import PageTransition from '@/components/PageTransition'
+import SendingAnimation from '@/components/SendingAnimation'
 
 export default function OnboardRecipient() {
   const navigate = useNavigate()
@@ -29,6 +30,8 @@ export default function OnboardRecipient() {
       return
     }
 
+    const minDelay = new Promise((r) => setTimeout(r, 3000))
+
     try {
       let senderName = user?.user_metadata?.display_name || user?.email || 'A friend'
 
@@ -50,16 +53,21 @@ export default function OnboardRecipient() {
         }
       }
 
-      if (supabase) {
-        const { error: invokeErr } = await supabase.functions.invoke('send-recipt-email', {
-          body: {
-            recipientEmail,
-            senderName,
-            content: currentDraft.content,
-          },
-        })
-        if (invokeErr) throw invokeErr
-      }
+      const sendRequest = supabase
+        ? supabase.functions
+            .invoke('send-recipt-email', {
+              body: {
+                recipientEmail,
+                senderName,
+                content: currentDraft.content,
+              },
+            })
+            .then(({ error: invokeErr }) => {
+              if (invokeErr) throw invokeErr
+            })
+        : Promise.resolve()
+
+      await Promise.all([sendRequest, minDelay])
 
       clearDraft()
       navigate('/onboard/sent')
@@ -68,6 +76,16 @@ export default function OnboardRecipient() {
       setError(err instanceof Error ? err.message : 'Failed to send. Please try again.')
       setSending(false)
     }
+  }
+
+  if (sending) {
+    return (
+      <PageTransition className="flex min-h-screen flex-col items-center justify-center bg-white px-6">
+        <div className="h-full max-h-[80vh] w-full max-w-md">
+          <SendingAnimation />
+        </div>
+      </PageTransition>
+    )
   }
 
   return (
@@ -103,7 +121,7 @@ export default function OnboardRecipient() {
           <button
             type="submit"
             disabled={sending}
-            className="bg-black text-white font-semibold rounded-lg mt-8 w-full py-3 disabled:opacity-50"
+            className="bg-black text-white font-semibold rounded-md mt-8 flex w-full h-14 items-center justify-center disabled:opacity-50"
           >
             {sending ? 'Sending...' : 'Send Inkling'}
           </button>

@@ -37,7 +37,7 @@ export default function ShareRecipient() {
 
           <button
             type="submit"
-            className="bg-black text-white font-semibold rounded-lg mt-8 w-full py-3"
+            className="bg-black text-white font-semibold rounded-md mt-8 flex w-full h-14 items-center justify-center"
           >
             Continue
           </button>

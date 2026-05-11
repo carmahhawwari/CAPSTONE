@@ -14,7 +14,7 @@ export default function OnboardSent() {
 
         <Link
           to="/home"
-          className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-10 block w-full py-3"
+          className="text-headline text-text-inverse bg-fill-primary rounded-md mt-10 flex w-full h-14 items-center justify-center"
         >
           Done
         </Link>
