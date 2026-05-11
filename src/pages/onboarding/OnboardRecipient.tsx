@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
+import { saveDraft } from '@/lib/onboardingDraft'
 import PageTransition from '@/components/PageTransition'
 
 export default function OnboardRecipient() {
   const navigate = useNavigate()
   const [sunet, setSunet] = useState('')
-  const [error, setError] = useState('')
+  const [error] = useState('')
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()

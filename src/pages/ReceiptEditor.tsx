@@ -206,7 +206,6 @@ export default function ReceiptEditor() {
         const blockId = (div as HTMLElement).getAttribute('data-block-id')
         const block = blocks.find(b => b.id === blockId)
         if (block && block.type === 'text' && !block.content) {
-          console.log('[ReceiptEditor] Hiding empty text block via data-block-id:', blockId)
           (div as HTMLElement).style.display = 'none'
         }
       })
@@ -215,7 +214,6 @@ export default function ReceiptEditor() {
       cleanReceipt.querySelectorAll('[contenteditable]').forEach(el => {
         const text = (el as HTMLElement).textContent?.trim()
         if (!text || text.includes('Type something')) {
-          console.log('[ReceiptEditor] Hiding contentEditable with placeholder')
           (el as HTMLElement).style.display = 'none'
         }
       })
@@ -299,7 +297,6 @@ export default function ReceiptEditor() {
       document.body.appendChild(cleanReceipt)
 
       cleanReceipt.querySelectorAll('[style*="border-dashed"]').forEach(el => {
-        (el as HTMLElement).style.borderStyle = 'none'
         (el as HTMLElement).style.display = 'none'
       })
       cleanReceipt.querySelectorAll('input, textarea').forEach(el => {
@@ -523,6 +520,7 @@ export default function ReceiptEditor() {
         <BlockToolbar
           onAddText={addTextBlock}
           onAddImage={addImageBlock}
+          onAddSticker={() => setShowStickerPicker(true)}
         />
 
         {/* Preview Button */}

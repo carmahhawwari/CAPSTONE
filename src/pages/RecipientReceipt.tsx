@@ -172,12 +172,6 @@ export default function RecipientReceipt() {
     )
   }
 
-  const dateStr = new Date(receipt.created_at).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  })
-
   return (
     <PageTransition className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
       <motion.div
@@ -216,13 +210,4 @@ export default function RecipientReceipt() {
 
     </PageTransition>
   )
-}
-
-function messageFromBlocks(blocks: Block[]): string {
-  return blocks
-    .filter((b): b is Extract<Block, { type: 'text' }> => b.type === 'text')
-    .map((b) => b.content)
-    .filter(Boolean)
-    .join('\n')
-    .trim()
 }
