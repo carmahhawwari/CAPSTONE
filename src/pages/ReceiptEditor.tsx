@@ -241,11 +241,17 @@ export default function ReceiptEditor() {
       // If recipient is pre-selected (home flow), send directly
       if (recipientEmail || recipientFriendId) {
         const email = recipientEmail || (recipientFriendId ? `${recipientFriendId}@stanford.edu` : null)
-        if (!email || !user?.user_metadata?.display_name) {
-          throw new Error('Missing recipient email or sender name')
+        let senderName = user?.user_metadata?.display_name as string | undefined
+        if (!senderName && user?.user_metadata?.full_name) {
+          senderName = (user.user_metadata.full_name as string).split(' ')[0]
+        }
+        if (!senderName && user?.email) {
+          senderName = user.email.split('@')[0]
         }
 
-        const senderName = user.user_metadata.display_name as string
+        if (!email || !senderName) {
+          throw new Error('Missing recipient email or sender name')
+        }
 
         // Send via edge function
         if (supabase) {
@@ -412,7 +418,7 @@ export default function ReceiptEditor() {
           </div>
 
           {/* Recipient Info */}
-          <div className="px-3 text-black mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: 'clamp(12px, 3.5vw, 40px)', lineHeight: '1.25em', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+          <div className="px-3 text-black mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: 'clamp(22px, 3.5vw, 22px)', lineHeight: '1.25em', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
             <div style={{ flex: '0 0 40%', display: 'inline-flex', gap: '8px', alignItems: 'center', minWidth: 0 }}>
               <span style={{ display: 'inline-block', verticalAlign: 'top' }}>To:</span>
               <div
