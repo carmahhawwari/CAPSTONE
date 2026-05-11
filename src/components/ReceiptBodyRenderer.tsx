@@ -44,6 +44,7 @@ export default function ReceiptBodyRenderer({
                 alt="sticker"
                 style={{
                   width: '100%',
+                  height: 'auto',
                   marginBottom: `${8 * scale}px`,
                   objectFit: 'contain',
                 }}

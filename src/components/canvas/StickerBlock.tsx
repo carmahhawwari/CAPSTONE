@@ -22,7 +22,7 @@ export default function StickerBlock({
       <img
         src={ditheredDataUrl ?? previewUrl}
         alt="Sticker"
-        style={{ width: '100%', objectFit: 'contain' }}
+        style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
       />
 
       {isActive && (
