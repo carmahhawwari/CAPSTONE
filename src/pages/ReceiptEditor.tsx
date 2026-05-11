@@ -412,7 +412,7 @@ export default function ReceiptEditor() {
           </div>
 
           {/* Recipient Info */}
-          <div className="px-3 text-black mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: 'clamp(24px, 5vw, 40px)', lineHeight: '1.25em', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+          <div className="px-3 text-black mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: 'clamp(12px, 3.5vw, 40px)', lineHeight: '1.25em', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
             <div style={{ flex: '0 0 40%', display: 'inline-flex', gap: '8px', alignItems: 'center', minWidth: 0 }}>
               <span style={{ display: 'inline-block', verticalAlign: 'top' }}>To:</span>
               <div
