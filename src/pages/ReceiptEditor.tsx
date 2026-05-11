@@ -471,11 +471,9 @@ export default function ReceiptEditor() {
                       previewUrl={block.previewUrl}
                       fullUrl={block.fullUrl}
                       ditheredDataUrl={block.ditheredDataUrl}
-                      size={block.size}
                       isActive={activeBlockId === block.id}
                       onFocus={() => setActiveBlockId(block.id)}
                       onDelete={() => deleteBlock(block.id)}
-                      onSizeChange={(size) => updateBlock(block.id, { size })}
                     />
                   )}
                   {activeBlockId === block.id && !(block.type === 'text' && !block.content) && (
