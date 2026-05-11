@@ -75,15 +75,6 @@ function applyCaptureStyle(doc: Document): HTMLStyleElement {
   return style
 }
 
-function loadImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error(`Failed to load image: ${url}`))
-    img.src = url
-  })
-}
 
 /**
  * Render a DOM element to a 1-bit bitmap ESC/POS buffer ready for the printer.
