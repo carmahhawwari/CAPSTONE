@@ -240,25 +240,29 @@ export default function ReceiptEditor() {
 
       // If recipient is pre-selected (home flow), send directly
       if (recipientEmail || recipientFriendId) {
-        if (!user || !user.email) {
-          console.error('[ReceiptEditor] User not authenticated:', { user, hasEmail: !!user?.email })
-          throw new Error('User not authenticated. Please log in and try again.')
+        // Verify sender is authenticated
+        if (!user?.email) {
+          console.error('[ReceiptEditor] Sender not authenticated:', { user })
+          throw new Error('You must be logged in to send a receipt.')
         }
 
+        // Construct recipient email (allow any email, including new/unverified ones)
         const email = recipientEmail || (recipientFriendId ? `${recipientFriendId}@stanford.edu` : null)
-        let senderName = user?.user_metadata?.display_name as string | undefined
-        if (!senderName && user?.user_metadata?.full_name) {
+        if (!email) {
+          console.error('[ReceiptEditor] Missing recipient email')
+          throw new Error('Missing recipient email')
+        }
+
+        // Get sender name from metadata with fallbacks
+        let senderName = user.user_metadata?.display_name as string | undefined
+        if (!senderName && user.user_metadata?.full_name) {
           senderName = (user.user_metadata.full_name as string).split(' ')[0]
         }
-        if (!senderName && user?.email) {
+        if (!senderName) {
           senderName = user.email.split('@')[0]
         }
 
-        console.log('[ReceiptEditor] Send attempt:', { email, senderName, recipientEmail, recipientFriendId })
-        if (!email || !senderName) {
-          console.error('[ReceiptEditor] Missing send details:', { email, senderName })
-          throw new Error('Missing recipient email or sender name')
-        }
+        console.log('[ReceiptEditor] Sending receipt:', { email, senderName })
 
         // Send via edge function
         if (supabase) {
