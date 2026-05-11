@@ -135,59 +135,6 @@ export async function renderToPrintBuffer(
     let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const mono = ditherImage(imageData, options.ditherMethod ?? 'floyd-steinberg')
 
-    // 3. If corner sticker provided, composite it onto the 1-bit image
-    if (options.cornerSticker) {
-      try {
-        console.log('[escpos] Loading corner sticker:', options.cornerSticker.imageUrl.substring(0, 50))
-        const stickerImg = await loadImage(options.cornerSticker.imageUrl)
-        console.log('[escpos] Sticker loaded:', stickerImg.width, 'x', stickerImg.height)
-
-        // Calculate sticker position and size
-        const stickerX = Math.round(options.cornerSticker.offsetX * scale)
-        const stickerY = Math.round(options.cornerSticker.offsetY * scale)
-        const stickerWidth = Math.round(stickerImg.width * options.cornerSticker.scale)
-        const stickerHeight = Math.round(stickerImg.height * options.cornerSticker.scale)
-
-        console.log('[escpos] Canvas:', canvas.width, 'x', canvas.height)
-        console.log('[escpos] Drawing sticker at x:', stickerX, 'y:', stickerY, 'w:', stickerWidth, 'h:', stickerHeight, 'rot:', options.cornerSticker.rotation)
-
-        // Draw sticker to temp canvas for dithering
-        const stickerCanvas = document.createElement('canvas')
-        stickerCanvas.width = stickerWidth
-        stickerCanvas.height = stickerHeight
-        const stickerCtx = stickerCanvas.getContext('2d')!
-
-        // Draw with rotation
-        stickerCtx.save()
-        stickerCtx.translate(stickerWidth / 2, stickerHeight / 2)
-        stickerCtx.rotate((options.cornerSticker.rotation * Math.PI) / 180)
-        stickerCtx.drawImage(stickerImg, -stickerWidth / 2, -stickerHeight / 2, stickerWidth, stickerHeight)
-        stickerCtx.restore()
-
-        // Dither the sticker separately
-        const stickerImageData = stickerCtx.getImageData(0, 0, stickerWidth, stickerHeight)
-        const stickerMono = ditherImage(stickerImageData, 'floyd-steinberg')
-
-        // Composite dithered sticker onto the receipt mono image
-        for (let y = 0; y < stickerHeight; y++) {
-          for (let x = 0; x < stickerWidth; x++) {
-            const destX = stickerX + x
-            const destY = stickerY + y
-            if (destX >= 0 && destX < canvas.width && destY >= 0 && destY < canvas.height) {
-              const srcIdx = y * stickerWidth + x
-              const destIdx = destY * canvas.width + destX
-              // Use sticker pixel if it's black (1)
-              if (stickerMono[srcIdx]) {
-                mono[destIdx] = 1
-              }
-            }
-          }
-        }
-        console.log('[escpos] Sticker composited successfully')
-      } catch (err) {
-        console.error('[escpos] Failed to composite corner sticker:', err)
-      }
-    }
 
     // 4. Build ESC/POS command buffer
     const buffer = buildEscPosBuffer(mono, canvas.width, canvas.height)

@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { submitPrintJob } from '@/lib/printJob'
+import { submitBase64PrintJob } from '@/lib/printJob'
 import PageTransition from '@/components/PageTransition'
 import type { Block } from '@/types/canvas'
-import ReceiptBodyRenderer from '@/components/ReceiptBodyRenderer'
 
 type DeliveredReceipt = {
   id: string
@@ -16,6 +15,7 @@ type DeliveredReceipt = {
   print_job_id: string | null
   printed_at: string | null
   created_at: string
+  receipt_image: string | null
 }
 
 export default function RecipientReceipt() {
@@ -29,7 +29,6 @@ export default function RecipientReceipt() {
   const [printing, setPrinting] = useState(false)
   const [printError, setPrintError] = useState<string | null>(null)
   const [printed, setPrinted] = useState(false)
-  const receiptRef = useRef<HTMLDivElement>(null)
   const shouldAutoPrint = searchParams.get('print') === 'true'
 
   useEffect(() => {
@@ -76,22 +75,28 @@ export default function RecipientReceipt() {
   }, [id, user?.email, authLoading])
 
   const handlePrint = async () => {
-    if (!receipt || !receiptRef.current) return
+    if (!receipt) return
     setPrintError(null)
     setPrinting(true)
     try {
-      const receiptState = {
-        blocks: receipt.content.blocks,
-        currentPrompt: receipt.content.prompt || 'No prompt',
-        headerVariant: 'simple',
+      if (!receipt.receipt_image) {
+        console.error('[RecipientReceipt] Receipt has no bitmap image stored:', receipt.id)
+        throw new Error('Receipt bitmap not available. This receipt may be too old. Please request a new one.')
       }
-      const jobId = await submitPrintJob({
-        receiptElement: receiptRef.current,
+
+      console.log('[RecipientReceipt] Using stored bitmap for receipt:', receipt.id)
+      // Add back the data URL prefix if it's missing (raw base64 from database)
+      const base64Image = receipt.receipt_image.startsWith('data:')
+        ? receipt.receipt_image
+        : `data:image/png;base64,${receipt.receipt_image}`
+
+      const jobId = await submitBase64PrintJob({
+        base64Image,
         recipientName: receipt.recipient_email.split('@')[0],
         recipientEmail: receipt.recipient_email,
-        messageText: messageFromBlocks(receipt.content.blocks),
-        receiptStateJson: JSON.stringify(receiptState),
       })
+
+      console.log('[RecipientReceipt] Print job submitted:', jobId)
       if (supabase && !jobId.startsWith('local-')) {
         await (supabase.from('delivered_receipts' as never) as any)
           .update({ print_job_id: jobId, printed_at: new Date().toISOString() })
@@ -99,6 +104,7 @@ export default function RecipientReceipt() {
       }
       setPrinted(true)
     } catch (err) {
+      console.error('[RecipientReceipt] Print error:', err)
       setPrintError(err instanceof Error ? err.message : 'Print failed')
     } finally {
       setPrinting(false)
@@ -108,7 +114,7 @@ export default function RecipientReceipt() {
 
   // Auto-print when page loads with print=true parameter
   useEffect(() => {
-    if (receipt && receiptRef.current && shouldAutoPrint && !printing && !printed) {
+    if (receipt && shouldAutoPrint && !printing && !printed) {
       handlePrint()
     }
   }, [receipt, shouldAutoPrint, printing, printed])
@@ -208,47 +214,6 @@ export default function RecipientReceipt() {
         </button>
       </motion.div>
 
-      {/* Hidden receipt — kept in DOM so html2canvas can rasterize it for the print job. */}
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          left: '-9999px',
-          top: 0,
-          width: 0,
-          height: 0,
-          opacity: 0,
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          ref={receiptRef}
-          style={{ fontFamily: 'Georgia, serif', padding: '16px 20px', backgroundColor: '#ffffff', color: '#222121', position: 'relative', width: '576px' }}
-        >
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', marginTop: '12px' }}>
-            <img src="/header-logo.svg" alt="Inklings" style={{ height: '64px', width: 'auto' }} />
-          </div>
-
-          {/* Recipient Bar */}
-          <img src="/recipient-bar.png" alt="Recipient Bar" style={{ width: '100%', height: 'auto', marginBottom: '12px', display: 'block' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', marginTop: '8px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif", fontSize: '32px', color: '#222121', lineHeight: 1.5 }}>
-            <span>To: {receipt.recipient_email?.split('@')[0] || 'You'}</span>
-            <span>{dateStr}</span>
-          </div>
-
-          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px', fontFamily: "'Printvetica', 'Inter Variable', sans-serif" }}>
-            From: {receipt.sender_name}
-          </div>
-
-          <ReceiptBodyRenderer
-            blocks={receipt.content.blocks}
-            prompt={receipt.content.prompt}
-            signature={(receipt.content as any).signature}
-            senderName={receipt.sender_name}
-          />
-        </div>
-      </div>
     </PageTransition>
   )
 }

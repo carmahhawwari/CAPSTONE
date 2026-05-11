@@ -22,7 +22,7 @@ export default function HomeScreen() {
 
   const handleSendClick = () => {
     clearDraft()
-    navigate('/compose')
+    navigate('/onboard/recipient')
   }
 
   const handlePrintClick = () => {

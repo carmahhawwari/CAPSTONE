@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import TextBlock from '@/components/canvas/TextBlock'
 import ImageBlock from '@/components/canvas/ImageBlock'
 import StickerBlock from '@/components/canvas/StickerBlock'
@@ -11,7 +11,9 @@ import FontWeightSlider from '@/components/canvas/FontWeightSlider'
 import RedactionLevelSlider from '@/components/canvas/RedactionLevelSlider'
 import ImageAdjustmentPanel from '@/components/canvas/ImageAdjustmentPanel'
 import { DEFAULT_ADJUSTMENTS } from '@/lib/imageProcessing'
-import { loadDraft, saveDraft } from '@/lib/onboardingDraft'
+import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft'
+import { renderToPrintBuffer } from '@/lib/escpos'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Block, TextStyle, Signature } from '@/types/canvas'
 import { newBlockId, STYLE_LABELS } from '@/types/canvas'
@@ -20,8 +22,11 @@ import recipientBarSvg from '@/assets/icons/recipient-bar.svg'
 
 export default function ReceiptEditor() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const draft = loadDraft()
+  const recipientFriendId = searchParams.get('to')
+  const recipientEmail = searchParams.get('email')
 
   // State
   const [blocks, setBlocks] = useState<Block[]>(() => {
@@ -40,11 +45,18 @@ export default function ReceiptEditor() {
   const [signature, setSignature] = useState<Signature>(() => {
     const draftSignature = loadDraft().content?.signature
     if (draftSignature) return draftSignature
-    const displayName = (user?.user_metadata?.display_name as string) || (user?.user_metadata?.full_name as string) || ''
-    const name = displayName.split(' ')[0] || user?.email?.split('@')[0] || ''
+    let name = ''
+    if (user?.user_metadata?.display_name) {
+      name = (user.user_metadata.display_name as string).split(' ')[0]
+    } else if (user?.user_metadata?.full_name) {
+      name = (user.user_metadata.full_name as string).split(' ')[0]
+    } else if (user?.email) {
+      name = user.email.split('@')[0]
+    }
     return { text: name ? `Love, ${name}` : 'Love, ', style: 'inter' }
   })
   const [signatureActive, setSignatureActive] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const headerVariant = 'simple' as const
   const receiptRef = useRef<HTMLDivElement>(null)
   const signatureAreaRef = useRef<HTMLDivElement>(null)
@@ -146,21 +158,141 @@ export default function ReceiptEditor() {
     setDraggedBlockId(null)
   }
 
-  const handleContinue = () => {
-    if (blocks.length === 0) return
-    const currentDraft = loadDraft()
-    saveDraft({
-      content: {
-        blocks,
-        prompt: '',
-        signature,
-        headerVariant,
-      },
-      recipient: currentDraft.recipient
-        ? { ...currentDraft.recipient, name: recipientDisplayName || currentDraft.recipient.name }
-        : recipientDisplayName ? { name: recipientDisplayName, phone: '' } : null,
-    })
-    navigate('/onboard/recipient')
+  const handleContinue = async () => {
+    if (blocks.length === 0 || !receiptRef.current) return
+
+    _setError(null)
+    try {
+      // Clone and clean up receiptRef for bitmap capture
+      const cleanReceipt = receiptRef.current.cloneNode(true) as HTMLElement
+      cleanReceipt.style.position = 'absolute'
+      cleanReceipt.style.left = '-9999px'
+      cleanReceipt.style.width = '576px'
+      document.body.appendChild(cleanReceipt)
+
+      // Remove editor UI elements: dashed borders, placeholder text, etc.
+      cleanReceipt.querySelectorAll('[style*="border-dashed"]').forEach(el => {
+        (el as HTMLElement).style.borderStyle = 'none'
+        (el as HTMLElement).style.display = 'none'
+      })
+      cleanReceipt.querySelectorAll('input, textarea').forEach(el => {
+        const inputEl = el as HTMLInputElement | HTMLTextAreaElement
+        const placeholder = inputEl.placeholder
+        if (placeholder && !inputEl.value) {
+          inputEl.value = ''
+        }
+        inputEl.style.border = 'none'
+        inputEl.style.outline = 'none'
+      })
+      // Remove "From:" line
+      cleanReceipt.querySelectorAll('div').forEach(el => {
+        if (el.textContent?.includes('From:') && el.textContent?.includes('Matthew')) {
+          (el as HTMLElement).style.display = 'none'
+        }
+      })
+
+      // Render receipt to bitmap
+      console.log('[ReceiptEditor] Starting bitmap capture...')
+      const { imageBase64 } = await renderToPrintBuffer(cleanReceipt)
+      document.body.removeChild(cleanReceipt)
+      console.log('[ReceiptEditor] Bitmap captured, length:', imageBase64?.length || 0)
+      console.log('[ReceiptEditor] Bitmap format:', imageBase64?.substring(0, 30) ?? 'undefined')
+
+      // Extract just the base64 part (remove "data:image/png;base64," prefix)
+      const receiptImageBase64 = imageBase64?.replace(/^data:image\/\w+;base64,/, '') || ''
+
+      // If recipient is pre-selected (home flow), send directly
+      if (recipientEmail || recipientFriendId) {
+        const email = recipientEmail || (recipientFriendId ? `${recipientFriendId}@stanford.edu` : null)
+        if (!email || !user?.user_metadata?.display_name) {
+          throw new Error('Missing recipient email or sender name')
+        }
+
+        const senderName = user.user_metadata.display_name as string
+
+        // Send via edge function
+        if (supabase) {
+          console.log('[ReceiptEditor] Sending receipt to', email, 'with bitmap length:', receiptImageBase64?.length || 0)
+          const { error: invokeErr } = await supabase.functions.invoke('send-recipt-email', {
+            body: {
+              recipientEmail: email,
+              senderName,
+              content: {
+                blocks,
+                prompt: '',
+                signature,
+                headerVariant,
+              },
+              receiptImage: receiptImageBase64,
+            },
+          })
+          if (invokeErr) {
+            console.error('[ReceiptEditor] Edge function error:', invokeErr)
+            throw invokeErr
+          }
+          console.log('[ReceiptEditor] Receipt sent successfully')
+        }
+
+        clearDraft()
+        navigate('/receipt-sent', {
+          state: {
+            recipientLabel: email,
+          },
+        })
+      } else {
+        // No pre-selected recipient (onboarding flow), save to draft and navigate to recipient selection
+        saveDraft({
+          content: {
+            blocks,
+            prompt: '',
+            signature,
+            headerVariant,
+            receiptImage: receiptImageBase64,
+          },
+        })
+        navigate('/onboard/recipient')
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to generate receipt image'
+      console.error('Failed to generate receipt image:', err)
+      _setError(errorMsg)
+    }
+  }
+
+  const handlePreview = async () => {
+    if (blocks.length === 0 || !receiptRef.current) return
+
+    try {
+      const cleanReceipt = receiptRef.current.cloneNode(true) as HTMLElement
+      cleanReceipt.style.position = 'absolute'
+      cleanReceipt.style.left = '-9999px'
+      cleanReceipt.style.width = '576px'
+      document.body.appendChild(cleanReceipt)
+
+      cleanReceipt.querySelectorAll('[style*="border-dashed"]').forEach(el => {
+        (el as HTMLElement).style.borderStyle = 'none'
+        (el as HTMLElement).style.display = 'none'
+      })
+      cleanReceipt.querySelectorAll('input, textarea').forEach(el => {
+        const inputEl = el as HTMLInputElement | HTMLTextAreaElement
+        inputEl.style.border = 'none'
+        inputEl.style.outline = 'none'
+      })
+      cleanReceipt.querySelectorAll('div').forEach(el => {
+        if (el.textContent?.includes('From:') && el.textContent?.includes('Matthew')) {
+          (el as HTMLElement).style.display = 'none'
+        }
+      })
+
+      const { imageBase64 } = await renderToPrintBuffer(cleanReceipt)
+      document.body.removeChild(cleanReceipt)
+
+      const receiptImageBase64 = imageBase64?.replace(/^data:image\/\w+;base64,/, '') || ''
+      const imageUrl = `data:image/png;base64,${receiptImageBase64}`
+      setPreviewImage(imageUrl)
+    } catch (err) {
+      console.error('Preview failed:', err)
+    }
   }
 
   const updateSignature = (updates: Partial<Signature> | ((current: Signature) => Partial<Signature>)) => {
@@ -231,19 +363,20 @@ export default function ReceiptEditor() {
           </div>
 
           {/* Recipient Info */}
-          <div className="flex items-center px-3 text-black gap-2 mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px', lineHeight: 1.2 }}>
-            <div className="flex items-center gap-0 min-w-0 flex-1">
-              <span className="shrink-0">To:&nbsp;</span>
-              <input
-                type="text"
-                value={recipientDisplayName}
-                onChange={(e) => setRecipientDisplayName(e.target.value)}
-                placeholder="___"
-                className="bg-transparent border-0 outline-none p-0 m-0 min-w-0 flex-1"
-                style={{ fontFamily: "var(--font-printvetica)", fontSize: '15.4px', lineHeight: 1.2 }}
-              />
+          <div className="px-3 text-black mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: '32px', lineHeight: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center', minWidth: 0 }}>
+              <span style={{ lineHeight: '40px', display: 'inline-block', verticalAlign: 'top' }}>To:</span>
+              <div
+                contentEditable
+                suppressContentEditableWarning
+                onInput={(e) => setRecipientDisplayName(e.currentTarget.textContent || '')}
+                className="bg-transparent outline-none flex-1 min-w-0"
+                style={{ fontFamily: "var(--font-printvetica)", fontSize: '32px', padding: 0, margin: 0, lineHeight: '40px', display: 'inline-block', verticalAlign: 'top', height: '40px', minWidth: '100px' }}
+              >
+                {recipientDisplayName}
+              </div>
             </div>
-            <span className="ml-auto shrink-0 text-xs">
+            <span style={{ whiteSpace: 'nowrap', marginLeft: '16px', lineHeight: '40px', display: 'inline' }}>
               {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </span>
           </div>
@@ -329,11 +462,13 @@ export default function ReceiptEditor() {
                 value={signature.text}
                 onChange={(e) => updateSignature({ text: e.target.value })}
                 placeholder="Love, [your name]"
-                className="w-full focus:outline-none border-0 bg-transparent px-0 py-1 text-sm italic"
+                className="w-full focus:outline-none border-0 bg-transparent px-0 italic"
                 style={{
-                  fontFamily: 'Georgia, serif',
-                  fontSize: '14px',
-                  color: '#4b5563',
+                  fontFamily: 'printvetica',
+                  fontSize: '28px',
+                  lineHeight: '1.9',
+                  color: '#000000',
+                  padding: '8px',
                 }}
               />
             </div>
@@ -441,8 +576,33 @@ export default function ReceiptEditor() {
           <p className="mt-4 text-xs text-red-600">{error}</p>
         )}
 
+        {/* Preview Image */}
+        {previewImage && (
+          <div className="mt-6 border-2 border-dashed border-gray-300 rounded-md p-4 bg-gray-50">
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-xs font-medium text-gray-600">Bitmap Preview</p>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                Close
+              </button>
+            </div>
+            <img src={previewImage} alt="Receipt preview" className="w-full h-auto border border-gray-200" />
+          </div>
+        )}
+
         {/* CTA */}
-        <div className="mt-auto pt-10 pb-4">
+        <div className="mt-auto pt-10 pb-4 space-y-2">
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={blocks.length === 0}
+            className="text-callout text-text-primary bg-white border border-gray-300 rounded-md flex w-full h-14 items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+          >
+            Preview Bitmap
+          </button>
           <button
             type="button"
             onClick={handleContinue}

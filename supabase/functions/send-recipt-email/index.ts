@@ -39,6 +39,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     content?: unknown
     message?: string
     receiptId?: string
+    receiptImage?: string
   }
   try {
     body = await req.json()
@@ -46,8 +47,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: 'Invalid JSON body' }, 400)
   }
 
-  const { recipientEmail, senderName, receiptId: providedReceiptId } = body
+  const { recipientEmail, senderName, receiptId: providedReceiptId, receiptImage } = body
   const content = body.content ?? { blocks: [], prompt: '', legacyMessage: body.message ?? '' }
+  console.log('[send-recipt-email] Received receiptImage length:', receiptImage?.length ?? 'undefined')
   if (!recipientEmail || !senderName) {
     return json({ error: 'recipientEmail and senderName are required' }, 400)
   }
@@ -78,8 +80,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
         sender_name: senderName,
         recipient_email: recipientEmail,
         content,
+        receipt_image: receiptImage ?? null,
       }),
     })
+    console.log('[send-recipt-email] Insert response status:', insertRes.status, 'ok:', insertRes.ok)
 
     if (!insertRes.ok) {
       const detail = await insertRes.text()
@@ -87,9 +91,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     const rows = await insertRes.json()
+    console.log('[send-recipt-email] Insert response:', rows)
     const insertedId = Array.isArray(rows) ? rows[0]?.id : rows?.id
     if (!insertedId) return json({ error: 'No receipt id returned from insert' }, 500)
     receiptId = insertedId
+
+    // Verify receipt was stored
+    if (Array.isArray(rows) && rows[0]) {
+      console.log('[send-recipt-email] Stored receipt_image length:', rows[0].receipt_image?.length ?? 'null')
+    }
   }
 
   const siteUrl = Deno.env.get('SITE_URL') ?? 'https://inklings.thecupidproject.org'
