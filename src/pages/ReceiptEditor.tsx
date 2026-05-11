@@ -4,7 +4,7 @@ import TextBlock from '@/components/canvas/TextBlock'
 import ImageBlock from '@/components/canvas/ImageBlock'
 import StickerBlock from '@/components/canvas/StickerBlock'
 import BlockToolbar from '@/components/canvas/BlockToolbar'
-import StickerPicker from '@/components/canvas/StickerPicker'
+import GiphyStickerPicker from '@/components/canvas/GiphyStickerPicker'
 import FontStylePicker from '@/components/canvas/FontStylePicker'
 import FontSizeSlider from '@/components/canvas/FontSizeSlider'
 import FontWeightSlider from '@/components/canvas/FontWeightSlider'
@@ -15,7 +15,7 @@ import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft'
 import { renderToPrintBuffer } from '@/lib/escpos'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Block, TextStyle, Signature } from '@/types/canvas'
+import type { Block, TextStyle, Signature, CornerSticker } from '@/types/canvas'
 import { newBlockId, STYLE_LABELS } from '@/types/canvas'
 import headerLogoSvg from '@/assets/icons/header-logo.svg'
 import recipientBarSvg from '@/assets/icons/recipient-bar.svg'
@@ -109,17 +109,19 @@ export default function ReceiptEditor() {
     setActiveBlockId(newBlock.id)
   }
 
-  const handleAddSticker = (stickerId: string) => {
+  const handleAddSticker = (sticker: CornerSticker) => {
     const active = blocks.find((b) => b.id === activeBlockId)
-    if (active && active.type === 'sticker' && !active.stickerId) {
+    if (active && active.type === 'sticker' && !active.previewUrl) {
       // Fill the existing empty sticker slot instead of appending a new one.
-      setBlocks(blocks.map((b) => (b.id === active.id ? { ...b, stickerId } : b)))
+      setBlocks(blocks.map((b) => (b.id === active.id ? { ...b, previewUrl: sticker.previewUrl, fullUrl: sticker.fullUrl, ditheredDataUrl: sticker.ditheredDataUrl } : b)))
       return
     }
     const newBlock: Block = {
       id: newBlockId(),
       type: 'sticker',
-      stickerId,
+      previewUrl: sticker.previewUrl,
+      fullUrl: sticker.fullUrl,
+      ditheredDataUrl: sticker.ditheredDataUrl,
     }
     setBlocks([...blocks, newBlock])
     setActiveBlockId(newBlock.id)
@@ -466,14 +468,12 @@ export default function ReceiptEditor() {
                   )}
                   {block.type === 'sticker' && (
                     <StickerBlock
-                      stickerId={block.stickerId}
-                      size={block.size}
-                      outline={block.outline}
+                      previewUrl={block.previewUrl}
+                      fullUrl={block.fullUrl}
+                      ditheredDataUrl={block.ditheredDataUrl}
                       isActive={activeBlockId === block.id}
                       onFocus={() => setActiveBlockId(block.id)}
                       onDelete={() => deleteBlock(block.id)}
-                      onSizeChange={(size) => updateBlock(block.id, { size })}
-                      onOutlineToggle={(outline) => updateBlock(block.id, { outline })}
                     />
                   )}
                   {activeBlockId === block.id && !(block.type === 'text' && !block.content) && (
@@ -617,7 +617,7 @@ export default function ReceiptEditor() {
 
         {/* Sticker Picker Modal */}
         {showStickerPicker && (
-          <StickerPicker
+          <GiphyStickerPicker
             onSelect={handleAddSticker}
             onClose={() => setShowStickerPicker(false)}
           />

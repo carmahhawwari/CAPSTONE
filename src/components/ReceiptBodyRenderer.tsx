@@ -39,15 +39,16 @@ export default function ReceiptBodyRenderer({
               />
             )}
             {block.type === 'sticker' && (
-              <div
+              <img
+                src={block.ditheredDataUrl ?? block.previewUrl}
+                alt="sticker"
                 style={{
-                  fontSize: `${12 * scale}px`,
-                  color: '#9ca3af',
+                  width: '100%',
+                  height: 'auto',
                   marginBottom: `${8 * scale}px`,
+                  objectFit: 'contain',
                 }}
-              >
-                [sticker]
-              </div>
+              />
             )}
           </div>
         ))}
