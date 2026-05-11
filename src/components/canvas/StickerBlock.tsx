@@ -41,25 +41,21 @@ export default function StickerBlock({
 
       <AnimatePresence>
         {isActive && (
-          <motion.div
+          <motion.input
+            type="range"
+            min={32}
+            max={160}
+            step={4}
+            value={size}
+            onChange={(e) => onSizeChange?.(Number(e.target.value))}
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="mt-2 flex items-center gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm"
+            className="mt-3 w-28 accent-black"
+            aria-label="Sticker size"
             onClick={e => e.stopPropagation()}
-          >
-            <input
-              type="range"
-              min={32}
-              max={160}
-              step={4}
-              value={size}
-              onChange={(e) => onSizeChange?.(Number(e.target.value))}
-              className="w-28 accent-black"
-              aria-label="Sticker size"
-            />
-          </motion.div>
+          />
         )}
       </AnimatePresence>
 
