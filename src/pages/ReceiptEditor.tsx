@@ -60,6 +60,7 @@ export default function ReceiptEditor() {
   const headerVariant = 'simple' as const
   const receiptRef = useRef<HTMLDivElement>(null)
   const signatureAreaRef = useRef<HTMLDivElement>(null)
+  const recipientNameRef = useRef<HTMLDivElement>(null)
 
 
   // Handle deselecting signature with Escape key or outside click
@@ -87,6 +88,13 @@ export default function ReceiptEditor() {
   const [recipientDisplayName, setRecipientDisplayName] = useState(() => {
     return draft.recipient?.name || ''
   })
+
+  // Initialize contentEditable with recipient name
+  useEffect(() => {
+    if (recipientNameRef.current && !recipientNameRef.current.textContent) {
+      recipientNameRef.current.textContent = recipientDisplayName
+    }
+  }, [])
 
   const addTextBlock = () => {
     const newBlock: Block = {
@@ -233,11 +241,17 @@ export default function ReceiptEditor() {
       // If recipient is pre-selected (home flow), send directly
       if (recipientEmail || recipientFriendId) {
         const email = recipientEmail || (recipientFriendId ? `${recipientFriendId}@stanford.edu` : null)
-        if (!email || !user?.user_metadata?.display_name) {
-          throw new Error('Missing recipient email or sender name')
+        let senderName = user?.user_metadata?.display_name as string | undefined
+        if (!senderName && user?.user_metadata?.full_name) {
+          senderName = (user.user_metadata.full_name as string).split(' ')[0]
+        }
+        if (!senderName && user?.email) {
+          senderName = user.email.split('@')[0]
         }
 
-        const senderName = user.user_metadata.display_name as string
+        if (!email || !senderName) {
+          throw new Error('Missing recipient email or sender name')
+        }
 
         // Send via edge function
         if (supabase) {
@@ -404,20 +418,19 @@ export default function ReceiptEditor() {
           </div>
 
           {/* Recipient Info */}
-          <div className="px-3 text-black mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: '32px', lineHeight: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center', minWidth: 0 }}>
-              <span style={{ lineHeight: '40px', display: 'inline-block', verticalAlign: 'top' }}>To:</span>
+          <div className="px-3 text-black mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: 'clamp(22px, 3.5vw, 22px)', lineHeight: '1.25em', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+            <div style={{ flex: '0 0 40%', display: 'inline-flex', gap: '8px', alignItems: 'center', minWidth: 0 }}>
+              <span style={{ display: 'inline-block', verticalAlign: 'top' }}>To:</span>
               <div
+                ref={recipientNameRef}
                 contentEditable
                 suppressContentEditableWarning
                 onInput={(e) => setRecipientDisplayName(e.currentTarget.textContent || '')}
                 className="bg-transparent outline-none flex-1 min-w-0"
-                style={{ fontFamily: "var(--font-printvetica)", fontSize: '32px', padding: 0, margin: 0, lineHeight: '40px', display: 'inline-block', verticalAlign: 'top', height: '40px', minWidth: '100px' }}
-              >
-                {recipientDisplayName}
-              </div>
+                style={{ fontFamily: "var(--font-printvetica)", padding: 0, margin: 0, display: 'inline-block', verticalAlign: 'top', minWidth: '100px' }}
+              />
             </div>
-            <span style={{ whiteSpace: 'nowrap', marginLeft: '16px', lineHeight: '40px', display: 'inline' }}>
+            <span style={{ flex: '0 0 40%', whiteSpace: 'nowrap', textAlign: 'right', display: 'inline' }}>
               {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </span>
           </div>
