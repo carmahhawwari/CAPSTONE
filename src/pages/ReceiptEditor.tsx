@@ -177,8 +177,9 @@ export default function ReceiptEditor() {
 
       // Remove editor UI elements: dashed borders, placeholder text, etc.
       cleanReceipt.querySelectorAll('[style*="border-dashed"], .border-dashed').forEach(el => {
-        (el as HTMLElement).style.borderTopStyle = 'none'
-        (el as HTMLElement).style.borderTopWidth = '0'
+        const htmlEl = el as HTMLElement
+        htmlEl.style.setProperty('border-top-style', 'none')
+        htmlEl.style.setProperty('border-top-width', '0')
       })
       cleanReceipt.querySelectorAll('input, textarea').forEach(el => {
         const inputEl = el as HTMLInputElement | HTMLTextAreaElement
@@ -394,15 +395,13 @@ export default function ReceiptEditor() {
         >
         <div className="p-5 space-y-3">
           {/* Header */}
-          <div className="flex items-center justify-center mb-6 mt-6">
+          <div className="flex items-center justify-center mb-0 mt-6">
             <img src={headerLogoSvg} alt="Inklings" className="h-16" />
           </div>
 
           {/* Recipient Bar */}
           <div className="mb-3">
-            <div className="h-[24px] mb-2">
-              <img src={recipientBarSvg} alt="" className="w-full h-full object-cover" />
-            </div>
+            <img src={recipientBarSvg} alt="" className="w-full h-auto" />
           </div>
 
           {/* Recipient Info */}
@@ -526,6 +525,16 @@ export default function ReceiptEditor() {
           onAddImage={addImageBlock}
         />
 
+        {/* Preview Button */}
+        <button
+          type="button"
+          onClick={handlePreview}
+          disabled={blocks.length === 0}
+          className="mt-4 text-xs text-text-primary bg-white rounded-md flex w-full h-10 items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+        >
+          Preview Inkling
+        </button>
+
         {/* Font Style Picker - collapsed by default; click 'Customize text' to open */}
         {activeBlock?.type === 'text' && (
           <details className="mt-4 group">
@@ -639,14 +648,6 @@ export default function ReceiptEditor() {
 
         {/* CTA */}
         <div className="mt-auto pt-10 pb-4 space-y-2">
-          <button
-            type="button"
-            onClick={handlePreview}
-            disabled={blocks.length === 0}
-            className="text-callout text-text-primary bg-white border border-gray-300 rounded-md flex w-full h-14 items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-          >
-            Preview Bitmap
-          </button>
           <button
             type="button"
             onClick={handleContinue}
