@@ -11,6 +11,7 @@ export type OnboardingDraft = {
     cornerSticker?: CornerSticker
     signature?: Signature
     headerVariant?: 'simple' | 'squids-checkers' | 'squids-v1' | 'none'
+    receiptImage?: string
   } | null
   recipient: {
     name: string

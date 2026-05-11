@@ -38,7 +38,7 @@ export interface FontStyleConfig {
 export const FONT_STYLES: Record<TextStyle, FontStyleConfig> = {
   normal: {
     fontFamily: "adobe-garamond-pro, 'Playfair Display', Georgia, serif",
-    fontSize: 14,
+    fontSize: 32,
     fontWeight: 400,
     lineHeight: 1.6,
   },
@@ -56,28 +56,28 @@ export const FONT_STYLES: Record<TextStyle, FontStyleConfig> = {
   },
   pixel: {
     fontFamily: "'Press Start 2P', monospace",
-    fontSize: 10,
+    fontSize: 18,
     fontWeight: 400,
     lineHeight: 2,
   },
   shout: {
     fontFamily: "bureau-grot, 'Permanent Marker', cursive",
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 400,
     textTransform: 'uppercase',
     lineHeight: 1.3,
   },
   artsy: {
     fontFamily: "snell-roundhand, cursive",
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: 400,
     lineHeight: 1.5,
   },
   decorative: {
     fontFamily: "ff-tisa-web-pro, adobe-garamond-pro, Georgia, serif",
-    fontSize: 18,
+    fontSize: 38,
     fontWeight: 700,
-    lineHeight: 1.4,
+    lineHeight: 2.0,
   },
   comic: {
     fontFamily: "europa, 'Comic Neue', cursive",
@@ -87,37 +87,37 @@ export const FONT_STYLES: Record<TextStyle, FontStyleConfig> = {
   },
   bold: {
     fontFamily: "av-pro, ff-tisa-web-pro, Georgia, serif",
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: 900,
-    lineHeight: 1.3,
+    lineHeight: 1.6,
   },
   liquida: {
     fontFamily: "liquida, sans-serif",
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: 200,
     lineHeight: 1.4,
   },
   dottonoji: {
     fontFamily: "dottonoji, sans-serif",
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: 400,
     lineHeight: 1.4,
   },
   tsuchinoko: {
     fontFamily: "tsuchinoko, sans-serif",
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: 400,
     lineHeight: 1.4,
   },
   redaction: {
     fontFamily: "redaction-50, sans-serif",
-    fontSize: 18,
+    fontSize: 32,
     fontWeight: 400,
     lineHeight: 1.4,
   },
   inter: {
     fontFamily: "var(--font-printvetica), Inter, sans-serif",
-    fontSize: 14,
+    fontSize: 28,
     fontWeight: 400,
     lineHeight: 1.5,
   },
@@ -137,7 +137,7 @@ export const STYLE_LABELS: Record<TextStyle, string> = {
   dottonoji: 'Dottonoji',
   tsuchinoko: 'Tsuchinoko',
   redaction: 'Redaction',
-  inter: 'Inter',
+  inter: 'Printvetica',
 }
 
 let _blockId = 0

@@ -185,8 +185,13 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
     setPrinting(true)
     setPrintError(null)
     try {
+      // Reconstruct data URL if needed (database stores just the base64 part)
+      const imageUrl = receipt.receiptImage.startsWith('data:')
+        ? receipt.receiptImage
+        : `data:image/png;base64,${receipt.receiptImage}`
+
       await submitBase64PrintJob({
-        base64Image: receipt.receiptImage,
+        base64Image: imageUrl,
         recipientName: receipt.to,
         recipientEmail: receipt.friendId,
         skipGeofence: false,
@@ -200,6 +205,11 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
 
   // If we have the receipt image, display it with reprint button
   if (receipt.receiptImage) {
+    // Reconstruct data URL if needed (database stores just the base64 part)
+    const imageUrl = receipt.receiptImage.startsWith('data:')
+      ? receipt.receiptImage
+      : `data:image/png;base64,${receipt.receiptImage}`
+
     return (
       <div className="border-fill-tertiary bg-white rounded-md border overflow-hidden">
         <div className="p-3 flex justify-between items-center border-b border-fill-tertiary bg-bg-secondary">
@@ -214,7 +224,7 @@ function ReceiptDisplay({ receipt }: { receipt: Receipt }) {
         </div>
         {printError && <p className="text-xs text-fill-red px-3 pt-2">{printError}</p>}
         <img
-          src={receipt.receiptImage}
+          src={imageUrl}
           alt={`Receipt to ${receipt.to}`}
           className="w-full h-auto"
           style={{ filter: 'grayscale(100%)' }}
