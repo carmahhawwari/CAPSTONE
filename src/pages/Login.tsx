@@ -67,7 +67,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-8 w-full py-3 disabled:opacity-50"
+            className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 flex w-full h-14 items-center justify-center disabled:opacity-50"
           >
             {loading ? 'Logging in...' : 'Continue'}
           </button>

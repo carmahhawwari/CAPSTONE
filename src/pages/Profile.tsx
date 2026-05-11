@@ -217,7 +217,7 @@ export default function Profile() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="text-callout text-text-inverse bg-fill-primary rounded-lg flex-1 py-3 disabled:opacity-50"
+                  className="text-callout text-text-inverse bg-fill-primary rounded-md flex flex-1 h-14 items-center justify-center disabled:opacity-50"
                 >
                   {saving ? 'Saving...' : 'Save'}
                 </button>
@@ -230,7 +230,7 @@ export default function Profile() {
                     })
                     setError('')
                   }}
-                  className="text-callout text-text-primary border-fill-tertiary rounded-lg flex-1 border py-3 hover:bg-bg-secondary"
+                  className="text-callout text-text-primary border-fill-tertiary rounded-md flex flex-1 h-14 items-center justify-center border hover:bg-bg-secondary"
                 >
                   Cancel
                 </button>
@@ -242,7 +242,7 @@ export default function Profile() {
 
       <button
         onClick={handleSignOut}
-        className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-8 w-full py-3"
+        className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 flex w-full h-14 items-center justify-center"
       >
         Sign Out
       </button>

@@ -227,7 +227,7 @@ export default function FindInklings() {
         <button
           type="button"
           onClick={handleInvite}
-          className="text-base font-semibold text-white bg-fill-primary rounded-lg mt-4 w-full py-3 shrink-0"
+          className="text-base font-semibold text-white bg-fill-primary rounded-md mt-4 flex w-full h-14 items-center justify-center shrink-0"
         >
           Invite contacts
         </button>

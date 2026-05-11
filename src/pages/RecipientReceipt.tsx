@@ -151,7 +151,7 @@ export default function RecipientReceipt() {
           </p>
           <Link
             to={`/signup?next=${encodeURIComponent(`/r/${receipt.id}`)}`}
-            className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-8 block w-full py-3"
+            className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 flex w-full h-14 items-center justify-center"
           >
             Click to continue
           </Link>
@@ -194,7 +194,7 @@ export default function RecipientReceipt() {
           type="button"
           onClick={handlePrint}
           disabled={printing || printed}
-          className="text-headline text-text-inverse bg-fill-primary rounded-lg mt-8 w-full py-3 disabled:opacity-50"
+          className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 flex w-full h-14 items-center justify-center disabled:opacity-50"
         >
           {printed ? 'Printed' : printing ? 'Printing…' : 'Print on the Inklings printer'}
         </button>

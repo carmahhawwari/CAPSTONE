@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { getUnprintedReceiptCount } from '@/lib/receipts'
 import { clearDraft } from '@/lib/onboardingDraft'
 import PageTransition from '@/components/PageTransition'
-import archiveImg from '@/assets/archive.png'
-import printerImg from '@/assets/printer.png'
-import { staggerContainer, staggerItem, durationNormal } from '@/lib/motion'
+import HomeCollage from '@/components/HomeCollage'
 
 export default function HomeScreen() {
   const navigate = useNavigate()
@@ -33,49 +30,67 @@ export default function HomeScreen() {
   }
 
   return (
-    <PageTransition className="flex min-h-screen flex-col bg-bg-base px-6 pt-8 pb-8">
+    <PageTransition className="flex h-screen flex-col bg-bg-base px-6 pt-8 pb-8 overflow-hidden">
       <header className="flex items-end justify-between">
         <h1 className="text-regular-semibold text-text-primary">Home</h1>
         <div className="flex flex-col gap-2">
-          <IconButton
-            label="Profile"
-            onClick={() => navigate('/profile')}
-          >
+          <IconButton label="Profile" onClick={() => navigate('/profile')}>
             <ProfileIcon />
           </IconButton>
-          <IconButton
-            label="Letters"
-            onClick={() => navigate('/letters')}
-          >
+          <IconButton label="Letters" onClick={() => navigate('/letters')}>
             <ArchiveIcon />
           </IconButton>
         </div>
       </header>
 
-      <motion.div
-        className="mt-6 flex flex-col gap-3"
-        variants={staggerContainer}
-        initial="initial"
-        animate="animate"
-      >
-        <motion.div className="relative" variants={staggerItem} transition={durationNormal}>
-          <Tile label="Printer" onClick={handlePrintClick}>
-            <PrinterPlaceholder />
-          </Tile>
-          {unprintedCount > 0 && (
-            <div className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold">
-              {unprintedCount}
-            </div>
-          )}
-        </motion.div>
-        <motion.div variants={staggerItem} transition={durationNormal}>
-          <Tile label="Send" onClick={handleSendClick}>
-            <ArchivePlaceholder />
-          </Tile>
-        </motion.div>
-      </motion.div>
+      {/* Collage viewport */}
+      <div className="flex-1 my-6 flex items-center justify-center min-h-0">
+        <HomeCollage />
+      </div>
 
+      {/* Stacked action buttons */}
+      <div className="flex flex-col gap-3">
+        <ActionButton label="Send" onClick={handleSendClick} variant="filled" />
+        <ActionButton
+          label="Print"
+          onClick={handlePrintClick}
+          badgeCount={unprintedCount}
+          variant="outlined"
+        />
+      </div>
     </PageTransition>
+  )
+}
+
+function ActionButton({
+  label,
+  onClick,
+  badgeCount = 0,
+  variant = 'filled',
+}: {
+  label: string
+  onClick: () => void
+  badgeCount?: number
+  variant?: 'filled' | 'outlined'
+}) {
+  const styles =
+    variant === 'filled'
+      ? 'bg-black text-white border border-black'
+      : 'bg-white text-black border border-black'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ fontFamily: 'var(--font-printvetica)' }}
+      className={`relative flex h-14 w-full items-center justify-center rounded-md text-base font-semibold active:opacity-80 transition-opacity ${styles}`}
+    >
+      <span>{label}</span>
+      {badgeCount > 0 && (
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-red-500 text-white rounded-full min-w-6 h-6 px-2 flex items-center justify-center text-xs font-semibold">
+          {badgeCount}
+        </span>
+      )}
+    </button>
   )
 }
 
@@ -94,27 +109,6 @@ function IconButton({
       onClick={onClick}
       aria-label={label}
       className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300 transition-colors"
-    >
-      {children}
-    </button>
-  )
-}
-
-function Tile({
-  children,
-  label,
-  onClick,
-}: {
-  children: React.ReactNode
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className="bg-bg-primary rounded-md flex aspect-[4/3] w-full items-center justify-center overflow-hidden active:opacity-70"
     >
       {children}
     </button>
@@ -159,24 +153,3 @@ function ArchiveIcon() {
     </svg>
   )
 }
-
-function PrinterPlaceholder() {
-  return (
-    <img
-      src={printerImg}
-      alt="Printer"
-      className="h-full w-full object-contain p-2"
-    />
-  )
-}
-
-function ArchivePlaceholder() {
-  return (
-    <img
-      src={archiveImg}
-      alt="Archive"
-      className="h-full w-full object-contain p-2"
-    />
-  )
-}
-

@@ -182,7 +182,34 @@ export default function ReceiptEditor() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col pb-16">
-      <div className="px-6 pt-8 flex-1 overflow-y-auto">
+      <div className="px-6 pt-12 flex-1 overflow-y-auto flex flex-col">
+
+        {/* Back button — matches the circular IconButton style used elsewhere */}
+        <div className="mb-8">
+          <button
+            type="button"
+            onClick={() => navigate('/home')}
+            aria-label="Back to home"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300 transition-colors"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
+            >
+              <path
+                d="M15 6L9 12L15 18"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
 
         {/* Receipt paper */}
         <div
@@ -415,12 +442,12 @@ export default function ReceiptEditor() {
         )}
 
         {/* CTA */}
-        <div className="mt-10 mb-8">
+        <div className="mt-auto pt-10 pb-4">
           <button
             type="button"
             onClick={handleContinue}
             disabled={blocks.length === 0}
-            className="text-callout text-text-inverse bg-fill-primary rounded-lg w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
+            className="text-callout text-text-inverse bg-fill-primary rounded-md flex w-full h-14 items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed active:opacity-80 transition-opacity"
           >
             Continue to Send
           </button>
