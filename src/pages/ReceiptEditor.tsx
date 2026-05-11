@@ -412,19 +412,19 @@ export default function ReceiptEditor() {
           </div>
 
           {/* Recipient Info */}
-          <div className="px-3 text-black mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: '32px', lineHeight: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center', minWidth: 0 }}>
-              <span style={{ lineHeight: '40px', display: 'inline-block', verticalAlign: 'top' }}>To:</span>
+          <div className="px-3 text-black mb-3" style={{ fontFamily: "var(--font-printvetica)", fontSize: 'clamp(24px, 5vw, 40px)', lineHeight: '1.25em', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+            <div style={{ flex: '0 0 40%', display: 'inline-flex', gap: '8px', alignItems: 'center', minWidth: 0 }}>
+              <span style={{ display: 'inline-block', verticalAlign: 'top' }}>To:</span>
               <div
                 ref={recipientNameRef}
                 contentEditable
                 suppressContentEditableWarning
                 onInput={(e) => setRecipientDisplayName(e.currentTarget.textContent || '')}
                 className="bg-transparent outline-none flex-1 min-w-0"
-                style={{ fontFamily: "var(--font-printvetica)", fontSize: '32px', padding: 0, margin: 0, lineHeight: '40px', display: 'inline-block', verticalAlign: 'top', height: '40px', minWidth: '100px' }}
+                style={{ fontFamily: "var(--font-printvetica)", padding: 0, margin: 0, display: 'inline-block', verticalAlign: 'top', minWidth: '100px' }}
               />
             </div>
-            <span style={{ whiteSpace: 'nowrap', marginLeft: '16px', lineHeight: '40px', display: 'inline' }}>
+            <span style={{ flex: '0 0 40%', whiteSpace: 'nowrap', textAlign: 'right', display: 'inline' }}>
               {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </span>
           </div>
