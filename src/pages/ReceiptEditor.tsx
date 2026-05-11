@@ -240,6 +240,11 @@ export default function ReceiptEditor() {
 
       // If recipient is pre-selected (home flow), send directly
       if (recipientEmail || recipientFriendId) {
+        if (!user || !user.email) {
+          console.error('[ReceiptEditor] User not authenticated:', { user, hasEmail: !!user?.email })
+          throw new Error('User not authenticated. Please log in and try again.')
+        }
+
         const email = recipientEmail || (recipientFriendId ? `${recipientFriendId}@stanford.edu` : null)
         let senderName = user?.user_metadata?.display_name as string | undefined
         if (!senderName && user?.user_metadata?.full_name) {
@@ -249,7 +254,9 @@ export default function ReceiptEditor() {
           senderName = user.email.split('@')[0]
         }
 
+        console.log('[ReceiptEditor] Send attempt:', { email, senderName, recipientEmail, recipientFriendId })
         if (!email || !senderName) {
+          console.error('[ReceiptEditor] Missing send details:', { email, senderName })
           throw new Error('Missing recipient email or sender name')
         }
 
