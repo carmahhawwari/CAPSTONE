@@ -170,10 +170,15 @@ export default function ReceiptEditor() {
       cleanReceipt.style.width = '576px'
       document.body.appendChild(cleanReceipt)
 
+      // Remove all buttons from the cloned receipt (delete buttons)
+      cleanReceipt.querySelectorAll('button').forEach(el => {
+        el.parentNode?.removeChild(el)
+      })
+
       // Remove editor UI elements: dashed borders, placeholder text, etc.
-      cleanReceipt.querySelectorAll('[style*="border-dashed"]').forEach(el => {
-        (el as HTMLElement).style.borderStyle = 'none'
-        (el as HTMLElement).style.display = 'none'
+      cleanReceipt.querySelectorAll('[style*="border-dashed"], .border-dashed').forEach(el => {
+        (el as HTMLElement).style.borderTopStyle = 'none'
+        (el as HTMLElement).style.borderTopWidth = '0'
       })
       cleanReceipt.querySelectorAll('input, textarea').forEach(el => {
         const inputEl = el as HTMLInputElement | HTMLTextAreaElement
@@ -187,6 +192,29 @@ export default function ReceiptEditor() {
       // Remove "From:" line
       cleanReceipt.querySelectorAll('div').forEach(el => {
         if (el.textContent?.includes('From:') && el.textContent?.includes('Matthew')) {
+          (el as HTMLElement).style.display = 'none'
+        }
+      })
+
+      // Hide empty text blocks - use multiple strategies to ensure they're hidden
+
+      // Strategy 1: Hide by data-block-id
+      const blockDivs = cleanReceipt.querySelectorAll('div[data-block-id]')
+      console.log('[ReceiptEditor] Found block divs:', blockDivs.length, 'Empty blocks:', blocks.filter(b => b.type === 'text' && !b.content).length)
+      blockDivs.forEach(div => {
+        const blockId = (div as HTMLElement).getAttribute('data-block-id')
+        const block = blocks.find(b => b.id === blockId)
+        if (block && block.type === 'text' && !block.content) {
+          console.log('[ReceiptEditor] Hiding empty text block via data-block-id:', blockId)
+          (div as HTMLElement).style.display = 'none'
+        }
+      })
+
+      // Strategy 2: Hide contentEditable divs that only contain placeholder text
+      cleanReceipt.querySelectorAll('[contenteditable]').forEach(el => {
+        const text = (el as HTMLElement).textContent?.trim()
+        if (!text || text.includes('Type something')) {
+          console.log('[ReceiptEditor] Hiding contentEditable with placeholder')
           (el as HTMLElement).style.display = 'none'
         }
       })
@@ -311,6 +339,10 @@ export default function ReceiptEditor() {
 
 
   const activeBlock = blocks.find(b => b.id === activeBlockId)
+  const hasEmptyBlocks = blocks.some(b =>
+    (b.type === 'text' && !b.content) ||
+    (b.type === 'image' && !b.dataUrl)
+  )
 
   return (
     <div className="min-h-screen bg-white flex flex-col pb-16">
@@ -341,6 +373,17 @@ export default function ReceiptEditor() {
               />
             </svg>
           </button>
+        </div>
+
+        {/* Block Status Notice */}
+        <div className={`mb-6 p-3 border rounded text-xs ${
+          hasEmptyBlocks
+            ? 'bg-red-50 border-red-200 text-red-700'
+            : 'bg-green-50 border-green-200 text-green-700'
+        }`}>
+          {hasEmptyBlocks
+            ? 'Bug Notice: Please delete empty image or text blocks before sending. Fix coming soon <3'
+            : 'All blocks have content. Ready to send! ✓'}
         </div>
 
         {/* Receipt paper */}
@@ -390,6 +433,7 @@ export default function ReceiptEditor() {
               blocks.map(block => (
                 <div
                   key={block.id}
+                  data-block-id={block.id}
                   draggable
                   onClick={() => {
                     setActiveBlockId(block.id)
@@ -436,7 +480,7 @@ export default function ReceiptEditor() {
                       onOutlineToggle={(outline) => updateBlock(block.id, { outline })}
                     />
                   )}
-                  {activeBlockId === block.id && (
+                  {activeBlockId === block.id && !(block.type === 'text' && !block.content) && (
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); deleteBlock(block.id) }}
