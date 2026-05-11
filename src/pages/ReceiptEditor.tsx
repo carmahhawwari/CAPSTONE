@@ -345,6 +345,7 @@ export default function ReceiptEditor() {
         <BlockToolbar
           onAddText={addTextBlock}
           onAddImage={addImageBlock}
+          onAddSticker={() => setShowStickerPicker(true)}
         />
 
         {/* Font Style Picker - collapsed by default; click 'Customize text' to open */}
