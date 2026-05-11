@@ -41,12 +41,21 @@ export default function ReceiptBodyRenderer({
             {block.type === 'sticker' && (
               <div
                 style={{
-                  fontSize: `${12 * scale}px`,
-                  color: '#9ca3af',
                   marginBottom: `${8 * scale}px`,
+                  display: 'flex',
+                  justifyContent: 'center',
                 }}
               >
-                [sticker]
+                <img
+                  src={block.ditheredDataUrl ?? block.previewUrl}
+                  alt="sticker"
+                  style={{
+                    width: `${(block.size ?? 64) * scale}px`,
+                    height: `${(block.size ?? 64) * scale}px`,
+                    objectFit: 'contain',
+                    filter: 'grayscale(100%)',
+                  }}
+                />
               </div>
             )}
           </div>

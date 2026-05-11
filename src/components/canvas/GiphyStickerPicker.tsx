@@ -132,9 +132,14 @@ export default function GiphyStickerPicker({ onSelect, onClose }: GiphyStickerPi
         )}
 
         {!query && (
-          <p className="text-xs text-gray-400 text-center py-4 italic">
-            Try searching for stickers like 'heart', 'star', 'gift', etc.
-          </p>
+          <>
+            <p className="text-xs text-gray-400 text-center py-4 italic">
+              Try searching for stickers like 'heart', 'star', 'gift', etc.
+            </p>
+            <p className="text-xs text-gray-400 text-center py-2 italic">
+              Powered by GIPHY
+            </p>
+          </>
         )}
       </motion.div>
     </motion.div>

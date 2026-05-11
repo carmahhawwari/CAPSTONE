@@ -1,33 +1,27 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { STICKERS } from '@/data/stickers'
 
 interface StickerBlockProps {
-  stickerId: string
+  previewUrl: string
+  fullUrl: string
+  ditheredDataUrl?: string
   size?: number
-  outline?: boolean
   isActive: boolean
   onFocus: () => void
   onDelete: () => void
   onSizeChange?: (size: number) => void
-  onOutlineToggle?: (outline: boolean) => void
 }
 
 const DEFAULT_SIZE = 64
 
 export default function StickerBlock({
-  stickerId,
+  previewUrl,
+  ditheredDataUrl,
   size = DEFAULT_SIZE,
-  outline = false,
   isActive,
   onFocus,
   onDelete,
   onSizeChange,
-  onOutlineToggle,
 }: StickerBlockProps) {
-  const sticker = STICKERS.find(s => s.id === stickerId)
-
-  if (!sticker) return null
-
   return (
     <div
       className={`group relative flex flex-col items-center py-2 ${isActive ? 'ring-1 ring-fill-tertiary ring-offset-1 rounded-md' : ''}`}
@@ -35,13 +29,14 @@ export default function StickerBlock({
     >
       <div
         style={{ width: size, height: size }}
-        className={`flex items-center justify-center [&>svg]:w-full [&>svg]:h-full ${outline ? 'rounded-md p-1.5' : ''}`}
+        className="flex items-center justify-center"
       >
-        <div
-          className={outline ? 'border border-black rounded-md p-1 w-full h-full flex items-center justify-center' : 'w-full h-full flex items-center justify-center'}
-        >
-          {sticker.svg}
-        </div>
+        <img
+          src={ditheredDataUrl ?? previewUrl}
+          alt="Sticker"
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          className="grayscale"
+        />
       </div>
 
       <AnimatePresence>
@@ -64,16 +59,6 @@ export default function StickerBlock({
               className="w-28 accent-black"
               aria-label="Sticker size"
             />
-            <button
-              type="button"
-              onClick={() => onOutlineToggle?.(!outline)}
-              aria-pressed={outline}
-              className={`text-xs font-medium px-2 py-1 rounded-md border transition-colors ${
-                outline ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300'
-              }`}
-            >
-              Outline
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
