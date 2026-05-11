@@ -53,7 +53,6 @@ export default function ReceiptBodyRenderer({
                     width: `${(block.size ?? 64) * scale}px`,
                     height: `${(block.size ?? 64) * scale}px`,
                     objectFit: 'contain',
-                    filter: 'grayscale(100%)',
                   }}
                 />
               </div>
