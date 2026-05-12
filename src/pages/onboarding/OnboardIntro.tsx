@@ -25,14 +25,14 @@ export default function OnboardIntro() {
           to="/signup"
           className="bg-black text-white font-semibold rounded-md mt-8 flex w-full h-14 items-center justify-center"
         >
-          Get Started
+          Create an account
         </Link>
 
         <Link
           to="/login"
           className="text-gray-700 mt-4 w-full text-center block"
         >
-          I already have an account
+          Log in
         </Link>
       </div>
     </PageTransition>

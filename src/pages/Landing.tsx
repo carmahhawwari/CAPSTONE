@@ -13,14 +13,14 @@ export default function Landing() {
           to="/signup"
           className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 flex w-full h-14 items-center justify-center"
         >
-          Get started
+          Create an account
         </Link>
 
         <Link
           to="/login"
           className="text-callout text-text-primary mt-4 w-full text-center"
         >
-          I already have an account
+          Log in
         </Link>
       </div>
     </div>
