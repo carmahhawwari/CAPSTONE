@@ -35,9 +35,9 @@ export default function RecipientReceipt() {
     if (authLoading) return
     if (!id) return
 
-    // If user is not logged in, don't try to load
+    // If user is not logged in, don't try to load the receipt
+    // They'll be prompted to sign up/login in the render
     if (!user?.email) {
-      setLoadError('Not authenticated')
       return
     }
 
@@ -127,6 +127,35 @@ export default function RecipientReceipt() {
     )
   }
 
+  // Unauthenticated view: prompt to create account or log in
+  if (!user) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
+        <div className="w-full max-w-sm text-center">
+          <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">you've got mail</p>
+          <h1 className="text-regular-semibold text-text-primary mt-3">
+            You've received an Inkling
+          </h1>
+          <p className="text-subheadline text-text-secondary mt-3">
+            Create an account or log in to view and print your message.
+          </p>
+          <Link
+            to={`/signup?next=${encodeURIComponent(`/r/${id}`)}`}
+            className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 flex w-full h-14 items-center justify-center"
+          >
+            Create account
+          </Link>
+          <Link
+            to={`/login?next=${encodeURIComponent(`/r/${id}`)}`}
+            className="text-callout text-text-primary mt-4 w-full text-center"
+          >
+            Log in
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   if (loadError || !receipt) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
@@ -137,35 +166,6 @@ export default function RecipientReceipt() {
           </p>
           <Link to="/" className="text-callout text-text-primary mt-6 inline-block underline">
             Go home
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
-  // Unauthenticated view: claim the receipt
-  if (!user) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
-        <div className="w-full max-w-sm text-center">
-          <p className="text-callout text-text-secondary uppercase tracking-[0.2em]">you've got mail</p>
-          <h1 className="text-regular-semibold text-text-primary mt-3">
-            {receipt.sender_name} sent you a message
-          </h1>
-          <p className="text-subheadline text-text-secondary mt-3">
-            Make a quick Inklings account to read it and print it on the receipt printer.
-          </p>
-          <Link
-            to={`/signup?next=${encodeURIComponent(`/r/${receipt.id}`)}`}
-            className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 flex w-full h-14 items-center justify-center"
-          >
-            Click to continue
-          </Link>
-          <Link
-            to={`/login?next=${encodeURIComponent(`/r/${receipt.id}`)}`}
-            className="text-callout text-text-secondary mt-4 inline-block"
-          >
-            I already have an account
           </Link>
         </div>
       </div>

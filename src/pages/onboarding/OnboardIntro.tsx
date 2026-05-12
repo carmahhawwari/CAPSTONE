@@ -16,23 +16,21 @@ export default function OnboardIntro() {
   return (
     <PageTransition className="flex min-h-screen flex-col bg-white px-6">
       <div className="flex flex-1 flex-col justify-center">
-        <h1 className="text-4xl font-bold text-black">Inklings</h1>
-        <p className="text-lg text-gray-700 mt-2">
-          Send a little paper note to someone. We'll walk you through it.
-        </p>
+        <h1 className="text-6xl font-bold text-black text-center">Inklings</h1>
+        <p className="text-xl text-center text-grey mt-6"> Simple messages to the friends you love.</p>
 
         <Link
           to="/signup"
           className="bg-black text-white font-semibold rounded-md mt-8 flex w-full h-14 items-center justify-center"
         >
-          Get Started
+          Create an account
         </Link>
 
         <Link
           to="/login"
           className="text-gray-700 mt-4 w-full text-center block"
         >
-          I already have an account
+          Log in
         </Link>
       </div>
     </PageTransition>
