@@ -10,8 +10,15 @@ export default function Landing() {
         </p>
 
         <Link
-          to="/login"
+          to="/signup"
           className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 flex w-full h-14 items-center justify-center"
+        >
+          Create account
+        </Link>
+
+        <Link
+          to="/login"
+          className="text-callout text-text-primary mt-4 w-full text-center"
         >
           Log in
         </Link>
