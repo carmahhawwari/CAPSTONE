@@ -240,10 +240,11 @@ export default function ReceiptEditor() {
 
       // If recipient is pre-selected (home flow), send directly
       if (recipientEmail || recipientFriendId) {
-        // Verify sender is authenticated
+        // Verify sender is authenticated - if not, redirect to login
         if (!user?.email) {
-          console.error('[ReceiptEditor] Sender not authenticated:', { user })
-          throw new Error('You must be logged in to send a receipt.')
+          console.error('[ReceiptEditor] Sender not authenticated, redirecting to login:', { user })
+          navigate('/login')
+          return
         }
 
         // Construct recipient email (allow any email, including new/unverified ones)
