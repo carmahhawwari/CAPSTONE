@@ -127,7 +127,7 @@ export default function RecipientReceipt() {
     )
   }
 
-  // Unauthenticated view: prompt to sign up or log in
+  // Unauthenticated view: prompt to log in
   if (!user) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-bg-base px-6">
@@ -137,19 +137,13 @@ export default function RecipientReceipt() {
             You've received an Inkling
           </h1>
           <p className="text-subheadline text-text-secondary mt-3">
-            Create an account or log in to view and print your message.
+            Log in to view and print your message.
           </p>
           <Link
-            to={`/signup?next=${encodeURIComponent(`/r/${id}`)}`}
+            to={`/login?next=${encodeURIComponent(`/r/${id}`)}`}
             className="text-headline text-text-inverse bg-fill-primary rounded-md mt-8 flex w-full h-14 items-center justify-center"
           >
-            Create account
-          </Link>
-          <Link
-            to={`/login?next=${encodeURIComponent(`/r/${id}`)}`}
-            className="text-callout text-text-secondary mt-4 inline-block"
-          >
-            I already have an account
+            Log in
           </Link>
         </div>
       </div>
