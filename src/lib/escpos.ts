@@ -42,6 +42,16 @@ function inlineComputedStyles(sourceRoot: HTMLElement, clonedRoot: HTMLElement):
 
       target.style.setProperty(prop, value, computed.getPropertyPriority(prop))
     }
+
+    // For img elements, use actual rendered dimensions to avoid "auto" issues
+    if (source instanceof HTMLImageElement) {
+      const rect = source.getBoundingClientRect()
+      if (rect.width && rect.height) {
+        target.style.width = rect.width + 'px'
+        target.style.height = rect.height + 'px'
+      }
+    }
+
     target.removeAttribute('class')
   }
 }
@@ -95,9 +105,47 @@ export async function renderToPrintBuffer(
   element.setAttribute(CAPTURE_ATTR, captureId)
 
   const cssWidth = Math.max(1, Math.round(element.getBoundingClientRect().width))
-  const scale = PRINTER_WIDTH_DOTS / cssWidth
+  // Account for device pixel ratio to ensure high quality rendering on high-DPI screens
+  const scale = (PRINTER_WIDTH_DOTS / cssWidth) * Math.max(1, window.devicePixelRatio)
 
   try {
+    // Wait for all images to load so dimensions are correct
+    const images = Array.from(element.querySelectorAll('img'))
+
+    // On iOS, convert external images to data URLs to avoid rendering issues
+    await Promise.all(
+      images.map(async (img) => {
+        if (img.src && (img.src.startsWith('http') || img.src.includes('/assets/'))) {
+          try {
+            const response = await fetch(img.src)
+            const blob = await response.blob()
+            const dataUrl = await new Promise<string>((resolve) => {
+              const reader = new FileReader()
+              reader.onload = () => resolve(reader.result as string)
+              reader.readAsDataURL(blob)
+            })
+            img.src = dataUrl
+          } catch (e) {
+            console.error('[escpos] Failed to convert image to data URL:', img.src, e)
+          }
+        }
+      })
+    )
+
+    // Wait for all images to load (including data URL images)
+    await Promise.all(
+      images.map(img => {
+        if (img.complete) return Promise.resolve()
+        return new Promise<void>((resolve) => {
+          img.onload = () => resolve()
+          img.onerror = () => resolve()
+          // Timeout in case onload never fires
+          setTimeout(() => resolve(), 1000)
+        })
+      })
+    )
+
+
     // 1. Rasterize DOM to canvas at 576-dot effective width
     const canvas = await html2canvas(element, {
       width: cssWidth,
@@ -114,8 +162,9 @@ export async function renderToPrintBuffer(
         clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => node.remove())
 
         // Remove all class attributes to prevent oklch color parsing errors
+        // but preserve classes on SVG elements since they often depend on CSS for styling
         clonedElement.removeAttribute('class')
-        clonedElement.querySelectorAll('[class]').forEach((node) => {
+        clonedElement.querySelectorAll('[class]:not(svg):not(svg *)').forEach((node) => {
           node.removeAttribute('class')
         })
       },
