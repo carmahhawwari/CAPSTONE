@@ -420,8 +420,8 @@ export default function ReceiptEditor() {
         >
         <div className="p-5 space-y-3">
           {/* Header */}
-          <div className="flex items-center justify-center mb-0 mt-6">
-            <img src={headerLogoSvg} alt="Inklings" className="h-16" />
+          <div className="mb-4 mt-6 flex justify-center">
+            <img src={headerLogoSvg} alt="Inklings" className="h-auto max-w-full" />
           </div>
 
           {/* Recipient Bar */}
