@@ -95,10 +95,12 @@ export async function renderToPrintBuffer(
   element.setAttribute(CAPTURE_ATTR, captureId)
 
   const cssWidth = Math.max(1, Math.round(element.getBoundingClientRect().width))
-  const scale = PRINTER_WIDTH_DOTS / cssWidth
+  // Use a high scale to render text at high DPI, preventing pixelation on mobile
+  // html2canvas will render at this scale factor relative to the display size
+  const scale = (PRINTER_WIDTH_DOTS / cssWidth) * 2
 
   try {
-    // 1. Rasterize DOM to canvas at 576-dot effective width
+    // 1. Rasterize DOM to canvas at 576-dot effective width with 2x DPI scaling for quality
     const canvas = await html2canvas(element, {
       width: cssWidth,
       scale,
@@ -121,22 +123,31 @@ export async function renderToPrintBuffer(
       },
     })
 
-    // 2. Get pixel data and convert receipt to 1-bit (dither before sticker)
-    let ctx = canvas.getContext('2d')!
-    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    // 2. Downscale canvas back to target width while preserving quality from high-DPI rendering
+    const targetWidth = PRINTER_WIDTH_DOTS
+    const targetHeight = Math.round(canvas.height / 2)
+    const downscaleCanvas = document.createElement('canvas')
+    downscaleCanvas.width = targetWidth
+    downscaleCanvas.height = targetHeight
+    const downscaleCtx = downscaleCanvas.getContext('2d')!
+    downscaleCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, targetWidth, targetHeight)
+
+    // 3. Get pixel data and convert receipt to 1-bit (dither)
+    let ctx = downscaleCanvas.getContext('2d')!
+    let imageData = ctx.getImageData(0, 0, downscaleCanvas.width, downscaleCanvas.height)
     const mono = ditherImage(imageData, options.ditherMethod ?? 'floyd-steinberg')
 
 
     // 4. Build ESC/POS command buffer
-    const buffer = buildEscPosBuffer(mono, canvas.width, canvas.height)
+    const buffer = buildEscPosBuffer(mono, downscaleCanvas.width, downscaleCanvas.height)
 
     // 5. Convert dithered 1-bit image to visual PNG for archive display
     // This ensures the saved receipt looks like what will actually print
     const ditherCanvas = document.createElement('canvas')
-    ditherCanvas.width = canvas.width
-    ditherCanvas.height = canvas.height
+    ditherCanvas.width = downscaleCanvas.width
+    ditherCanvas.height = downscaleCanvas.height
     const ditherCtx = ditherCanvas.getContext('2d')!
-    const ditherImageData = ditherCtx.createImageData(canvas.width, canvas.height)
+    const ditherImageData = ditherCtx.createImageData(downscaleCanvas.width, downscaleCanvas.height)
     for (let i = 0; i < mono.length; i++) {
       const pixel = mono[i] ? 0 : 255 // 1 (black) → 0, 0 (white) → 255
       ditherImageData.data[i * 4] = pixel
