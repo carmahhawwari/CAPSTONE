@@ -18,6 +18,7 @@ export interface CornerStickerData {
 interface RenderToPrintOptions {
   ditherMethod?: DitherMethod
   cornerSticker?: CornerStickerData
+  scale?: number
 }
 
 function inlineComputedStyles(sourceRoot: HTMLElement, clonedRoot: HTMLElement): void {
@@ -105,8 +106,8 @@ export async function renderToPrintBuffer(
   element.setAttribute(CAPTURE_ATTR, captureId)
 
   const cssWidth = Math.max(1, Math.round(element.getBoundingClientRect().width))
-  // Account for device pixel ratio to ensure high quality rendering on high-DPI screens
-  const scale = (PRINTER_WIDTH_DOTS / cssWidth) * Math.max(1, window.devicePixelRatio)
+  // Scale to match printer width (576 dots)
+  const scale = options.scale ?? (PRINTER_WIDTH_DOTS / cssWidth)
 
   try {
     // Wait for all images to load so dimensions are correct
