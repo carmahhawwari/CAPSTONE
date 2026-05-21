@@ -3,8 +3,9 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { submitBase64PrintJob } from '@/lib/printJob'
+import { submitBase64PrintJob, fetchAllActivePrinters, checkNearestPrinter } from '@/lib/printJob'
 import PageTransition from '@/components/PageTransition'
+import PrinterPickerModal from '@/components/PrinterPickerModal'
 import type { Block } from '@/types/canvas'
 
 type DeliveredReceipt = {
@@ -29,6 +30,9 @@ export default function RecipientReceipt() {
   const [printing, setPrinting] = useState(false)
   const [printError, setPrintError] = useState<string | null>(null)
   const [printed, setPrinted] = useState(false)
+  const [selectedPrinter, setSelectedPrinter] = useState<{ id: string; name: string } | null>(null)
+  const [showPrinterModal, setShowPrinterModal] = useState(false)
+  const [allPrinters, setAllPrinters] = useState<{ id: string; name: string }[]>([])
   const shouldAutoPrint = searchParams.get('print') === 'true'
 
   useEffect(() => {
@@ -75,7 +79,11 @@ export default function RecipientReceipt() {
   }, [id, user?.email, authLoading])
 
   const handlePrint = async () => {
-    if (!receipt) return
+    if (!receipt || !selectedPrinter) {
+      setShowPrinterModal(true)
+      return
+    }
+
     setPrintError(null)
     setPrinting(true)
     try {
@@ -94,6 +102,7 @@ export default function RecipientReceipt() {
         base64Image,
         recipientName: receipt.recipient_email.split('@')[0],
         recipientEmail: receipt.recipient_email,
+        printerId: selectedPrinter.id,
       })
 
       console.log('[RecipientReceipt] Print job submitted:', jobId)
@@ -113,11 +122,26 @@ export default function RecipientReceipt() {
 
 
   // Auto-print when page loads with print=true parameter
+  // Pre-fetch printers and auto-select nearest
   useEffect(() => {
-    if (receipt && shouldAutoPrint && !printing && !printed) {
+    const loadPrinters = async () => {
+      const printers = await fetchAllActivePrinters()
+      setAllPrinters(printers)
+
+      // Auto-select nearest printer
+      const nearest = await checkNearestPrinter()
+      if (nearest) {
+        setSelectedPrinter(nearest)
+      }
+    }
+    loadPrinters()
+  }, [])
+
+  useEffect(() => {
+    if (receipt && shouldAutoPrint && !printing && !printed && selectedPrinter) {
       handlePrint()
     }
-  }, [receipt, shouldAutoPrint, printing, printed])
+  }, [receipt, shouldAutoPrint, printing, printed, selectedPrinter])
 
   if (authLoading) {
     return (
@@ -188,6 +212,28 @@ export default function RecipientReceipt() {
           Head to onCall to receive your message.
         </p>
 
+        {selectedPrinter ? (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <p className="text-mini text-text-secondary">Printing at:</p>
+            <p className="text-callout text-text-primary font-semibold">{selectedPrinter.name}</p>
+            <button
+              type="button"
+              onClick={() => setShowPrinterModal(true)}
+              className="text-mini text-text-secondary underline mt-2 hover:text-text-primary"
+            >
+              Change printer
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowPrinterModal(true)}
+            className="text-headline text-text-secondary bg-gray-100 rounded-md mt-8 flex w-full h-12 items-center justify-center hover:bg-gray-200"
+          >
+            Select printer location
+          </button>
+        )}
+
         {printError && <p className="text-mini text-fill-red mt-4">{printError}</p>}
 
         <button
@@ -208,6 +254,18 @@ export default function RecipientReceipt() {
         </button>
       </motion.div>
 
+      {/* Printer Picker Modal */}
+      {showPrinterModal && (
+        <PrinterPickerModal
+          printers={allPrinters}
+          selectedId={selectedPrinter?.id ?? null}
+          onSelect={(p) => {
+            setSelectedPrinter(p)
+            setShowPrinterModal(false)
+          }}
+          onClose={() => setShowPrinterModal(false)}
+        />
+      )}
     </PageTransition>
   )
 }
