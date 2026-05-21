@@ -60,50 +60,73 @@ function getCurrentPosition(): Promise<GeolocationPosition | null> {
 }
 
 /**
- * Check which printer is available (geofence disabled).
- * Returns the printer UUID or null if unavailable.
+ * Fetch all active printers from the database.
+ * Returns list of { id, name } or empty array if none found.
  */
-export async function checkNearestPrinter(): Promise<string | null> {
+export async function fetchAllActivePrinters(): Promise<{ id: string; name: string }[]> {
   if (!supabase) throw new Error('Supabase not configured')
 
-  // Get all printers
   const { data: printers, error } = await supabase
     .from('printers')
-    .select('*')
+    .select('id, name')
+    .eq('is_active', true)
+    .order('name')
 
   if (error) {
-    console.error('[PrintJob] Printer query error:', error)
+    console.error('[PrintJob] Error fetching printers:', error)
+    return []
+  }
+
+  return printers ?? []
+}
+
+/**
+ * Check which printer is nearest via geofence using the user's GPS location.
+ * Returns { id, name } of the nearest printer, or null if outside all geofences or location unavailable.
+ */
+export async function checkNearestPrinter(): Promise<{ id: string; name: string } | null> {
+  if (!supabase) throw new Error('Supabase not configured')
+
+  // Get user's current position
+  const position = await getCurrentPosition()
+  if (!position) {
+    console.log('[PrintJob] Could not get user location, cannot determine nearest printer')
     return null
   }
 
-  console.log('[PrintJob] Available printers:', printers?.map((p: any) => ({ id: p.id, name: p.name })))
+  const { latitude: lat, longitude: lng } = position.coords
+  console.log('[PrintJob] User location:', { lat, lng })
 
-  if (!printers || printers.length === 0) {
-    console.log('[PrintJob] No printers found')
+  // Call the nearest_printer() RPC function
+  const { data: nearestId, error } = await supabase.rpc('nearest_printer', {
+    lat,
+    lng,
+  })
+
+  if (error) {
+    console.error('[PrintJob] Error calling nearest_printer RPC:', error)
     return null
   }
 
-  // Filter out stale printers
-  const stalePrinterIds = [
-    '09029d8e-b86b-4f7e-b478-3cb36ffe4956',
-    'b29f0568-61f9-402e-89cd-2af1bc731993',
-  ]
-  const activePrinters = printers.filter((p: any) => !stalePrinterIds.includes(p.id))
-
-  if (activePrinters.length === 0) {
-    console.log('[PrintJob] No active printers available (all are stale)')
+  if (!nearestId) {
+    console.log('[PrintJob] No printer within geofence')
     return null
   }
 
-  // Select the most recently updated printer
-  const selectedPrinter = activePrinters.sort((a: any, b: any) => {
-    const aTime = new Date(a.updated_at || a.created_at || 0).getTime()
-    const bTime = new Date(b.updated_at || b.created_at || 0).getTime()
-    return bTime - aTime
-  })[0]
+  // Fetch the printer's name
+  const { data: printer, error: fetchError } = await supabase
+    .from('printers')
+    .select('id, name')
+    .eq('id', nearestId)
+    .single()
 
-  console.log('[PrintJob] Selected active printer:', selectedPrinter?.id, selectedPrinter?.name)
-  return selectedPrinter?.id ?? null
+  if (fetchError || !printer) {
+    console.error('[PrintJob] Error fetching nearest printer details:', fetchError)
+    return null
+  }
+
+  console.log('[PrintJob] Found nearest printer:', { id: printer.id, name: printer.name })
+  return { id: printer.id, name: printer.name }
 }
 
 /**
@@ -285,11 +308,13 @@ export async function submitBase64PrintJob({
   recipientName,
   recipientEmail,
   skipGeofence,
+  printerId,
 }: {
   base64Image: string
   recipientName: string
   recipientEmail?: string
   skipGeofence?: boolean
+  printerId?: string
 }): Promise<string> {
   // 1. Convert base64 image to ESC/POS buffer
   const { buffer } = await renderBase64ToPrintBuffer(base64Image)
@@ -320,8 +345,8 @@ export async function submitBase64PrintJob({
     lng = position?.coords.longitude ?? null
   }
 
-  // 3. Get printer via geofence or use default
-  const printerId = skipGeofence ? null : await checkNearestPrinter()
+  // 3. Get printer via explicit selection, geofence, or default
+  const finalPrinterId = printerId ?? (skipGeofence ? null : (await checkNearestPrinter())?.id ?? null)
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.email) throw new Error('User email not available')
@@ -330,7 +355,7 @@ export async function submitBase64PrintJob({
   const { data: job, error } = await supabase
     .from('print_jobs')
     .insert({
-      printer_id: printerId ?? null,
+      printer_id: finalPrinterId,
       sender_id: user?.id ?? null,
       sender_email: user.email,
       sender_name: user.email,

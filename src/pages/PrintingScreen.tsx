@@ -5,9 +5,10 @@ import { getFriends } from '@/lib/friends'
 import { getReceivedUnprintedReceipts } from '@/lib/receipts'
 import printerImg from '@/assets/printer.png'
 import wifiSymbol from '@/assets/wifi-symbol.svg'
-import { submitPrintJob, checkNearestPrinter } from '@/lib/printJob'
+import { submitPrintJob, checkNearestPrinter, fetchAllActivePrinters } from '@/lib/printJob'
 import { markReceiptAsPrinted } from '@/lib/receipts'
 import PageTransition from '@/components/PageTransition'
+import PrinterPickerModal from '@/components/PrinterPickerModal'
 import type { FriendProfile, Receipt } from '@/types/app'
 import ReceiptBodyRenderer from '@/components/ReceiptBodyRenderer'
 
@@ -24,6 +25,9 @@ export default function PrintingScreen() {
   const [isLoading, setIsLoading] = useState(true)
   const [unprinted, setUnprinted] = useState<Receipt[]>([])
   const [receiptState, setReceiptState] = useState<any>((location.state as any)?.receiptState || null)
+  const [selectedPrinter, setSelectedPrinter] = useState<{ id: string; name: string } | null>(null)
+  const [printerOverrideOpen, setPrinterOverrideOpen] = useState(false)
+  const [allPrinters, setAllPrinters] = useState<{ id: string; name: string }[]>([])
   const receiptRef = useRef<HTMLDivElement>(null)
   const isTestMode = !searchParams.get('to') && !searchParams.get('email')
 
@@ -32,6 +36,12 @@ export default function PrintingScreen() {
       setReceiptState((location.state as any).receiptState)
     }
   }, [location.state])
+
+  useEffect(() => {
+    if (state === 'confirm' && allPrinters.length === 0) {
+      fetchAllActivePrinters().then(setAllPrinters)
+    }
+  }, [state])
 
   useEffect(() => {
     const loadRecipientInfo = async () => {
@@ -78,13 +88,24 @@ export default function PrintingScreen() {
             return () => clearTimeout(timer)
           }
 
-          const printerId = await checkNearestPrinter()
+          // Short-circuit if user already picked manually
+          if (selectedPrinter) {
+            setState('printing')
+            const timer = setTimeout(() => {
+              setState('done')
+              setTimeout(() => navigate('/home'), 1000)
+            }, 3000)
+            return () => clearTimeout(timer)
+          }
 
-          if (printerId === null) {
+          const printer = await checkNearestPrinter()
+
+          if (printer === null) {
             setState('no-printer')
             return
           }
 
+          setSelectedPrinter(printer)
           setState('printing')
 
           const timer = setTimeout(() => {
@@ -106,7 +127,7 @@ export default function PrintingScreen() {
 
       checkPrinter()
     }
-  }, [state, navigate, isTestMode])
+  }, [state, navigate, isTestMode, selectedPrinter])
 
   useEffect(() => {
     if (state === 'done' && user?.id && receiptState && receiptRef.current) {
@@ -129,6 +150,7 @@ export default function PrintingScreen() {
             recipientId: selectedFriend?.profile.id,
             recipientEmail: finalRecipientEmail,
             skipGeofence: isTestMode,
+            printerId: selectedPrinter?.id,
             cornerSticker: receiptState.cornerSticker ? {
               imageUrl: receiptState.cornerSticker.ditheredDataUrl || receiptState.cornerSticker.fullUrl,
               offsetX: receiptState.cornerSticker.offsetX ?? 0,
@@ -148,7 +170,7 @@ export default function PrintingScreen() {
       }
       submitPrint()
     }
-  }, [state, user?.id, receiptState, selectedFriend, recipientEmail, isTestMode, searchParams])
+  }, [state, user?.id, receiptState, selectedFriend, recipientEmail, isTestMode, searchParams, selectedPrinter])
 
   const handleBack = () => navigate('/home')
 
@@ -238,6 +260,13 @@ export default function PrintingScreen() {
           </button>
 
           <button
+            onClick={() => setPrinterOverrideOpen(true)}
+            className="w-full px-6 py-2 text-sm text-gray-400 text-center font-medium hover:text-gray-600 underline"
+          >
+            Change printer
+          </button>
+
+          <button
             onClick={handleBack}
             className="w-full px-6 py-2 text-gray-700 text-center font-medium hover:text-black"
           >
@@ -281,6 +310,11 @@ export default function PrintingScreen() {
           <p className="text-gray-600 text-base font-medium">
             {state === 'locating' ? 'Finding your printer...' : 'Sending to printer...'}
           </p>
+          {selectedPrinter && (
+            <p className="text-sm text-gray-400 mt-1">
+              Printing at: {selectedPrinter.name}
+            </p>
+          )}
         </>
       )}
 
@@ -303,8 +337,15 @@ export default function PrintingScreen() {
           />
 
           <button
-            onClick={handleBack}
+            onClick={() => setPrinterOverrideOpen(true)}
             className="px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 active:opacity-80 transition-opacity"
+          >
+            Choose printer manually
+          </button>
+
+          <button
+            onClick={handleBack}
+            className="px-6 py-2 text-gray-700 text-center font-medium hover:text-black"
           >
             Back to Home
           </button>
@@ -380,6 +421,27 @@ export default function PrintingScreen() {
             />
           </div>
         </div>
+      )}
+
+      {/* Printer Picker Modal */}
+      {printerOverrideOpen && (
+        <PrinterPickerModal
+          printers={allPrinters}
+          selectedId={selectedPrinter?.id ?? null}
+          onSelect={(p) => {
+            setSelectedPrinter(p)
+            setPrinterOverrideOpen(false)
+            // If in no-printer state, auto-proceed to printing after selection
+            if (state === 'no-printer') {
+              setState('printing')
+              setTimeout(() => {
+                setState('done')
+                setTimeout(() => navigate('/home'), 1000)
+              }, 3000)
+            }
+          }}
+          onClose={() => setPrinterOverrideOpen(false)}
+        />
       )}
     </PageTransition>
   )
